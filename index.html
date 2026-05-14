@@ -281,12 +281,12 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
    MOBILE  (≤640px)
 ═══════════════════════════════════════ */
 @media (max-width: 640px) {
-  /* Hide PC layout */
   #screen-app { display:none !important; }
-  #screen-mobile { display:flex !important; }
+  #screen-mobile { display:flex !important; flex-direction:column; height:100vh; overflow:hidden; background:var(--gold-faint); }
 }
 @media (min-width: 641px) {
   #screen-mobile { display:none !important; }
+  #screen-app { display:flex; }
 }
 
 #screen-mobile {
@@ -615,14 +615,10 @@ async function verifyToken() {
 window.enterApp = function(role) {
   document.getElementById('screen-loading').style.display = 'none';
   document.getElementById('screen-guest').style.display = 'none';
-  // Show PC or mobile
-  if (window.innerWidth <= 640) {
-    document.getElementById('screen-mobile').style.display = 'flex';
-    document.getElementById('screen-app').style.display = 'none';
-  } else {
-    document.getElementById('screen-app').style.display = 'flex';
-    document.getElementById('screen-mobile').style.display = 'none';
-  }
+  // Let CSS media queries control PC vs mobile visibility.
+  // Just remove display:none from both and let @media rules take over.
+  document.getElementById('screen-app').style.display = '';
+  document.getElementById('screen-mobile').style.display = '';
   window._role = role;
   // PC badges
   const b = document.getElementById('role-badge');
@@ -630,10 +626,11 @@ window.enterApp = function(role) {
     if (role === 'trusted') { b.textContent='✦ 信任裝置'; b.className='role-badge trusted'; document.getElementById('btn-gen').style.display='inline-flex'; document.getElementById('status-txt').textContent='信任裝置 · 完整存取'; }
     else { b.textContent='◈ 訪客模式'; b.className='role-badge guest'; document.getElementById('status-txt').textContent='訪客模式 · 限時存取'; }
   }
-  // Mobile badges
+  // Mobile badges + token button
   const mb = document.getElementById('mob-badge');
   if (mb) mb.textContent = role === 'trusted' ? '✦ 信任裝置' : '◈ 訪客模式';
-  if (role === 'trusted') { const mt = document.getElementById('mob-btn-token'); if (mt) mt.style.display='block'; }
+  const mt = document.getElementById('mob-btn-token');
+  if (mt && role === 'trusted') mt.style.display = 'flex';
   loadEntries();
 };
 
