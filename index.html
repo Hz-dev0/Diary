@@ -282,7 +282,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 ═══════════════════════════════════════ */
 @media (max-width: 640px) {
   #screen-app { display:none !important; }
-  #screen-mobile { display:flex !important; flex-direction:column; height:100vh; overflow:hidden; background:var(--gold-faint); }
+  #screen-mobile { display:flex !important; flex-direction:column; height:100vh; overflow:hidden; background:var(--white); }
 }
 @media (min-width: 641px) {
   #screen-mobile { display:none !important; }
@@ -294,11 +294,11 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   flex-direction:column;
   height:100vh;
   overflow:hidden;
-  background:var(--gold-faint);
+  background:var(--white);
 }
 
 /* Mobile home */
-.mob-home { display:flex; flex-direction:column; height:100%; overflow:hidden; }
+.mob-home { display:flex; flex-direction:column; height:100%; overflow:hidden; background:var(--white); }
 .mob-header { text-align:center; padding:20px 16px 12px; background:var(--navy); border-bottom:1px solid rgba(11,25,41,0.2); flex-shrink:0; }
 .mob-header h1 { font-family:'Cormorant Garamond',serif; font-size:20px; letter-spacing:5px; color:var(--gold-light); font-weight:600; }
 .mob-header .mob-badge { font-size:10px; color:rgba(232,200,122,0.5); margin-top:3px; }
@@ -492,7 +492,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     </div>
     <div class="mob-bottom">
       <button class="mob-btn-new" onclick="mobNewEntry()">＋ 新增記事</button>
-      <button class="mob-btn-token" id="mob-btn-token" onclick="openModal()" style="display:none">🔑</button>
+      <button class="mob-btn-token" id="mob-btn-token" onclick="openModal()">🔑 驗證碼</button>
     </div>
   </div>
 
