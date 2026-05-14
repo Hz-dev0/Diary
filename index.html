@@ -65,24 +65,63 @@ body { font-family:'Noto Sans TC',sans-serif; background:var(--white); color:var
 
 /* ═══════════════════════════════════════
    STEALTH MODE
-   sepia crushes colour → uniform warm paper.
-   contrast(0.34) + brightness(1.1): near (~55cm) text
-   still readable; far / camera angle → blank page.
-   selection highlight suppressed to near-invisible.
+   Strategy: two-layer approach.
+   1. body filter: sepia+brightness flattens mid-tones to warm paper.
+   2. Direct color overrides on high-contrast elements (dark backgrounds,
+      dark text, borders) so nothing stands out at camera distance.
+   Near-screen (~55cm): faint warm text still legible.
+   Camera / oblique: uniform blank cream page.
 ═══════════════════════════════════════ */
 body.stealth {
-  filter: sepia(1) brightness(1.10) contrast(0.34) saturate(0);
+  filter: sepia(1) brightness(1.08) contrast(0.30) saturate(0);
 }
 
-/* Kill text selection highlight in stealth */
-body.stealth ::selection {
-  background: rgba(180,160,100,0.15);
-  color: inherit;
+/* Override all dark-background elements to near-paper */
+body.stealth .sb-head,
+body.stealth .btn-new,
+body.stealth .btn-save,
+body.stealth .btn-main,
+body.stealth .mob-btn-new,
+body.stealth .mob-btn-save,
+body.stealth .cal-day.selected,
+body.stealth .mob-cal-day.selected,
+body.stealth .stealth-btn,
+body.stealth .role-badge {
+  background: rgba(210,195,160,0.18) !important;
+  color: rgba(120,105,70,0.55) !important;
+  border-color: rgba(180,160,110,0.15) !important;
+  box-shadow: none !important;
 }
-body.stealth ::-moz-selection {
-  background: rgba(180,160,100,0.15);
-  color: inherit;
+
+/* Borders and dividers — near invisible */
+body.stealth * {
+  border-color: rgba(190,175,135,0.12) !important;
+  box-shadow: none !important;
 }
+
+/* Text in all elements */
+body.stealth,
+body.stealth * {
+  color: rgba(100,88,58,0.52) !important;
+  text-shadow: none !important;
+}
+
+/* Backgrounds that were white/off-white stay paper-like via filter,
+   but sidebar was gold-tinted — flatten it */
+body.stealth .sidebar,
+body.stealth .ed-header,
+body.stealth .ed-toolbar,
+body.stealth .statusbar,
+body.stealth .calendar-wrap,
+body.stealth .energy-wrap,
+body.stealth .cal-new-row,
+body.stealth .sb-spacer {
+  background: rgba(235,225,200,0.25) !important;
+}
+
+/* Kill text selection highlight */
+body.stealth ::selection { background: rgba(180,160,100,0.10); color: inherit; }
+body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inherit; }
 
 /* Loading */
 #screen-loading { display:flex; align-items:center; justify-content:center; height:100vh; flex-direction:column; gap:14px; color:var(--blue-faint); font-size:13px; }
