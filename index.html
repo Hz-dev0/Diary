@@ -3,35 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>私密日記</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<title>片刻留白</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-  import {
-    getFirestore, collection, addDoc, getDocs, doc,
-    deleteDoc, updateDoc, setDoc, getDoc,
-    query, orderBy, serverTimestamp, Timestamp
-  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, query, orderBy, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  // =============================================
-  // 🔥 填入你的 Firebase 設定
-  // =============================================
-  const firebaseConfig = {
-  apiKey: "AIzaSyD-ZPtk7SgDdZ-BBGmGjcXuRuO1Hh-Tj0o",
-  authDomain: "diary-1d399.firebaseapp.com",
-  projectId: "diary-1d399",
-  storageBucket: "diary-1d399.firebasestorage.app",
-  messagingSenderId: "230492568365",
-  appId: "1:230492568365:web:cf04c2e0f6c73838b5b1a4"
-};
-
-  // 白名單 UID（你的信任裝置，第一次開啟後從頁面底部複製你的 UID 填進來）
-  const TRUSTED_UIDS = [
-    "rEAVYuPlDrTjZsqmqGE5TeHFSX73",
-  ];
-  // =============================================
+  const firebaseConfig = { apiKey:"AIzaSyD-ZPtk7SgDdZ-BBGmGjcXuRuO1Hh-Tj0o", authDomain:"diary-1d399.firebaseapp.com", projectId:"diary-1d399", storageBucket:"diary-1d399.firebasestorage.app", messagingSenderId:"230492568365", appId:"1:230492568365:web:cf04c2e0f6c73838b5b1a4" };
+  const TRUSTED_UIDS = ["rEAVYuPlDrTjZsqmqGE5TeHFSX73"];
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -41,153 +22,304 @@
   onAuthStateChanged(auth, async (user) => {
     if (!user) { await signInAnonymously(auth); return; }
     window._me = user;
-    document.getElementById('display-uid').textContent = user.uid;
-
-    if (TRUSTED_UIDS.includes(user.uid)) {
-      window.enterApp('trusted');
-    } else {
-      // Check if already has valid guest_access
+    document.querySelectorAll('.display-uid').forEach(el => el.textContent = user.uid);
+    if (TRUSTED_UIDS.includes(user.uid)) { window.enterApp('trusted'); }
+    else {
       try {
-        const gd = await getDoc(doc(db, 'guest_access', user.uid));
-        if (gd.exists()) {
-          const exp = gd.data().expiresAt?.toMillis?.() || 0;
-          if (exp > Date.now()) { window.enterApp('guest'); return; }
-        }
+        const gd = await getDoc(doc(db,'guest_access',user.uid));
+        if (gd.exists() && (gd.data().expiresAt?.toMillis?.() || 0) > Date.now()) { window.enterApp('guest'); return; }
       } catch(_) {}
       document.getElementById('screen-loading').style.display = 'none';
       document.getElementById('screen-guest').style.display = 'flex';
     }
   });
-
   signInAnonymously(auth).catch(e => {
-    document.getElementById('screen-loading').innerHTML = '<p style="color:#c00;font-size:13px">Firebase 連線失敗：' + e.message + '</p>';
+    document.getElementById('screen-loading').innerHTML = '<p style="color:#c44;font-size:13px">Firebase 連線失敗：' + e.message + '</p>';
   });
 </script>
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ═══════════════════════════════════════
+   VARIABLES
+═══════════════════════════════════════ */
+* { box-sizing:border-box; margin:0; padding:0; }
 :root {
-  --ink: #1a1208; --ink-soft: #4a3f2f; --ink-faint: #8a7a65;
-  --paper: #faf6ef; --paper-warm: #f2ead8; --paper-deep: #e8dcc8;
-  --accent: #8b5e3c; --accent-l: #c4956a; --accent-f: #f0e4d4;
-  --danger: #9b3131; --ok: #2d6e3e;
-  --border: rgba(139,94,60,0.18);
+  /* Gold — used sparingly as accent */
+  --gold:#c4a24a; --gold-mid:#b08c36; --gold-deep:#8c6e22;
+  --gold-light:#ddb96a; --gold-pale:#f0e0b0; --gold-faint:#faf5e8; --gold-bg:#f5edd5;
+
+  /* Navy — header, selected states, buttons */
+  --navy:#0b1929; --navy-mid:#122238; --navy-light:#1a3050; --navy-soft:#243d68;
+
+  /* Blue — body text */
+  --blue-text:#1c304e; --blue-mid:#284268; --blue-soft:#4a6284; --blue-faint:#8898b8;
+
+  /* Surfaces — white-dominant */
+  --white:#ffffff; --off-white:#fbfaf8; --sidebar-bg:#f7f4ec;
+  --border-g:rgba(180,148,60,0.20); --border-b:rgba(28,48,78,0.08);
+  --radius:3px;
+  --shadow:0 4px 40px rgba(11,25,41,0.10);
 }
-body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+body { font-family:'Noto Sans TC',sans-serif; background:var(--white); color:var(--blue-text); height:100vh; overflow:hidden; transition:filter 0.5s ease; }
+
+/* ═══════════════════════════════════════
+   STEALTH MODE
+   sepia crushes colour → uniform warm paper.
+   contrast(0.34) + brightness(1.1): near (~55cm) text
+   still readable; far / camera angle → blank page.
+   selection highlight suppressed to near-invisible.
+═══════════════════════════════════════ */
+body.stealth {
+  filter: sepia(1) brightness(1.10) contrast(0.34) saturate(0);
+}
+
+/* Kill text selection highlight in stealth */
+body.stealth ::selection {
+  background: rgba(180,160,100,0.15);
+  color: inherit;
+}
+body.stealth ::-moz-selection {
+  background: rgba(180,160,100,0.15);
+  color: inherit;
+}
 
 /* Loading */
-#screen-loading { display:flex; align-items:center; justify-content:center; height:100vh; flex-direction:column; gap:14px; color:var(--ink-faint); font-size:13px; }
-.spinner { width:28px; height:28px; border:2px solid var(--paper-deep); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+#screen-loading { display:flex; align-items:center; justify-content:center; height:100vh; flex-direction:column; gap:14px; color:var(--blue-faint); font-size:13px; }
+.spinner { width:26px; height:26px; border:2px solid var(--border-g); border-top-color:var(--gold); border-radius:50%; animation:spin .9s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
-/* Guest screen */
-#screen-guest { display:none; align-items:center; justify-content:center; min-height:100vh; position:relative; }
-#screen-guest::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(139,94,60,0.05) 28px); pointer-events:none; }
+/* ═══════════════════════════════════════
+   GUEST SCREEN
+═══════════════════════════════════════ */
+#screen-guest { display:none; align-items:center; justify-content:center; min-height:100vh; }
+.auth-card { background:var(--white); border:1px solid var(--border-g); border-radius:var(--radius); padding:48px 44px 40px; width:min(420px,92vw); box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.auth-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold-deep),var(--gold-light),var(--gold-deep)); }
+.brand { text-align:center; margin-bottom:36px; }
+.brand .ico { font-size:28px; display:block; margin-bottom:10px; color:var(--gold); }
+.brand h1 { font-family:'Cormorant Garamond',serif; font-size:26px; letter-spacing:6px; color:var(--navy); font-weight:600; }
+.brand p { font-size:11px; color:var(--blue-soft); margin-top:7px; letter-spacing:1px; }
+.code-inputs { display:flex; gap:8px; justify-content:center; margin:24px 0; }
+.code-inputs input { width:46px; height:56px; border:1px solid var(--border-g); border-radius:var(--radius); text-align:center; font-size:22px; font-weight:500; color:var(--navy); background:var(--gold-faint); outline:none; transition:all .2s; font-family:'Noto Serif TC',serif; }
+.code-inputs input:focus { border-color:var(--gold); background:var(--white); box-shadow:0 0 0 3px rgba(201,168,76,0.12); }
+.code-inputs input.filled { border-color:var(--gold-mid); }
+.code-inputs input.err { border-color:#b04040; animation:shake .3s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+.btn-main { width:100%; padding:13px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:13px; font-weight:600; letter-spacing:3px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all .2s; }
+.btn-main:hover { background:var(--navy-light); }
+.btn-main:disabled { opacity:0.4; cursor:default; }
+.err-msg { font-size:11px; color:#b04040; text-align:center; margin-top:10px; min-height:16px; }
+.uid-hint { margin-top:20px; padding:10px 12px; background:var(--gold-faint); border:1px solid var(--border-g); border-radius:var(--radius); font-size:10px; color:var(--blue-soft); line-height:1.8; }
+.uid-hint code { font-family:monospace; font-size:10px; color:var(--blue-mid); word-break:break-all; }
 
-.auth-card { background:#fff; border:1px solid var(--border); border-radius:2px; padding:44px 40px 36px; width:min(400px,90vw); position:relative; box-shadow:0 8px 40px rgba(90,60,20,0.08); }
-.auth-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent-l)); }
-
-.brand { text-align:center; margin-bottom:32px; }
-.brand .ico { font-size:38px; display:block; margin-bottom:10px; }
-.brand h1 { font-family:'Noto Serif TC',serif; font-size:20px; letter-spacing:4px; }
-.brand p { font-size:11px; color:var(--ink-faint); margin-top:6px; }
-
-.code-inputs { display:flex; gap:8px; justify-content:center; margin:22px 0; }
-.code-inputs input { width:44px; height:54px; border:1px solid var(--border); border-radius:2px; text-align:center; font-size:22px; font-weight:500; color:var(--ink); background:var(--paper); outline:none; transition:border-color .2s; font-family:'Noto Serif TC',serif; }
-.code-inputs input:focus { border-color:var(--accent); background:#fff; }
-.code-inputs input.filled { border-color:var(--accent-l); }
-.code-inputs input.err { border-color:var(--danger); background:#fff5f5; animation:shake .3s; }
-@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
-
-.btn-main { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:2px; font-size:13px; font-weight:500; letter-spacing:2px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:background .2s; }
-.btn-main:hover { background:#7a4f2e; }
-.btn-main:disabled { background:var(--paper-deep); color:var(--ink-faint); cursor:default; }
-
-.err-msg { font-size:11px; color:var(--danger); text-align:center; margin-top:10px; min-height:16px; }
-.uid-hint { margin-top:20px; padding:10px 12px; background:var(--accent-f); border-radius:2px; font-size:10px; color:var(--ink-faint); line-height:1.7; }
-.uid-hint code { font-family:monospace; font-size:10px; color:var(--ink-soft); word-break:break-all; }
-
-/* App screen */
+/* ═══════════════════════════════════════
+   PC APP LAYOUT  (editor LEFT, sidebar RIGHT)
+═══════════════════════════════════════ */
 #screen-app { display:none; height:100vh; flex-direction:row; overflow:hidden; }
 
-/* Sidebar */
-.sidebar { width:290px; min-width:240px; background:var(--paper-warm); border-right:1px solid var(--border); display:flex; flex-direction:column; }
-.sb-head { padding:20px 18px 12px; border-bottom:1px solid var(--border); }
-.sb-head h2 { font-family:'Noto Serif TC',serif; font-size:16px; letter-spacing:3px; }
-.role-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:3px 8px; border-radius:20px; margin-top:5px; font-weight:500; letter-spacing:.5px; }
-.role-badge.trusted { background:rgba(45,110,62,.12); color:var(--ok); }
-.role-badge.guest { background:rgba(139,94,60,.12); color:var(--accent); }
-.sb-actions { padding:9px 12px; display:flex; gap:7px; border-bottom:1px solid var(--border); }
-.btn-new { flex:1; padding:8px 10px; background:var(--accent); color:#fff; border:none; border-radius:2px; font-size:12px; cursor:pointer; letter-spacing:1px; font-family:'Noto Sans TC',sans-serif; transition:background .2s; }
-.btn-new:hover { background:#7a4f2e; }
-.btn-gen { display:none; align-items:center; gap:3px; padding:8px 10px; background:none; border:1px solid var(--border); border-radius:2px; font-size:11px; color:var(--ink-soft); cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all .2s; white-space:nowrap; }
-.btn-gen:hover { border-color:var(--accent-l); color:var(--accent); }
+/* ── EDITOR (left) ── */
+.editor { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--white); position:relative; }
+.editor::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(196,162,74,.025) 32px); pointer-events:none; z-index:0; }
 
-.elist { flex:1; overflow-y:auto; padding:4px 0; }
-.elist::-webkit-scrollbar { width:3px; }
-.elist::-webkit-scrollbar-thumb { background:var(--paper-deep); }
-.eitem { padding:12px 16px; cursor:pointer; border-bottom:1px solid rgba(139,94,60,.07); transition:background .15s; position:relative; }
-.eitem:hover { background:rgba(139,94,60,.05); }
-.eitem.active { background:rgba(139,94,60,.1); }
-.eitem .ed { font-size:10px; color:var(--accent-l); letter-spacing:1px; margin-bottom:2px; font-weight:500; }
-.eitem .et { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.eitem .ep { font-size:11px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.eitem .em { position:absolute; right:12px; top:12px; font-size:14px; }
-.empty { padding:36px 18px; text-align:center; color:var(--ink-faint); font-size:11px; line-height:1.8; }
+/* Editor header — sync icon LEFT of title */
+.ed-header { display:flex; align-items:center; padding:13px 28px; border-bottom:1px solid var(--border-g); background:var(--white); position:relative; z-index:1; gap:10px; }
+.sync-icon { font-size:13px; color:transparent; transition:color .3s; flex-shrink:0; user-select:none; }
+.sync-icon.syncing { color:var(--gold); animation:syncpulse 0.8s ease-in-out infinite alternate; }
+.sync-icon.error { color:#c44; animation:none; }
+@keyframes syncpulse { from{opacity:0.3} to{opacity:1} }
+.ed-header-title { font-family:'Cormorant Garamond',serif; font-size:16px; letter-spacing:4px; color:var(--blue-text); font-weight:600; flex:1; }
 
-/* Editor */
-.editor { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#fff; position:relative; }
-.editor::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(139,94,60,.04) 32px); pointer-events:none; }
-.ed-toolbar { display:flex; align-items:center; justify-content:space-between; padding:12px 26px; border-bottom:1px solid var(--border); background:rgba(255,255,255,.96); position:relative; z-index:1; }
-.mood-row { display:flex; gap:4px; }
-.mb { background:none; border:1px solid transparent; border-radius:50%; width:28px; height:28px; font-size:14px; cursor:pointer; transition:all .15s; }
-.mb:hover { border-color:var(--border); background:var(--accent-f); }
-.mb.sel { border-color:var(--accent-l); background:var(--accent-f); }
+.ed-toolbar { display:flex; align-items:center; justify-content:space-between; padding:9px 28px; border-bottom:1px solid var(--border-g); background:var(--white); position:relative; z-index:1; }
+.mood-toggle { display:flex; gap:6px; align-items:center; }
+.mood-sym { width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border-b); background:none; font-size:15px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; color:var(--blue-faint); font-family:'Noto Serif TC',serif; }
+.mood-sym:hover { border-color:var(--gold); background:var(--gold-faint); color:var(--navy); }
+.mood-sym.sym-positive.on { background:linear-gradient(135deg,var(--gold),var(--gold-light)); border-color:var(--gold-mid); color:var(--navy-mid); box-shadow:0 2px 8px rgba(180,140,50,0.25); }
+.mood-sym.sym-negative.on { background:linear-gradient(135deg,var(--navy-mid),var(--navy-light)); border-color:var(--navy-mid); color:var(--gold-light); box-shadow:0 2px 8px rgba(22,38,68,0.2); }
 .tr { display:flex; gap:7px; align-items:center; }
-.btn-del { padding:6px 12px; background:none; border:1px solid var(--border); border-radius:2px; font-size:11px; color:var(--ink-faint); cursor:pointer; transition:all .2s; }
-.btn-del:hover { border-color:var(--danger); color:var(--danger); }
-.btn-save { padding:6px 16px; background:var(--accent); color:#fff; border:none; border-radius:2px; font-size:12px; letter-spacing:1px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:background .2s; }
-.btn-save:hover { background:#7a4f2e; }
-.btn-save:disabled { background:var(--paper-deep); color:var(--ink-faint); cursor:default; }
+.btn-del { padding:5px 12px; background:none; border:1px solid var(--border-b); border-radius:var(--radius); font-size:11px; color:var(--blue-soft); cursor:pointer; transition:all .2s; }
+.btn-del:hover { border-color:#b04040; color:#b04040; }
+.btn-save { padding:6px 20px; background:linear-gradient(135deg,var(--navy-mid),var(--navy-light)); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:12px; letter-spacing:2px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all .2s; font-weight:600; }
+.btn-save:hover { background:linear-gradient(135deg,var(--navy-light),var(--navy-soft)); }
+.btn-save:disabled { opacity:.4; cursor:default; }
 
-.ed-body { flex:1; display:flex; flex-direction:column; padding:26px 40px; overflow-y:auto; position:relative; z-index:1; }
+.ed-body { flex:1; display:flex; flex-direction:column; padding:28px 48px; overflow-y:auto; position:relative; z-index:1; transition:background .4s; }
 .ed-body::-webkit-scrollbar { width:3px; }
-.ed-body::-webkit-scrollbar-thumb { background:var(--paper-deep); }
-#entry-date { font-size:10px; color:var(--accent-l); letter-spacing:2px; margin-bottom:12px; font-weight:500; }
-#entry-title { font-family:'Noto Serif TC',serif; font-size:24px; font-weight:700; color:var(--ink); border:none; outline:none; width:100%; background:transparent; margin-bottom:14px; }
-#entry-title::placeholder { color:var(--paper-deep); }
-.div-line { height:1px; background:var(--border); margin-bottom:18px; }
-#entry-body { font-family:'Noto Serif TC',serif; font-size:15px; line-height:2; color:var(--ink-soft); border:none; outline:none; width:100%; flex:1; min-height:340px; background:transparent; resize:none; }
-#entry-body::placeholder { color:rgba(139,94,60,.2); }
+.ed-body::-webkit-scrollbar-thumb { background:var(--border-g); }
+#entry-date { font-size:10px; color:var(--gold-mid); letter-spacing:2.5px; margin-bottom:16px; font-weight:500; }
+.ed-body.tint-pos { background:linear-gradient(180deg,rgba(196,162,74,0.06) 0%,transparent 50%); }
+.ed-body.tint-neg { background:linear-gradient(180deg,rgba(26,48,80,0.05) 0%,transparent 50%); }
+#entry-body { font-family:'Noto Serif TC',serif; font-size:15px; line-height:2.1; color:var(--blue-text); border:none; outline:none; width:100%; flex:1; min-height:300px; background:transparent; resize:none; }
+#entry-body::placeholder { color:rgba(74,98,132,.18); }
 
-.welcome { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--ink-faint); text-align:center; position:relative; z-index:1; padding:40px; }
-.welcome .wi { font-size:52px; opacity:.35; margin-bottom:18px; }
-.welcome h3 { font-family:'Noto Serif TC',serif; font-size:17px; font-weight:500; margin-bottom:8px; color:var(--ink-soft); }
-.welcome p { font-size:12px; line-height:1.8; }
+.welcome { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; z-index:1; padding:40px; }
+.welcome-icon { font-size:28px; color:var(--gold); opacity:.35; margin-bottom:18px; }
+.welcome h3 { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; margin-bottom:8px; color:var(--blue-text); letter-spacing:4px; }
+.welcome p { font-size:12px; line-height:1.9; color:var(--blue-faint); }
 
-.statusbar { padding:5px 40px; border-top:1px solid var(--border); font-size:10px; color:var(--ink-faint); background:var(--paper); z-index:1; display:flex; align-items:center; gap:5px; }
-.sdot { width:5px; height:5px; border-radius:50%; background:#6bb36b; flex-shrink:0; }
+.statusbar { padding:5px 28px; border-top:1px solid var(--border-g); font-size:10px; color:var(--blue-faint); background:var(--off-white); z-index:1; display:flex; align-items:center; gap:7px; }
+.sdot { width:5px; height:5px; border-radius:50%; background:#4aaa70; flex-shrink:0; }
 
-/* Token modal — uses normal flow, no fixed */
-.modal-wrap { display:none; position:fixed; inset:0; background:rgba(26,18,8,.52); z-index:200; align-items:center; justify-content:center; }
+/* ── SIDEBAR (right) ── */
+.sidebar { width:280px; min-width:240px; background:var(--white); border-left:1px solid var(--border-g); display:flex; flex-direction:column; order:1; }
+
+.sb-head { padding:14px 16px 12px; border-bottom:1px solid rgba(11,25,41,0.18); background:var(--navy); }
+.sb-head-row { display:flex; align-items:center; justify-content:space-between; }
+.sb-title { font-family:'Cormorant Garamond',serif; font-size:17px; letter-spacing:4px; color:var(--gold-light); font-weight:600; }
+
+/* Stealth btn */
+.stealth-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); border-radius:20px; padding:4px 10px; cursor:pointer; font-size:10px; color:rgba(255,255,255,0.55); letter-spacing:1px; transition:all .25s; font-family:'Noto Sans TC',sans-serif; }
+.stealth-btn:hover { background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.8); }
+.stealth-btn.active { background:rgba(196,162,74,0.15); border-color:rgba(196,162,74,0.35); color:var(--gold-light); }
+
+.role-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 8px; border-radius:20px; margin-top:5px; font-weight:500; }
+.role-badge.trusted { background:rgba(196,162,74,.18); color:var(--gold-light); }
+.role-badge.guest { background:rgba(255,255,255,.08); color:rgba(255,255,255,.5); }
+
+/* Calendar */
+.calendar-wrap { padding:14px 13px 10px; background:var(--white); flex-shrink:0; }
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
+.cal-month { font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:600; color:var(--blue-text); letter-spacing:2px; }
+.cal-arrow { background:none; border:none; color:var(--gold-mid); font-size:18px; cursor:pointer; padding:0 4px; transition:color .15s; line-height:1; }
+.cal-arrow:hover { color:var(--navy); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-dow { text-align:center; font-size:9px; color:var(--blue-faint); padding:1px 0 4px; }
+.cal-day { text-align:center; font-size:11px; border-radius:var(--radius); cursor:pointer; color:var(--blue-mid); transition:all .15s; aspect-ratio:1; display:flex; align-items:center; justify-content:center; position:relative; }
+.cal-day:empty { cursor:default; }
+.cal-day:not(:empty):hover { background:var(--gold-faint); color:var(--navy); }
+.cal-day.today { font-weight:700; color:var(--navy-mid); }
+.cal-day.today::after { content:''; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:3px; height:3px; border-radius:50%; background:var(--gold); }
+.cal-day.has-entry::before { content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:12px; height:2px; border-radius:1px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
+.cal-day.selected { background:var(--navy) !important; color:var(--gold-light) !important; font-weight:700; }
+.cal-day.selected::before, .cal-day.selected::after { display:none !important; }
+
+/* Divider line under calendar */
+.cal-divider { height:1px; background:var(--border-g); margin:0 13px; }
+
+/* Energy bar */
+.energy-wrap { padding:10px 13px 8px; background:var(--white); flex-shrink:0; }
+.energy-bar-bg { height:5px; border-radius:3px; background:rgba(196,162,74,0.12); overflow:hidden; }
+.energy-bar-fill { height:100%; border-radius:3px; transition:width .6s ease; background:var(--gold); }
+
+/* Spacer pushes btn-new to bottom */
+.sb-spacer { flex:1; }
+
+/* New entry btn at bottom */
+.cal-new-row { padding:12px 13px; border-top:1px solid var(--border-g); background:var(--white); display:flex; gap:7px; flex-shrink:0; }
+.btn-new { flex:1; padding:10px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:12px; cursor:pointer; letter-spacing:2px; font-family:'Noto Sans TC',sans-serif; transition:all .2s; font-weight:500; }
+.btn-new:hover { background:var(--navy-light); }
+.btn-gen { display:none; align-items:center; padding:10px 12px; background:none; border:1px solid var(--border-g); border-radius:var(--radius); font-size:12px; color:var(--blue-mid); cursor:pointer; transition:all .2s; }
+.btn-gen:hover { background:var(--gold-faint); }
+/* ── HOVER TOOLTIP ── */
+.cal-tooltip { position:fixed; background:var(--navy); color:var(--gold-light); border-radius:4px; padding:6px 10px; font-size:11px; pointer-events:none; z-index:9999; white-space:nowrap; opacity:0; transition:opacity .15s; line-height:1.7; border:1px solid rgba(201,168,76,0.25); }
+.cal-tooltip.show { opacity:1; }
+.tt-pos { color:var(--gold-light); }
+.tt-neg { color:#7ea8e0; }
+
+/* ── TOKEN MODAL ── */
+.modal-wrap { display:none; position:fixed; inset:0; background:rgba(13,27,46,.5); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
 .modal-wrap.open { display:flex; }
-.modal { background:#fff; border-radius:2px; padding:32px 36px; width:min(360px,90vw); border:1px solid var(--border); }
-.modal h3 { font-family:'Noto Serif TC',serif; font-size:16px; margin-bottom:6px; }
-.modal .sub { font-size:11px; color:var(--ink-faint); line-height:1.7; margin-bottom:18px; }
-.dur-row { display:flex; gap:7px; margin-bottom:18px; }
-.dur-btn { flex:1; padding:7px; border:1px solid var(--border); background:none; border-radius:2px; font-size:11px; cursor:pointer; transition:all .15s; font-family:'Noto Sans TC',sans-serif; color:var(--ink-soft); }
-.dur-btn:hover { border-color:var(--accent-l); }
-.dur-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
-.token-box { text-align:center; padding:22px; background:var(--paper); border-radius:2px; border:1px dashed var(--border); margin-bottom:14px; }
-.token-num { font-family:'Noto Serif TC',serif; font-size:40px; font-weight:700; letter-spacing:10px; color:var(--accent); }
-.token-tim { font-size:11px; color:var(--ink-faint); margin-top:7px; }
-.token-tim span { color:var(--accent); font-weight:500; }
-.btn-outline { width:100%; padding:9px; background:none; border:1px solid var(--border); border-radius:2px; font-size:12px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; color:var(--ink-soft); transition:all .2s; margin-top:7px; }
-.btn-outline:hover { background:var(--paper); }
+.modal { background:var(--white); border-radius:var(--radius); padding:36px 40px; width:min(380px,92vw); border:1px solid var(--border-g); box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.modal::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold-deep),var(--gold-light),var(--gold-deep)); }
+.modal h3 { font-family:'Cormorant Garamond',serif; font-size:18px; margin-bottom:6px; color:var(--navy); letter-spacing:2px; }
+.modal .sub { font-size:11px; color:var(--blue-soft); line-height:1.8; margin-bottom:20px; }
+.dur-row { display:flex; gap:7px; margin-bottom:20px; }
+.dur-btn { flex:1; padding:8px; border:1px solid var(--border-g); background:none; border-radius:var(--radius); font-size:11px; cursor:pointer; transition:all .15s; font-family:'Noto Sans TC',sans-serif; color:var(--blue-soft); }
+.dur-btn:hover { border-color:var(--gold); }
+.dur-btn.active { background:var(--navy); color:var(--gold-light); border-color:var(--navy-mid); font-weight:600; }
+.token-box { text-align:center; padding:24px; background:var(--gold-faint); border-radius:var(--radius); border:1px dashed var(--border-g); margin-bottom:16px; }
+.token-num { font-family:'Cormorant Garamond',serif; font-size:42px; font-weight:600; letter-spacing:12px; color:var(--navy); }
+.token-tim { font-size:11px; color:var(--blue-soft); margin-top:7px; }
+.token-tim span { color:var(--gold-deep); font-weight:600; }
+.btn-outline { width:100%; padding:10px; background:none; border:1px solid var(--border-g); border-radius:var(--radius); font-size:12px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; color:var(--blue-soft); transition:all .2s; margin-top:7px; letter-spacing:1px; }
+.btn-outline:hover { background:var(--gold-faint); border-color:var(--gold); color:var(--navy); }
 
-/* Toast */
-.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--ink); color:#fff; padding:9px 22px; border-radius:24px; font-size:12px; z-index:9999; transition:transform .3s ease; pointer-events:none; white-space:nowrap; }
+/* ── TOAST ── */
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--navy); color:var(--gold-light); padding:9px 24px; border-radius:24px; font-size:12px; z-index:9999; transition:transform .3s ease; pointer-events:none; white-space:nowrap; border:1px solid rgba(201,168,76,.3); letter-spacing:1px; }
 .toast.show { transform:translateX(-50%) translateY(0); }
+
+
+/* ═══════════════════════════════════════
+   MOBILE  (≤640px)
+═══════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Hide PC layout */
+  #screen-app { display:none !important; }
+  #screen-mobile { display:flex !important; }
+}
+@media (min-width: 641px) {
+  #screen-mobile { display:none !important; }
+}
+
+#screen-mobile {
+  display:none;
+  flex-direction:column;
+  height:100vh;
+  overflow:hidden;
+  background:var(--gold-faint);
+}
+
+/* Mobile home */
+.mob-home { display:flex; flex-direction:column; height:100%; overflow:hidden; }
+.mob-header { text-align:center; padding:20px 16px 12px; background:var(--navy); border-bottom:1px solid rgba(11,25,41,0.2); flex-shrink:0; }
+.mob-header h1 { font-family:'Cormorant Garamond',serif; font-size:20px; letter-spacing:5px; color:var(--gold-light); font-weight:600; }
+.mob-header .mob-badge { font-size:10px; color:rgba(232,200,122,0.5); margin-top:3px; }
+
+.mob-cal-area { flex:1; overflow-y:auto; padding:14px 10px 8px; }
+.mob-cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding:0 4px; }
+.mob-cal-month { font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:600; color:var(--blue-text); letter-spacing:2px; }
+.mob-cal-arrow { background:none; border:none; color:var(--gold-deep); font-size:20px; cursor:pointer; padding:0 8px; }
+.mob-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.mob-cal-dow { text-align:center; font-size:10px; color:var(--blue-faint); padding:2px 0 5px; }
+.mob-cal-day { text-align:center; font-size:13px; padding:0; border-radius:4px; cursor:pointer; color:var(--blue-mid); transition:all .15s; aspect-ratio:1; display:flex; align-items:center; justify-content:center; position:relative; }
+.mob-cal-day:empty { cursor:default; }
+.mob-cal-day:not(:empty):hover { background:var(--gold-pale); }
+.mob-cal-day.today { font-weight:700; color:var(--navy); }
+.mob-cal-day.today::after { content:''; position:absolute; bottom:3px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--gold-deep); }
+.mob-cal-day.has-entry::before { content:''; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:16px; height:2px; border-radius:1px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
+.mob-cal-day.selected { background:linear-gradient(135deg,var(--navy-mid),var(--navy-light)) !important; color:var(--gold-light) !important; font-weight:700; }
+.mob-cal-day.selected::before, .mob-cal-day.selected::after { display:none !important; }
+
+/* Energy bar mobile */
+.mob-energy-wrap { padding:6px 14px 2px; }
+.mob-energy-bg { height:5px; border-radius:3px; background:rgba(180,140,50,0.15); overflow:hidden; }
+.mob-energy-fill { height:100%; border-radius:3px; background:var(--gold); transition:width .6s; }
+
+/* Mobile stats row */
+.mob-stats { display:flex; gap:8px; padding:10px 14px 6px; }
+.mob-stat { flex:1; text-align:center; padding:6px; background:var(--white); border:1px solid var(--border-g); border-radius:var(--radius); }
+.mob-stat .sv { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:var(--navy); }
+.mob-stat .sl { font-size:9px; color:var(--blue-faint); }
+
+/* Mobile bottom bar */
+.mob-bottom { display:flex; gap:10px; padding:12px 16px; border-top:1px solid var(--border-g); background:var(--white); flex-shrink:0; }
+.mob-btn-new { flex:1; padding:12px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:14px; cursor:pointer; letter-spacing:2px; font-family:'Noto Sans TC',sans-serif; font-weight:500; }
+.mob-btn-new:active { background:var(--navy-light); }
+.mob-btn-token { display:none; padding:12px 14px; background:none; border:1px solid var(--border-b); border-radius:var(--radius); font-size:13px; color:var(--blue-mid); cursor:pointer; }
+
+/* Mobile editor */
+.mob-editor { display:none; flex-direction:column; height:100%; background:var(--white); position:relative; }
+.mob-editor::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(201,168,76,.03) 32px); pointer-events:none; z-index:0; }
+
+.mob-ed-top { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border-g); background:var(--white); position:relative; z-index:2; flex-shrink:0; }
+.mob-back { background:none; border:none; font-size:20px; color:var(--gold-mid); cursor:pointer; padding:2px 8px; line-height:1; }
+.mob-mood-row { display:flex; gap:6px; }
+.mob-mood-sym { width:34px; height:34px; border-radius:50%; border:1.5px solid var(--border-b); background:none; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--blue-faint); transition:all .2s; }
+.mob-mood-sym.sym-positive.on { background:linear-gradient(135deg,var(--gold),var(--gold-light)); border-color:var(--gold-mid); color:var(--navy-mid); }
+.mob-mood-sym.sym-negative.on { background:linear-gradient(135deg,var(--navy-mid),var(--navy-light)); border-color:var(--navy-mid); color:var(--gold-light); }
+.mob-sync-icon { font-size:14px; color:transparent; transition:color .3s; }
+.mob-sync-icon.syncing { color:var(--gold); animation:syncpulse 0.8s ease-in-out infinite alternate; }
+.mob-sync-icon.error { color:#c44; }
+
+.mob-ed-body { flex:1; overflow-y:auto; padding:18px 18px 80px; position:relative; z-index:1; }
+#mob-entry-date { font-size:10px; color:var(--gold-mid); letter-spacing:2px; margin-bottom:12px; }
+#mob-entry-body { font-family:'Noto Serif TC',serif; font-size:15px; line-height:2.1; color:var(--blue-text); border:none; outline:none; width:100%; min-height:300px; background:transparent; resize:none; }
+#mob-entry-body::placeholder { color:rgba(74,98,132,.18); }
+
+/* Floating bottom bar in editor */
+.mob-ed-bottom { position:absolute; bottom:0; left:0; right:0; z-index:2; display:flex; justify-content:flex-end; gap:8px; padding:10px 14px; background:rgba(255,255,255,0.96); border-top:1px solid var(--border-g); backdrop-filter:blur(4px); }
+.mob-btn-del { padding:9px 16px; background:none; border:1px solid var(--border-b); border-radius:var(--radius); font-size:12px; color:var(--blue-soft); cursor:pointer; }
+.mob-btn-del:active { border-color:#b04040; color:#b04040; }
+.mob-btn-save { padding:9px 22px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:13px; letter-spacing:2px; cursor:pointer; font-weight:600; font-family:'Noto Sans TC',sans-serif; }
 </style>
 </head>
 <body>
@@ -195,15 +327,15 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color:
 <!-- Loading -->
 <div id="screen-loading">
   <div class="spinner"></div>
-  <span>連線中…</span>
+  <span style="letter-spacing:2px;font-size:11px;">連線中…</span>
 </div>
 
 <!-- Guest -->
 <div id="screen-guest">
   <div class="auth-card">
     <div class="brand">
-      <span class="ico">🔐</span>
-      <h1>私密日記</h1>
+      <span class="ico">✦</span>
+      <h1>片刻留白</h1>
       <p>請從信任裝置取得 6 位數驗證碼</p>
     </div>
     <div class="code-inputs" id="code-inputs">
@@ -216,58 +348,132 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color:
     </div>
     <button class="btn-main" id="btn-verify" onclick="verifyToken()" disabled>驗 證 進 入</button>
     <div class="err-msg" id="guest-err"></div>
-    <div class="uid-hint">
-      此裝置 UID（讓信任裝置加白名單用）：<br>
-      <code id="display-uid">—</code>
-    </div>
+    <div class="uid-hint">此裝置 UID：<br><code class="display-uid">—</code></div>
   </div>
 </div>
 
-<!-- App -->
+<!-- PC App -->
 <div id="screen-app">
-  <div class="sidebar">
-    <div class="sb-head">
-      <h2>私密日記</h2>
-      <div class="role-badge" id="role-badge"></div>
-    </div>
-    <div class="sb-actions">
-      <button class="btn-new" onclick="newEntry()">＋ 新增</button>
-      <button class="btn-gen" id="btn-gen" onclick="openModal()">🔑 產生驗證碼</button>
-    </div>
-    <div class="elist" id="elist"><div class="empty">載入中…</div></div>
-  </div>
-
+  <!-- Editor (LEFT) -->
   <div class="editor">
+    <div class="ed-header">
+      <span class="sync-icon" id="sync-icon">✦</span>
+      <span class="ed-header-title">片刻留白</span>
+    </div>
     <div class="welcome" id="welcome">
-      <div class="wi">✍️</div>
-      <h3>選擇一篇日記</h3>
-      <p>或點擊「新增」開始書寫今天</p>
+      <div class="welcome-icon">✧</div>
+      <h3>片刻留白</h3>
+      <p>點擊右側日曆日期開始書寫<br>或按「新增記事」</p>
     </div>
     <div id="edview" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
-        <div class="mood-row">
-          <button class="mb" data-mood="😊" onclick="selMood(this)">😊</button>
-          <button class="mb" data-mood="😔" onclick="selMood(this)">😔</button>
-          <button class="mb" data-mood="😤" onclick="selMood(this)">😤</button>
-          <button class="mb" data-mood="😴" onclick="selMood(this)">😴</button>
-          <button class="mb" data-mood="🤔" onclick="selMood(this)">🤔</button>
-          <button class="mb" data-mood="🥰" onclick="selMood(this)">🥰</button>
+        <div class="mood-toggle">
+          <button class="mood-sym sym-positive" id="ms-pos" onclick="selMood('positive')">✧</button>
+          <button class="mood-sym sym-negative" id="ms-neg" onclick="selMood('negative')">✦</button>
         </div>
         <div class="tr">
           <button class="btn-del" id="btn-del" style="display:none" onclick="delEntry()">刪除</button>
           <button class="btn-save" id="btn-save" onclick="saveEntry()">儲 存</button>
         </div>
       </div>
-      <div class="ed-body">
+      <div class="ed-body" id="ed-body">
         <div id="entry-date"></div>
-        <input type="text" id="entry-title" placeholder="今天的標題…">
-        <div class="div-line"></div>
-        <textarea id="entry-body" placeholder="寫下你的想法、感受、今天發生的事…"></textarea>
+        <textarea id="entry-body" placeholder="寫下此刻的想法…"></textarea>
       </div>
       <div class="statusbar">
         <span class="sdot"></span>
-        <span id="status-txt">已連線 · 私密保護中</span>
+        <span id="status-txt">連線中</span>
+        <span style="margin-left:auto;" id="wordcount"></span>
       </div>
+    </div>
+  </div>
+
+  <!-- Sidebar (RIGHT) -->
+  <div class="sidebar">
+    <div class="sb-head">
+      <div class="sb-head-row">
+        <span class="sb-title">片刻留白</span>
+        <button class="stealth-btn" id="stealth-btn" onclick="toggleStealth()">████</button>
+      </div>
+      <div class="role-badge" id="role-badge"></div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-wrap">
+      <div class="cal-nav">
+        <button class="cal-arrow" onclick="calPrev()">‹</button>
+        <span class="cal-month" id="cal-month-label"></span>
+        <button class="cal-arrow" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid">
+        <div class="cal-dow">日</div><div class="cal-dow">一</div><div class="cal-dow">二</div>
+        <div class="cal-dow">三</div><div class="cal-dow">四</div><div class="cal-dow">五</div><div class="cal-dow">六</div>
+      </div>
+    </div>
+
+    <!-- Energy bar -->
+    <div class="energy-wrap">
+      <div class="energy-bar-bg">
+        <div class="energy-bar-fill" id="energy-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Spacer -->
+    <div class="sb-spacer"></div>
+
+    <!-- New entry button at very bottom -->
+    <div class="cal-new-row">
+      <button class="btn-new" onclick="newEntry()">＋ 新增記事</button>
+      <button class="btn-gen" id="btn-gen" onclick="openModal()">🔑</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile App -->
+<div id="screen-mobile">
+  <!-- Home -->
+  <div class="mob-home" id="mob-home">
+    <div class="mob-header">
+      <h1>片刻留白</h1>
+      <div class="mob-badge" id="mob-badge"></div>
+    </div>
+    <div class="mob-cal-area">
+      <div class="mob-cal-nav">
+        <button class="mob-cal-arrow" onclick="mobCalPrev()">‹</button>
+        <span class="mob-cal-month" id="mob-cal-month"></span>
+        <button class="mob-cal-arrow" onclick="mobCalNext()">›</button>
+      </div>
+      <div class="mob-cal-grid" id="mob-cal-grid">
+        <div class="mob-cal-dow">日</div><div class="mob-cal-dow">一</div><div class="mob-cal-dow">二</div>
+        <div class="mob-cal-dow">三</div><div class="mob-cal-dow">四</div><div class="mob-cal-dow">五</div><div class="mob-cal-dow">六</div>
+      </div>
+      <div class="mob-energy-wrap" style="margin-top:10px;">
+        <div class="mob-energy-bg"><div class="mob-energy-fill" id="mob-energy-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="mob-bottom">
+      <button class="mob-btn-new" onclick="mobNewEntry()">＋ 新增記事</button>
+      <button class="mob-btn-token" id="mob-btn-token" onclick="openModal()" style="display:none">🔑</button>
+    </div>
+  </div>
+
+  <!-- Editor -->
+  <div class="mob-editor" id="mob-editor">
+    <div class="mob-ed-top">
+      <button class="mob-back" onclick="mobBack()">‹</button>
+      <div class="mob-mood-row">
+        <button class="mob-mood-sym sym-positive" id="mob-ms-pos" onclick="mobSelMood('positive')">✧</button>
+        <button class="mob-mood-sym sym-negative" id="mob-ms-neg" onclick="mobSelMood('negative')">✦</button>
+      </div>
+      <span class="mob-sync-icon" id="mob-sync-icon">✦</span>
+    </div>
+    <div class="mob-ed-body">
+      <div id="mob-entry-date"></div>
+      <textarea id="mob-entry-body" placeholder="寫下此刻的想法…"></textarea>
+    </div>
+    <div class="mob-ed-bottom">
+      <button class="mob-btn-del" id="mob-btn-del" style="display:none" onclick="mobDelEntry()">刪除</button>
+      <button class="mob-btn-save" onclick="mobSaveEntry()">儲 存</button>
     </div>
   </div>
 </div>
@@ -276,7 +482,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color:
 <div class="modal-wrap" id="modal">
   <div class="modal">
     <h3>產生訪客驗證碼</h3>
-    <p class="sub">選擇有效時間，將 6 位數驗證碼給其他裝置輸入。時間到期後自動失效。</p>
+    <p class="sub">選擇有效時間，將 6 位數驗證碼給其他裝置輸入。</p>
     <div class="dur-row">
       <button class="dur-btn active" data-min="30" onclick="setDur(this)">30 分鐘</button>
       <button class="dur-btn" data-min="120" onclick="setDur(this)">2 小時</button>
@@ -291,31 +497,61 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color:
   </div>
 </div>
 
+<!-- Tooltip -->
+<div class="cal-tooltip" id="cal-tooltip"></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
+/* ═══════════════════════ SHARED STATE ═══════════════════════ */
 let curId = null, mood = '', entries = [], durMin = 30, timerInt = null;
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+let mobCalYear = new Date().getFullYear(), mobCalMonth = new Date().getMonth();
+let autoSaveTimer = null, stealthOn = false, selectedDate = null;
+let mobCurId = null, mobMood = '', mobAutoSaveTimer = null;
 
-// Code input UX
+/* ═══════════════════════ SYNC ICON ═══════════════════════ */
+function setSyncState(state) {
+  // state: 'idle' | 'syncing' | 'error'
+  ['sync-icon','mob-sync-icon'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = id.replace('-icon','') + (id.startsWith('mob') ? '-icon' : ' sync-icon');
+    if (state === 'syncing') { el.className += ' syncing'; el.style.color = ''; }
+    else if (state === 'error') { el.className += ' error'; el.style.color = ''; }
+    else { el.style.color = 'transparent'; }
+  });
+  // re-apply proper class names (simpler):
+  const pc = document.getElementById('sync-icon');
+  const mob = document.getElementById('mob-sync-icon');
+  if (pc) pc.className = state === 'syncing' ? 'sync-icon syncing' : state === 'error' ? 'sync-icon error' : 'sync-icon';
+  if (mob) mob.className = state === 'syncing' ? 'mob-sync-icon syncing' : state === 'error' ? 'mob-sync-icon error' : 'mob-sync-icon';
+}
+
+/* ═══════════════════════ AUTH ═══════════════════════ */
 document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
   inp.addEventListener('input', e => {
-    e.target.value = e.target.value.replace(/\D/g,'');
-    if (e.target.value && i < all.length-1) all[i+1].focus();
+    // Strip non-digits and take only the LAST typed digit (handles IME / double-fire)
+    const digits = e.target.value.replace(/\D/g, '');
+    e.target.value = digits.slice(-1); // keep only 1 char
+    if (e.target.value && i < all.length - 1) all[i + 1].focus();
     all.forEach(x => x.classList.toggle('filled', !!x.value));
-    document.getElementById('btn-verify').disabled = [...all].map(x=>x.value).join('').length < 6;
+    document.getElementById('btn-verify').disabled = [...all].map(x => x.value).join('').length < 6;
   });
-  inp.addEventListener('keydown', e => { if (e.key==='Backspace' && !inp.value && i>0) all[i-1].focus(); });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !inp.value && i > 0) all[i - 1].focus();
+  });
   inp.addEventListener('paste', e => {
     e.preventDefault();
-    const p = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
-    p.split('').forEach((ch,j) => { if (all[j]) all[j].value=ch; });
-    if (all[Math.min(p.length,5)]) all[Math.min(p.length,5)].focus();
+    const p = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+    p.split('').forEach((ch, j) => { if (all[j]) all[j].value = ch; });
+    const focusIdx = Math.min(p.length, all.length - 1);
+    all[focusIdx].focus();
     document.getElementById('btn-verify').disabled = p.length < 6;
     all.forEach(x => x.classList.toggle('filled', !!x.value));
   });
 });
 
-// Guest verify
 async function verifyToken() {
   const { db, doc, getDoc, setDoc, Timestamp } = window._fb;
   const code = [...document.querySelectorAll('.code-inputs input')].map(x=>x.value).join('');
@@ -324,182 +560,492 @@ async function verifyToken() {
   document.getElementById('btn-verify').disabled = true;
   document.getElementById('btn-verify').textContent = '驗證中…';
   try {
-    const td = await getDoc(doc(db, 'tokens', code));
+    const td = await getDoc(doc(db,'tokens',code));
     if (!td.exists()) throw new Error('驗證碼不存在');
-    const exp = td.data().expiresAt?.toMillis?.() || 0;
-    if (exp < Date.now()) throw new Error('驗證碼已過期');
-    // Register guest_access
-    await setDoc(doc(db, 'guest_access', window._me.uid), {
-      grantedAt: Timestamp.now(),
-      expiresAt: td.data().expiresAt
-    });
+    if ((td.data().expiresAt?.toMillis?.() || 0) < Date.now()) throw new Error('驗證碼已過期');
+    await setDoc(doc(db,'guest_access',window._me.uid), { grantedAt:Timestamp.now(), expiresAt:td.data().expiresAt });
     window.enterApp('guest');
   } catch(e) {
     errEl.textContent = e.message;
-    document.querySelectorAll('.code-inputs input').forEach(x => { x.classList.add('err'); setTimeout(()=>x.classList.remove('err'),400); });
+    document.querySelectorAll('.code-inputs input').forEach(x=>{ x.classList.add('err'); setTimeout(()=>x.classList.remove('err'),400); });
     document.getElementById('btn-verify').disabled = false;
     document.getElementById('btn-verify').textContent = '驗 證 進 入';
   }
 }
 
-// Enter app
 window.enterApp = function(role) {
   document.getElementById('screen-loading').style.display = 'none';
   document.getElementById('screen-guest').style.display = 'none';
-  document.getElementById('screen-app').style.display = 'flex';
-  window._role = role;
-  const b = document.getElementById('role-badge');
-  if (role === 'trusted') {
-    b.textContent = '✦ 信任裝置'; b.className = 'role-badge trusted';
-    document.getElementById('btn-gen').style.display = 'inline-flex';
-    document.getElementById('status-txt').textContent = '信任裝置 · 完整存取';
+  // Show PC or mobile
+  if (window.innerWidth <= 640) {
+    document.getElementById('screen-mobile').style.display = 'flex';
+    document.getElementById('screen-app').style.display = 'none';
   } else {
-    b.textContent = '◈ 訪客模式'; b.className = 'role-badge guest';
-    document.getElementById('status-txt').textContent = '訪客模式 · 限時存取';
+    document.getElementById('screen-app').style.display = 'flex';
+    document.getElementById('screen-mobile').style.display = 'none';
   }
+  window._role = role;
+  // PC badges
+  const b = document.getElementById('role-badge');
+  if (b) {
+    if (role === 'trusted') { b.textContent='✦ 信任裝置'; b.className='role-badge trusted'; document.getElementById('btn-gen').style.display='inline-flex'; document.getElementById('status-txt').textContent='信任裝置 · 完整存取'; }
+    else { b.textContent='◈ 訪客模式'; b.className='role-badge guest'; document.getElementById('status-txt').textContent='訪客模式 · 限時存取'; }
+  }
+  // Mobile badges
+  const mb = document.getElementById('mob-badge');
+  if (mb) mb.textContent = role === 'trusted' ? '✦ 信任裝置' : '◈ 訪客模式';
+  if (role === 'trusted') { const mt = document.getElementById('mob-btn-token'); if (mt) mt.style.display='block'; }
   loadEntries();
 };
 
-// Load entries
+/* ═══════════════════════ DATA ═══════════════════════ */
 async function loadEntries() {
   const { db, collection, query, orderBy, getDocs } = window._fb;
   try {
+    setSyncState('syncing');
     const q = query(collection(db,'users','diary','entries'), orderBy('createdAt','desc'));
     const snap = await getDocs(q);
-    entries = snap.docs.map(d => ({id:d.id,...d.data()}));
-    renderList();
-  } catch(e) {
-    document.getElementById('elist').innerHTML = '<div class="empty">載入失敗<br><small>'+esc(e.message)+'</small></div>';
+    entries = snap.docs.map(d=>({id:d.id,...d.data()}));
+    setSyncState('idle');
+    renderCalendar(); renderMobCalendar();
+    updateEnergyBar();
+  } catch(e) { setSyncState('error'); console.warn(e); }
+}
+
+/* ═══════════════════════ CALENDAR HELPERS ═══════════════════════ */
+function getEntryDateSet() {
+  const s = new Set();
+  entries.forEach(e => {
+    const d = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+    if (d) s.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+  });
+  return s;
+}
+
+// Returns {pos, neg, both} word counts for a given y-m-d
+function getDayStats(y, m, d) {
+  const de = entries.filter(e => {
+    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
+  });
+  let pos = 0, neg = 0;
+  de.forEach(e => {
+    const wc = (e.body||'').replace(/\s/g,'').length;
+    if (e.mood === 'positive') pos += wc;
+    else if (e.mood === 'negative') neg += wc;
+    // no mood: not counted
+  });
+  return { pos, neg, entries: de };
+}
+
+/* ═══════════════════════ PC CALENDAR ═══════════════════════ */
+function renderCalendar() {
+  const months = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('cal-month-label').textContent = `${calYear} · ${months[calMonth]}`;
+  const grid = document.getElementById('cal-grid');
+  const headers = [...grid.querySelectorAll('.cal-dow')];
+  grid.innerHTML = ''; headers.forEach(h => grid.appendChild(h));
+  const today = new Date();
+  const dates = getEntryDateSet();
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  for (let i=0;i<first;i++) { const x=document.createElement('div'); x.className='cal-day'; grid.appendChild(x); }
+  for (let day=1; day<=daysInMonth; day++) {
+    const el = document.createElement('div'); el.className='cal-day'; el.textContent=day;
+    const key = `${calYear}-${calMonth}-${day}`;
+    if (dates.has(key)) el.classList.add('has-entry');
+    if (today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===day) el.classList.add('today');
+    if (selectedDate && selectedDate.y===calYear && selectedDate.m===calMonth && selectedDate.d===day) el.classList.add('selected');
+    // Hover tooltip
+    el.addEventListener('mouseenter', ev => showTooltip(ev, calYear, calMonth, day));
+    el.addEventListener('mousemove', ev => moveTooltip(ev));
+    el.addEventListener('mouseleave', hideTooltip);
+    el.onclick = () => selectDay(calYear, calMonth, day);
+    grid.appendChild(el);
+  }
+}
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+/* ═══════════════════════ TOOLTIP ═══════════════════════ */
+function showTooltip(ev, y, m, d) {
+  const { pos, neg } = getDayStats(y, m, d);
+  if (!pos && !neg) return;
+  const tt = document.getElementById('cal-tooltip');
+  let html = '';
+  if (pos) html += `<span class="tt-pos">✧ ${pos}</span>`;
+  if (pos && neg) html += '<br>';
+  if (neg) html += `<span class="tt-neg">✦ ${neg}</span>`;
+  tt.innerHTML = html;
+  moveTooltip(ev);
+  tt.classList.add('show');
+}
+function moveTooltip(ev) {
+  const tt = document.getElementById('cal-tooltip');
+  let x = ev.clientX + 12, y = ev.clientY + 12;
+  if (x + 100 > window.innerWidth) x = ev.clientX - 100;
+  if (y + 60 > window.innerHeight) y = ev.clientY - 54;
+  tt.style.left = x + 'px'; tt.style.top = y + 'px';
+}
+function hideTooltip() { document.getElementById('cal-tooltip').classList.remove('show'); }
+
+/* ═══════════════════════ ENERGY BAR ═══════════════════════ */
+function updateEnergyBar() {
+  // Count days in current calMonth: pure-pos / mixed / pure-neg
+  const y = calYear, m = calMonth;
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  let pure_pos = 0, mixed = 0, pure_neg = 0, total = 0;
+  for (let d=1; d<=daysInMonth; d++) {
+    const de = entries.filter(e => {
+      const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+      return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
+    });
+    if (!de.length) continue;
+    const hasPos = de.some(e=>e.mood==='positive');
+    const hasNeg = de.some(e=>e.mood==='negative');
+    if (hasPos && hasNeg) mixed++;
+    else if (hasPos) pure_pos++;
+    else if (hasNeg) pure_neg++;
+    else pure_pos++; // no mood → treat neutral as pos
+    total++;
+  }
+  if (!total) { setBar('energy-fill', 0, 0, 0); setBar('mob-energy-fill', 0, 0, 0); return; }
+  const pP = pure_pos/total, pM = mixed/total, pN = pure_neg/total;
+  setBar('energy-fill', pP, pM, pN);
+  setBar('mob-energy-fill', pP, pM, pN);
+}
+
+function setBar(id, pP, pM, pN) {
+  const el = document.getElementById(id); if (!el) return;
+  if (pP===0 && pM===0 && pN===0) { el.style.width='0%'; el.style.background=''; return; }
+  // gold: #c9a84c  mixed: #8a7a56 (warm blue-gold blend)  navy: #2a4a7a
+  const stops = [];
+  let pos = 0;
+  const push = (color, frac) => {
+    if (frac <= 0) return;
+    stops.push(`${color} ${(pos*100).toFixed(1)}%`);
+    pos += frac;
+    stops.push(`${color} ${(pos*100).toFixed(1)}%`);
+  };
+  push('#c9a84c', pP);
+  push('#7a8a6a', pM); // gold-navy mix
+  push('#2a4a7a', pN);
+  el.style.width = '100%';
+  el.style.background = stops.length > 0 ? `linear-gradient(90deg, ${stops.join(', ')})` : '#c9a84c';
+}
+
+/* ═══════════════════════ DAY SELECTION ═══════════════════════ */
+function selectDay(y, m, d) {
+  selectedDate = {y, m, d};
+  renderCalendar();
+  const dayEntries = entries.filter(e => {
+    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
+  });
+  if (dayEntries.length > 0) openEntry(dayEntries[0].id);
+  else {
+    curId=null; mood='';
+    const dateObj = new Date(y, m, d);
+    document.getElementById('entry-date').textContent = dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+    document.getElementById('entry-body').value='';
+    updateMoodUI();
+    document.getElementById('btn-del').style.display='none';
+    document.getElementById('welcome').style.display='none';
+    document.getElementById('edview').style.display='flex';
+    document.getElementById('ed-body').className='ed-body';
+    updateWordCount();
+    document.getElementById('entry-body').focus();
   }
 }
 
-function renderList() {
-  const el = document.getElementById('elist');
-  if (!entries.length) { el.innerHTML = '<div class="empty">還沒有日記<br>點擊「新增」開始吧</div>'; return; }
-  el.innerHTML = entries.map(e => {
-    const d = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
-    const ds = d.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
-    return `<div class="eitem${e.id===curId?' active':''}" onclick="openEntry('${e.id}')">
-      <div class="ed">${ds}</div>
-      <div class="et">${esc(e.title||'（無標題）')}</div>
-      <div class="ep">${esc((e.body||'').slice(0,46))}</div>
-      ${e.mood?`<span class="em">${e.mood}</span>`:''}
-    </div>`;
-  }).join('');
+/* ═══════════════════════ STEALTH ═══════════════════════ */
+function toggleStealth() {
+  stealthOn = !stealthOn;
+  document.body.classList.toggle('stealth', stealthOn);
+  document.getElementById('stealth-btn').classList.toggle('active', stealthOn);
 }
+document.addEventListener('keydown', e => { if (e.ctrlKey&&e.shiftKey&&e.key==='H'){e.preventDefault();toggleStealth();} });
 
+/* ═══════════════════════ PC ENTRY ═══════════════════════ */
 function newEntry() {
-  curId=null; mood='';
-  document.getElementById('entry-title').value='';
+  curId=null; mood=''; selectedDate=null;
+  renderCalendar();
   document.getElementById('entry-body').value='';
-  document.getElementById('entry-date').textContent =
-    new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('entry-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  updateMoodUI();
   document.getElementById('btn-del').style.display='none';
   document.getElementById('welcome').style.display='none';
   document.getElementById('edview').style.display='flex';
-  renderList();
-  document.getElementById('entry-title').focus();
+  document.getElementById('ed-body').className='ed-body';
+  updateWordCount();
+  document.getElementById('entry-body').focus();
 }
 
 function openEntry(id) {
   const e = entries.find(x=>x.id===id); if (!e) return;
   curId=id; mood=e.mood||'';
-  const d = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
-  document.getElementById('entry-date').textContent =
-    d.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  document.getElementById('entry-title').value = e.title||'';
+  const dt = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
+  document.getElementById('entry-date').textContent = dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('entry-body').value = e.body||'';
-  document.querySelectorAll('.mb').forEach(b=>b.classList.toggle('sel',b.dataset.mood===mood));
+  updateMoodUI();
   document.getElementById('btn-del').style.display='inline-block';
   document.getElementById('welcome').style.display='none';
   document.getElementById('edview').style.display='flex';
-  renderList();
+  updateWordCount();
 }
 
-function selMood(btn) {
-  const same = mood===btn.dataset.mood;
-  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('sel'));
-  mood = same ? '' : btn.dataset.mood;
-  if (!same) btn.classList.add('sel');
+function selMood(m) { mood=(mood===m)?'':m; updateMoodUI(); scheduleAutoSave(); }
+function updateMoodUI() {
+  document.getElementById('ms-pos').className='mood-sym sym-positive'+(mood==='positive'?' on':'');
+  document.getElementById('ms-neg').className='mood-sym sym-negative'+(mood==='negative'?' on':'');
+  document.getElementById('ed-body').className='ed-body'+(mood==='positive'?' tint-pos':mood==='negative'?' tint-neg':'');
 }
 
-async function saveEntry() {
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  setSyncState('syncing');
+  autoSaveTimer = setTimeout(async () => {
+    await autoSave();
+  }, 3000);
+}
+
+async function autoSave() {
   const { db, collection, addDoc, doc, updateDoc, serverTimestamp } = window._fb;
-  const title = document.getElementById('entry-title').value.trim();
   const body = document.getElementById('entry-body').value.trim();
-  if (!title && !body) { showToast('請輸入內容'); return; }
-  const bs = document.getElementById('btn-save');
-  bs.disabled=true; bs.textContent='儲存中…';
-  const data = { title:title||'（無標題）', body, mood };
+  if (!body) { setSyncState('idle'); return; }
+  const data = { body, mood };
   try {
     if (curId) {
       await updateDoc(doc(db,'users','diary','entries',curId), data);
       const idx = entries.findIndex(e=>e.id===curId);
       if (idx!==-1) entries[idx]={...entries[idx],...data};
-      showToast('已更新 ✓');
     } else {
       data.createdAt = serverTimestamp();
       const ref = await addDoc(collection(db,'users','diary','entries'), data);
       curId = ref.id;
-      await loadEntries();
-      showToast('已儲存 ✓');
+      document.getElementById('btn-del').style.display='inline-block';
+      await loadEntries(); setSyncState('idle'); return;
+    }
+    setSyncState('idle');
+    renderCalendar(); updateEnergyBar();
+  } catch(e) { setSyncState('error'); }
+}
+
+document.getElementById('entry-body').addEventListener('input', () => { updateWordCount(); scheduleAutoSave(); });
+function updateWordCount() {
+  const c = document.getElementById('entry-body').value.replace(/\s/g,'').length;
+  document.getElementById('wordcount').textContent = c>0 ? c+' 字' : '';
+}
+
+async function saveEntry() {
+  clearTimeout(autoSaveTimer);
+  const { db, collection, addDoc, doc, updateDoc, serverTimestamp } = window._fb;
+  const body = document.getElementById('entry-body').value.trim();
+  if (!body) { showToast('請輸入內容'); return; }
+  const bs = document.getElementById('btn-save');
+  bs.disabled=true; bs.textContent='儲存中…';
+  setSyncState('syncing');
+  const data = { body, mood };
+  try {
+    if (curId) {
+      await updateDoc(doc(db,'users','diary','entries',curId), data);
+      const idx = entries.findIndex(e=>e.id===curId);
+      if (idx!==-1) entries[idx]={...entries[idx],...data};
+      showToast('已更新 ✦');
+    } else {
+      data.createdAt = serverTimestamp();
+      const ref = await addDoc(collection(db,'users','diary','entries'), data);
+      curId=ref.id; await loadEntries(); showToast('已儲存 ✦');
     }
     document.getElementById('btn-del').style.display='inline-block';
-    renderList();
-  } catch(e) { showToast('儲存失敗：'+e.message); }
+    setSyncState('idle');
+    renderCalendar(); updateEnergyBar();
+  } catch(e) { showToast('儲存失敗：'+e.message); setSyncState('error'); }
   bs.disabled=false; bs.textContent='儲 存';
 }
 
 async function delEntry() {
-  if (!curId || !confirm('確定刪除這篇日記？')) return;
+  if (!curId||!confirm('確定刪除這篇記事？')) return;
   const { db, doc, deleteDoc } = window._fb;
   try {
+    setSyncState('syncing');
     await deleteDoc(doc(db,'users','diary','entries',curId));
-    entries = entries.filter(e=>e.id!==curId); curId=null;
+    entries=entries.filter(e=>e.id!==curId); curId=null;
     document.getElementById('edview').style.display='none';
     document.getElementById('welcome').style.display='flex';
-    renderList(); showToast('已刪除');
-  } catch(e) { showToast('刪除失敗'); }
+    setSyncState('idle');
+    renderCalendar(); updateEnergyBar(); showToast('已刪除');
+  } catch(e) { showToast('刪除失敗'); setSyncState('error'); }
 }
 
-// Token modal
-function openModal() { document.getElementById('modal').classList.add('open'); }
-function closeModal() { document.getElementById('modal').classList.remove('open'); clearInterval(timerInt); }
-function setDur(btn) {
-  document.querySelectorAll('.dur-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); durMin = parseInt(btn.dataset.min);
+/* ═══════════════════════ MOBILE CALENDAR ═══════════════════════ */
+function renderMobCalendar() {
+  const months=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('mob-cal-month').textContent=`${mobCalYear} · ${months[mobCalMonth]}`;
+  const grid=document.getElementById('mob-cal-grid');
+  const headers=[...grid.querySelectorAll('.mob-cal-dow')];
+  grid.innerHTML=''; headers.forEach(h=>grid.appendChild(h));
+  const today=new Date(), dates=getEntryDateSet();
+  const first=new Date(mobCalYear,mobCalMonth,1).getDay();
+  const daysInMonth=new Date(mobCalYear,mobCalMonth+1,0).getDate();
+  for(let i=0;i<first;i++){const x=document.createElement('div');x.className='mob-cal-day';grid.appendChild(x);}
+  for(let day=1;day<=daysInMonth;day++){
+    const el=document.createElement('div'); el.className='mob-cal-day'; el.textContent=day;
+    const key=`${mobCalYear}-${mobCalMonth}-${day}`;
+    if(dates.has(key)) el.classList.add('has-entry');
+    if(today.getFullYear()===mobCalYear&&today.getMonth()===mobCalMonth&&today.getDate()===day) el.classList.add('today');
+    el.onclick=()=>mobSelectDay(mobCalYear,mobCalMonth,day);
+    grid.appendChild(el);
+  }
+  updateEnergyBar();
+}
+function mobCalPrev(){mobCalMonth--;if(mobCalMonth<0){mobCalMonth=11;mobCalYear--;}renderMobCalendar();}
+function mobCalNext(){mobCalMonth++;if(mobCalMonth>11){mobCalMonth=0;mobCalYear++;}renderMobCalendar();}
+
+/* ═══════════════════════ MOBILE EDITOR ═══════════════════════ */
+function mobSelectDay(y,m,d){
+  const dayEntries=entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;});
+  if(dayEntries.length>0) mobOpenEntry(dayEntries[0].id);
+  else {
+    mobCurId=null; mobMood='';
+    const dateObj=new Date(y,m,d);
+    document.getElementById('mob-entry-date').textContent=dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+    document.getElementById('mob-entry-body').value='';
+    mobUpdateMoodUI();
+    document.getElementById('mob-btn-del').style.display='none';
+    showMobEditor();
+  }
 }
 
-async function generateToken() {
-  const { db, doc, setDoc, Timestamp } = window._fb;
+function mobNewEntry(){
+  mobCurId=null; mobMood='';
+  document.getElementById('mob-entry-date').textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  document.getElementById('mob-entry-body').value='';
+  mobUpdateMoodUI();
+  document.getElementById('mob-btn-del').style.display='none';
+  showMobEditor();
+}
+
+function mobOpenEntry(id){
+  const e=entries.find(x=>x.id===id); if(!e) return;
+  mobCurId=id; mobMood=e.mood||'';
+  const dt=e.createdAt?.toDate?e.createdAt.toDate():new Date();
+  document.getElementById('mob-entry-date').textContent=dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  document.getElementById('mob-entry-body').value=e.body||'';
+  mobUpdateMoodUI();
+  document.getElementById('mob-btn-del').style.display='inline-block';
+  showMobEditor();
+}
+
+function showMobEditor(){
+  document.getElementById('mob-home').style.display='none';
+  const ed=document.getElementById('mob-editor');
+  ed.style.display='flex';
+  setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
+}
+
+function mobBack(){
+  document.getElementById('mob-editor').style.display='none';
+  document.getElementById('mob-home').style.display='flex';
+  renderMobCalendar();
+}
+
+function mobSelMood(m){mobMood=(mobMood===m)?'':m;mobUpdateMoodUI();mobScheduleAutoSave();}
+function mobUpdateMoodUI(){
+  document.getElementById('mob-ms-pos').className='mob-mood-sym sym-positive'+(mobMood==='positive'?' on':'');
+  document.getElementById('mob-ms-neg').className='mob-mood-sym sym-negative'+(mobMood==='negative'?' on':'');
+}
+
+function mobScheduleAutoSave(){
+  clearTimeout(mobAutoSaveTimer);
+  setSyncState('syncing');
+  mobAutoSaveTimer=setTimeout(async()=>{await mobAutoSave();},3000);
+}
+
+async function mobAutoSave(){
+  const{db,collection,addDoc,doc,updateDoc,serverTimestamp}=window._fb;
+  const body=document.getElementById('mob-entry-body').value.trim();
+  if(!body){setSyncState('idle');return;}
+  const data={body,mood:mobMood};
+  try{
+    if(mobCurId){
+      await updateDoc(doc(db,'users','diary','entries',mobCurId),data);
+      const idx=entries.findIndex(e=>e.id===mobCurId);
+      if(idx!==-1) entries[idx]={...entries[idx],...data};
+    } else {
+      data.createdAt=serverTimestamp();
+      const ref=await addDoc(collection(db,'users','diary','entries'),data);
+      mobCurId=ref.id;
+      document.getElementById('mob-btn-del').style.display='inline-block';
+      await loadEntries(); setSyncState('idle'); return;
+    }
+    setSyncState('idle');
+  } catch(e){setSyncState('error');}
+}
+
+document.getElementById('mob-entry-body').addEventListener('input',()=>mobScheduleAutoSave());
+
+async function mobSaveEntry(){
+  clearTimeout(mobAutoSaveTimer);
+  const{db,collection,addDoc,doc,updateDoc,serverTimestamp}=window._fb;
+  const body=document.getElementById('mob-entry-body').value.trim();
+  if(!body){showToast('請輸入內容');return;}
+  setSyncState('syncing');
+  const data={body,mood:mobMood};
+  try{
+    if(mobCurId){
+      await updateDoc(doc(db,'users','diary','entries',mobCurId),data);
+      const idx=entries.findIndex(e=>e.id===mobCurId);
+      if(idx!==-1) entries[idx]={...entries[idx],...data};
+      showToast('已更新 ✦');
+    } else {
+      data.createdAt=serverTimestamp();
+      const ref=await addDoc(collection(db,'users','diary','entries'),data);
+      mobCurId=ref.id; await loadEntries(); showToast('已儲存 ✦');
+    }
+    document.getElementById('mob-btn-del').style.display='inline-block';
+    setSyncState('idle');
+    renderMobCalendar();
+  } catch(e){showToast('儲存失敗');setSyncState('error');}
+}
+
+async function mobDelEntry(){
+  if(!mobCurId||!confirm('確定刪除這篇記事？'))return;
+  const{db,doc,deleteDoc}=window._fb;
+  try{
+    setSyncState('syncing');
+    await deleteDoc(doc(db,'users','diary','entries',mobCurId));
+    entries=entries.filter(e=>e.id!==mobCurId); mobCurId=null;
+    setSyncState('idle');
+    mobBack(); showToast('已刪除');
+  } catch(e){showToast('刪除失敗');setSyncState('error');}
+}
+
+/* ═══════════════════════ TOKEN MODAL ═══════════════════════ */
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');clearInterval(timerInt);}
+function setDur(btn){document.querySelectorAll('.dur-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');durMin=parseInt(btn.dataset.min);}
+async function generateToken(){
+  const{db,doc,setDoc,Timestamp}=window._fb;
   clearInterval(timerInt);
-  const code = String(Math.floor(100000+Math.random()*900000));
-  const expiresAt = new Timestamp(Math.floor(Date.now()/1000)+durMin*60, 0);
-  try {
-    await setDoc(doc(db,'tokens',code), {
-      createdBy: window._me.uid,
-      createdAt: Timestamp.now(),
-      expiresAt, durationMinutes: durMin
-    });
-    document.getElementById('token-num').textContent = code;
-    let rem = durMin*60;
-    const tick = () => {
-      const m=Math.floor(rem/60), s=rem%60;
-      document.getElementById('token-tim').innerHTML = `有效時間剩餘 <span>${m}:${String(s).padStart(2,'0')}</span>`;
-      if (rem<=0) { clearInterval(timerInt); document.getElementById('token-tim').textContent='已過期'; document.getElementById('token-num').textContent='— — — — — —'; }
+  const code=String(Math.floor(100000+Math.random()*900000));
+  const expiresAt=new Timestamp(Math.floor(Date.now()/1000)+durMin*60,0);
+  try{
+    await setDoc(doc(db,'tokens',code),{createdBy:window._me.uid,createdAt:Timestamp.now(),expiresAt,durationMinutes:durMin});
+    document.getElementById('token-num').textContent=code;
+    let rem=durMin*60;
+    const tick=()=>{
+      const m=Math.floor(rem/60),s=rem%60;
+      document.getElementById('token-tim').innerHTML=`有效時間剩餘 <span>${m}:${String(s).padStart(2,'0')}</span>`;
+      if(rem<=0){clearInterval(timerInt);document.getElementById('token-tim').textContent='已過期';document.getElementById('token-num').textContent='——————';}
       rem--;
     };
-    tick(); timerInt = setInterval(tick, 1000);
-  } catch(e) { showToast('產生失敗：'+e.message); }
+    tick(); timerInt=setInterval(tick,1000);
+  } catch(e){showToast('產生失敗：'+e.message);}
 }
 
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function showToast(msg) {
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
+/* ═══════════════════════ UTILS ═══════════════════════ */
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 </script>
 </body>
 </html>
