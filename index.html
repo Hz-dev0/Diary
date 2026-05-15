@@ -396,6 +396,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .mob-btn-new { flex:1; padding:12px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:14px; cursor:pointer; letter-spacing:2px; font-family:'Noto Sans TC',sans-serif; font-weight:500; }
 .mob-btn-new:active { background:var(--navy-light); }
 .mob-btn-token { padding:12px 14px; background:none; border:1px solid var(--border-b); border-radius:var(--radius); font-size:13px; color:var(--blue-mid); cursor:pointer; white-space:nowrap; font-family:'Noto Sans TC',sans-serif; }
+.mob-btn-revoke { padding:12px 14px; background:none; border:1px solid rgba(176,64,64,.5); border-radius:var(--radius); font-size:13px; color:#b04040; cursor:pointer; white-space:nowrap; font-family:'Noto Sans TC',sans-serif; }
 
 /* Mobile editor */
 .mob-editor { display:none; flex-direction:column; height:100%; background:var(--white); position:relative; overflow:hidden; }
@@ -668,6 +669,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     <div class="mob-bottom">
       <button class="mob-btn-new" onclick="mobNewEntry()">＋ 新增記事</button>
       <button class="mob-btn-token" id="mob-btn-token" onclick="openModal()">🔑 驗證碼</button>
+      <button class="mob-btn-revoke" id="mob-btn-revoke" onclick="revokeAllGuests()" style="display:none;">⊘ 登出訪客</button>
     </div>
   </div>
 
@@ -856,7 +858,8 @@ window.enterApp = function(role) {
       b.title='點擊登出'; b.style.cursor='pointer';
       b.onclick = async function() {
         if(!confirm('確定要登出訪客模式？')) return;
-        const {auth} = window._fb;
+        const {auth, db, doc, deleteDoc} = window._fb;
+        try { await deleteDoc(doc(db,'guest_access',window._me.uid)); } catch(_) {}
         try { await auth.signOut(); } catch(_) {}
         location.reload();
       };
@@ -868,6 +871,10 @@ window.enterApp = function(role) {
   // Mobile badges
   const mb = document.getElementById('mob-badge');
   if (mb) mb.textContent = role === 'trusted' ? '✦ 信任裝置' : '◈ 訪客模式';
+  const mobRevoke = document.getElementById('mob-btn-revoke');
+  if (mobRevoke) mobRevoke.style.display = role === 'trusted' ? '' : 'none';
+  const mobToken = document.getElementById('mob-btn-token');
+  if (mobToken) mobToken.style.display = role === 'trusted' ? '' : 'none';
   loadEntries();
 };
 
