@@ -102,7 +102,7 @@ body.stealth * {
 /* Text in all elements */
 body.stealth,
 body.stealth * {
-  color: rgba(100,88,58,0.72) !important;
+  color: rgba(80,68,40,0.88) !important;
   text-shadow: none !important;
 }
 
@@ -272,6 +272,53 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .btn-outline { width:100%; padding:10px; background:none; border:1px solid var(--border-g); border-radius:var(--radius); font-size:12px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; color:var(--blue-soft); transition:all .2s; margin-top:7px; letter-spacing:1px; }
 .btn-outline:hover { background:var(--gold-faint); border-color:var(--gold); color:var(--navy); }
 
+/* ── COMPARE BUTTON ── */
+.btn-compare {
+  width:32px; height:32px; border-radius:var(--radius);
+  border:1.5px solid var(--border-b); background:none;
+  font-size:16px; cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--blue-soft); line-height:1;
+}
+.btn-compare:hover { border-color:var(--gold); background:var(--gold-faint); color:var(--navy); }
+.btn-compare.active { background:linear-gradient(135deg,var(--gold-faint),var(--gold-pale)); border-color:var(--gold-mid); color:var(--navy); }
+
+/* ── COMPARE (dual-column) VIEW ── */
+.compare-view {
+  flex:1; display:flex; flex-direction:row; overflow:hidden;
+  background:var(--white); position:relative; z-index:1;
+}
+.compare-col {
+  flex:1; display:flex; flex-direction:column;
+  padding:24px 32px; overflow-y:auto;
+}
+.compare-col::-webkit-scrollbar { width:3px; }
+.compare-col::-webkit-scrollbar-thumb { background:var(--border-g); }
+.compare-pos { background:linear-gradient(180deg,rgba(196,162,74,0.07) 0%,transparent 60%); }
+.compare-neg { background:linear-gradient(180deg,rgba(26,48,80,0.06) 0%,transparent 60%); }
+.compare-label {
+  font-size:10px; letter-spacing:2.5px; font-weight:600;
+  margin-bottom:8px; opacity:.55;
+}
+.compare-pos .compare-label { color:var(--gold-deep); }
+.compare-neg .compare-label { color:var(--navy-soft); }
+.compare-date {
+  font-size:9.5px; color:var(--gold-mid); letter-spacing:2px;
+  margin-bottom:14px; font-weight:500;
+}
+.compare-text {
+  font-family:'Noto Serif TC',serif; font-size:14.5px;
+  line-height:2.1; color:var(--blue-text); white-space:pre-wrap;
+  word-break:break-word;
+}
+.compare-empty {
+  font-size:12px; color:var(--blue-faint); opacity:.5;
+  font-style:italic; padding-top:20px;
+}
+.compare-divider {
+  width:1px; background:var(--border-g); flex-shrink:0; margin:20px 0;
+}
+
 /* ── TOAST ── */
 .toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--navy); color:var(--gold-light); padding:9px 24px; border-radius:24px; font-size:12px; z-index:9999; transition:transform .3s ease; pointer-events:none; white-space:nowrap; border:1px solid rgba(201,168,76,.3); letter-spacing:1px; }
 .toast.show { transform:translateX(-50%) translateY(0); }
@@ -399,18 +446,14 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       <span class="sync-icon" id="sync-icon">✦</span>
       <span class="ed-header-title">片刻留白</span>
     </div>
-    <div class="welcome" id="welcome">
-      <div class="welcome-icon">✧</div>
-      <h3>片刻留白</h3>
-      <p>點擊右側日曆日期開始書寫<br>或按「新增記事」</p>
-    </div>
-    <div id="edview" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+    <div id="edview" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
         <div class="mood-toggle">
           <button class="mood-sym sym-positive" id="ms-pos" onclick="selMood('positive')">✧</button>
           <button class="mood-sym sym-negative" id="ms-neg" onclick="selMood('negative')">✦</button>
         </div>
         <div class="tr">
+          <button class="btn-compare" id="btn-compare" style="display:none" onclick="toggleCompare()" title="對照正負能量">⊞</button>
           <button class="btn-del" id="btn-del" style="display:none" onclick="delEntry()">刪除</button>
           <button class="btn-save" id="btn-save" onclick="saveEntry()">儲 存</button>
         </div>
@@ -418,6 +461,19 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       <div class="ed-body" id="ed-body">
         <div id="entry-date"></div>
         <textarea id="entry-body" placeholder="寫下此刻的想法…"></textarea>
+      </div>
+      <div class="compare-view" id="compare-view" style="display:none;">
+        <div class="compare-col compare-pos">
+          <div class="compare-label">✧ 正能量</div>
+          <div class="compare-date" id="cmp-date-pos"></div>
+          <div class="compare-text" id="cmp-text-pos"></div>
+        </div>
+        <div class="compare-divider"></div>
+        <div class="compare-col compare-neg">
+          <div class="compare-label">✦ 負能量</div>
+          <div class="compare-date" id="cmp-date-neg"></div>
+          <div class="compare-text" id="cmp-text-neg"></div>
+        </div>
       </div>
       <div class="statusbar">
         <span class="sdot"></span>
@@ -460,10 +516,9 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     <!-- Spacer -->
     <div class="sb-spacer"></div>
 
-    <!-- New entry button at very bottom -->
-    <div class="cal-new-row">
-      <button class="btn-new" onclick="newEntry()">＋ 新增記事</button>
-      <button class="btn-gen" id="btn-gen" onclick="openModal()">🔑</button>
+    <!-- Key button for trusted device -->
+    <div class="cal-new-row" id="cal-new-row" style="display:none;">
+      <button class="btn-gen" id="btn-gen" onclick="openModal()" style="display:none;flex:1;">🔑 驗證碼</button>
     </div>
   </div>
 </div>
@@ -532,6 +587,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       <div class="token-tim" id="token-tim">點擊下方按鈕產生</div>
     </div>
     <button class="btn-main" onclick="generateToken()">產 生 新 驗 證 碼</button>
+    <button class="btn-outline btn-revoke" id="btn-revoke" onclick="revokeAllGuests()" style="margin-top:7px;border-color:#b04040;color:#b04040;">強制登出所有訪客</button>
     <button class="btn-outline" onclick="closeModal()">關 閉</button>
   </div>
 </div>
@@ -570,10 +626,13 @@ function setSyncState(state) {
 /* ═══════════════════════ AUTH ═══════════════════════ */
 document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
   inp.addEventListener('input', e => {
-    // Strip non-digits and take only the LAST typed digit (handles IME / double-fire)
-    const digits = e.target.value.replace(/\D/g, '');
-    e.target.value = digits.slice(-1); // keep only 1 char
-    if (e.target.value && i < all.length - 1) all[i + 1].focus();
+    // Clear first to avoid double-character from IME / browser auto-fill double-fire
+    const raw = e.target.value;
+    e.target.value = '';
+    const digits = raw.replace(/\D/g, '');
+    const ch = digits.slice(-1);
+    e.target.value = ch;
+    if (ch && i < all.length - 1) all[i + 1].focus();
     all.forEach(x => x.classList.toggle('filled', !!x.value));
     document.getElementById('btn-verify').disabled = [...all].map(x => x.value).join('').length < 6;
   });
@@ -615,16 +674,23 @@ async function verifyToken() {
 window.enterApp = function(role) {
   document.getElementById('screen-loading').style.display = 'none';
   document.getElementById('screen-guest').style.display = 'none';
-  // Let CSS media queries control PC vs mobile visibility.
-  // Just remove display:none from both and let @media rules take over.
   document.getElementById('screen-app').style.display = '';
   document.getElementById('screen-mobile').style.display = '';
   window._role = role;
   // PC badges
   const b = document.getElementById('role-badge');
   if (b) {
-    if (role === 'trusted') { b.textContent='✦ 信任裝置'; b.className='role-badge trusted'; document.getElementById('btn-gen').style.display='inline-flex'; document.getElementById('status-txt').textContent='信任裝置 · 完整存取'; }
-    else { b.textContent='◈ 訪客模式'; b.className='role-badge guest'; document.getElementById('status-txt').textContent='訪客模式 · 限時存取'; }
+    if (role === 'trusted') {
+      b.textContent='✦ 信任裝置'; b.className='role-badge trusted';
+      document.getElementById('status-txt').textContent='信任裝置 · 完整存取';
+      // Show key button for trusted
+      document.getElementById('cal-new-row').style.display='flex';
+      document.getElementById('btn-gen').style.display='flex';
+    } else {
+      b.textContent='◈ 訪客模式'; b.className='role-badge guest';
+      document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
+      if(!stealthOn){toggleStealth();}
+    }
   }
   // Mobile badges
   const mb = document.getElementById('mob-badge');
@@ -639,10 +705,16 @@ async function loadEntries() {
     setSyncState('syncing');
     const q = query(collection(db,'users','diary','entries'), orderBy('createdAt','desc'));
     const snap = await getDocs(q);
+    const wasEmpty = entries.length === 0;
     entries = snap.docs.map(d=>({id:d.id,...d.data()}));
     setSyncState('idle');
     renderCalendar(); renderMobCalendar();
     updateEnergyBar();
+    // On first load, auto-open today on PC
+    if (wasEmpty) {
+      const t = new Date();
+      selectDay(t.getFullYear(), t.getMonth(), t.getDate());
+    }
   } catch(e) { setSyncState('error'); console.warn(e); }
 }
 
@@ -716,9 +788,12 @@ function showTooltip(ev, y, m, d) {
 }
 function moveTooltip(ev) {
   const tt = document.getElementById('cal-tooltip');
-  let x = ev.clientX + 12, y = ev.clientY + 12;
-  if (x + 100 > window.innerWidth) x = ev.clientX - 100;
-  if (y + 60 > window.innerHeight) y = ev.clientY - 54;
+  const ttW = tt.offsetWidth || 120, ttH = tt.offsetHeight || 50;
+  let x = ev.clientX + 14, y = ev.clientY + 14;
+  if (x + ttW + 4 > window.innerWidth) x = ev.clientX - ttW - 6;
+  if (y + ttH + 4 > window.innerHeight) y = ev.clientY - ttH - 6;
+  if (x < 4) x = 4;
+  if (y < 4) y = 4;
   tt.style.left = x + 'px'; tt.style.top = y + 'px';
 }
 function hideTooltip() { document.getElementById('cal-tooltip').classList.remove('show'); }
@@ -771,6 +846,7 @@ function setBar(id, pP, pM, pN) {
 /* ═══════════════════════ DAY SELECTION ═══════════════════════ */
 function selectDay(y, m, d) {
   selectedDate = {y, m, d};
+  compareOn = false;
   renderCalendar();
   const dayEntries = entries.filter(e => {
     const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
@@ -784,15 +860,74 @@ function selectDay(y, m, d) {
     document.getElementById('entry-body').value='';
     updateMoodUI();
     document.getElementById('btn-del').style.display='none';
-    document.getElementById('welcome').style.display='none';
     document.getElementById('edview').style.display='flex';
+    document.getElementById('ed-body').style.display='flex';
+    document.getElementById('compare-view').style.display='none';
+    document.getElementById('btn-compare').style.display='none';
     document.getElementById('ed-body').className='ed-body';
     updateWordCount();
     document.getElementById('entry-body').focus();
   }
+  updateCompareBtn(y, m, d);
 }
 
-/* ═══════════════════════ STEALTH ═══════════════════════ */
+/* ═══════════════════════ COMPARE MODE ═══════════════════════ */
+let compareOn = false;
+
+function updateCompareBtn(y, m, d) {
+  const { pos, neg, entries: de } = getDayStats(y, m, d);
+  const hasPos = de.some(e => e.mood === 'positive');
+  const hasNeg = de.some(e => e.mood === 'negative');
+  const btn = document.getElementById('btn-compare');
+  if (btn) btn.style.display = (hasPos && hasNeg) ? 'flex' : 'none';
+  if (!(hasPos && hasNeg) && compareOn) exitCompare();
+}
+
+function toggleCompare() {
+  compareOn = !compareOn;
+  document.getElementById('btn-compare').classList.toggle('active', compareOn);
+  if (compareOn) renderCompare();
+  else exitCompare();
+}
+
+function exitCompare() {
+  compareOn = false;
+  const btn = document.getElementById('btn-compare');
+  if (btn) btn.classList.remove('active');
+  document.getElementById('compare-view').style.display = 'none';
+  document.getElementById('ed-body').style.display = 'flex';
+}
+
+function renderCompare() {
+  if (!selectedDate) return;
+  const { y, m, d } = selectedDate;
+  const de = entries.filter(e => {
+    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
+  });
+  const posEntry = de.find(e => e.mood === 'positive');
+  const negEntry = de.find(e => e.mood === 'negative');
+
+  const fmt = e => {
+    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
+    return dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  };
+
+  document.getElementById('cmp-date-pos').textContent = posEntry ? fmt(posEntry) : '';
+  document.getElementById('cmp-text-pos').innerHTML = posEntry
+    ? `<span>${posEntry.body||''}</span>`
+    : '<span class="compare-empty">這一天沒有正能量記事</span>';
+
+  document.getElementById('cmp-date-neg').textContent = negEntry ? fmt(negEntry) : '';
+  document.getElementById('cmp-text-neg').innerHTML = negEntry
+    ? `<span>${negEntry.body||''}</span>`
+    : '<span class="compare-empty">這一天沒有負能量記事</span>';
+
+  document.getElementById('ed-body').style.display = 'none';
+  document.getElementById('compare-view').style.display = 'flex';
+}
+
+
 function toggleStealth() {
   stealthOn = !stealthOn;
   document.body.classList.toggle('stealth', stealthOn);
@@ -803,13 +938,16 @@ document.addEventListener('keydown', e => { if (e.ctrlKey&&e.shiftKey&&e.key==='
 /* ═══════════════════════ PC ENTRY ═══════════════════════ */
 function newEntry() {
   curId=null; mood=''; selectedDate=null;
+  compareOn=false;
+  document.getElementById('btn-compare').style.display='none';
+  document.getElementById('btn-compare').classList.remove('active');
+  document.getElementById('compare-view').style.display='none';
+  document.getElementById('ed-body').style.display='flex';
   renderCalendar();
   document.getElementById('entry-body').value='';
   document.getElementById('entry-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   updateMoodUI();
   document.getElementById('btn-del').style.display='none';
-  document.getElementById('welcome').style.display='none';
-  document.getElementById('edview').style.display='flex';
   document.getElementById('ed-body').className='ed-body';
   updateWordCount();
   document.getElementById('entry-body').focus();
@@ -823,12 +961,46 @@ function openEntry(id) {
   document.getElementById('entry-body').value = e.body||'';
   updateMoodUI();
   document.getElementById('btn-del').style.display='inline-block';
-  document.getElementById('welcome').style.display='none';
   document.getElementById('edview').style.display='flex';
+  document.getElementById('ed-body').style.display='flex';
+  document.getElementById('compare-view').style.display='none';
+  if (compareOn) { compareOn=false; document.getElementById('btn-compare').classList.remove('active'); }
   updateWordCount();
+  if (selectedDate) updateCompareBtn(selectedDate.y, selectedDate.m, selectedDate.d);
 }
 
-function selMood(m) { mood=(mood===m)?'':m; updateMoodUI(); scheduleAutoSave(); }
+function selMood(m) {
+  const newMood = (mood===m) ? '' : m;
+  mood = newMood;
+  updateMoodUI();
+  // If we have a selected date, try to load the matching mood entry
+  if (selectedDate) {
+    const { y, m: mo, d } = selectedDate;
+    const dayEntries = entries.filter(e => {
+      const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+      return dt && dt.getFullYear()===y && dt.getMonth()===mo && dt.getDate()===d;
+    });
+    const target = newMood ? dayEntries.find(e => e.mood === newMood) : null;
+    if (target) {
+      // Load existing entry for this mood (don't change curId flow, just update UI)
+      curId = target.id;
+      document.getElementById('entry-body').value = target.body || '';
+      document.getElementById('btn-del').style.display = 'inline-block';
+      updateWordCount();
+      updateCompareBtn(y, mo, d);
+      return;
+    } else if (dayEntries.length > 0) {
+      // No entry for this mood yet — open blank editor for this date
+      curId = null;
+      document.getElementById('entry-body').value = '';
+      document.getElementById('btn-del').style.display = 'none';
+      updateWordCount();
+      updateCompareBtn(y, mo, d);
+      return;
+    }
+  }
+  scheduleAutoSave();
+}
 function updateMoodUI() {
   document.getElementById('ms-pos').className='mood-sym sym-positive'+(mood==='positive'?' on':'');
   document.getElementById('ms-neg').className='mood-sym sym-negative'+(mood==='negative'?' on':'');
@@ -899,15 +1071,26 @@ async function saveEntry() {
 }
 
 async function delEntry() {
-  if (!curId||!confirm('確定刪除這篇記事？')) return;
+  if (!curId) return;
+  const curEntry = entries.find(e => e.id === curId);
+  if (!curEntry) return;
+  const curDt = curEntry.createdAt?.toDate ? curEntry.createdAt.toDate() : null;
+  const sameDay = curDt ? entries.filter(e => {
+    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+    return dt && dt.getFullYear()===curDt.getFullYear() && dt.getMonth()===curDt.getMonth() && dt.getDate()===curDt.getDate();
+  }) : [curEntry];
+  const msg = sameDay.length > 1 ? `確定刪除這天的全部記事（共 ${sameDay.length} 篇，正負能量皆會刪除）？` : '確定刪除這篇記事？';
+  if (!confirm(msg)) return;
   const { db, doc, deleteDoc } = window._fb;
   try {
     setSyncState('syncing');
-    await deleteDoc(doc(db,'users','diary','entries',curId));
-    entries=entries.filter(e=>e.id!==curId); curId=null;
-    document.getElementById('edview').style.display='none';
-    document.getElementById('welcome').style.display='flex';
+    await Promise.all(sameDay.map(e => deleteDoc(doc(db,'users','diary','entries',e.id))));
+    const delIds = new Set(sameDay.map(e => e.id));
+    entries = entries.filter(e => !delIds.has(e.id));
+    curId = null; selectedDate = null;
     setSyncState('idle');
+    const t = new Date();
+    selectDay(t.getFullYear(), t.getMonth(), t.getDate());
     renderCalendar(); updateEnergyBar(); showToast('已刪除');
   } catch(e) { showToast('刪除失敗'); setSyncState('error'); }
 }
@@ -938,8 +1121,9 @@ function mobCalNext(){mobCalMonth++;if(mobCalMonth>11){mobCalMonth=0;mobCalYear+
 
 /* ═══════════════════════ MOBILE EDITOR ═══════════════════════ */
 function mobSelectDay(y,m,d){
+  mobSelectedDate={y,m,d};
   const dayEntries=entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;});
-  if(dayEntries.length>0) mobOpenEntry(dayEntries[0].id);
+  if(dayEntries.length>0){const moodEntry=mobMood?dayEntries.find(e=>e.mood===mobMood):null;mobOpenEntry((moodEntry||dayEntries[0]).id);}
   else {
     mobCurId=null; mobMood='';
     const dateObj=new Date(y,m,d);
@@ -997,7 +1181,7 @@ function mobScheduleAutoSave(){
 }
 
 async function mobAutoSave(){
-  const{db,collection,addDoc,doc,updateDoc,serverTimestamp}=window._fb;
+  const{db,collection,addDoc,doc,updateDoc,serverTimestamp,Timestamp}=window._fb;
   const body=document.getElementById('mob-entry-body').value.trim();
   if(!body){setSyncState('idle');return;}
   const data={body,mood:mobMood};
@@ -1007,7 +1191,12 @@ async function mobAutoSave(){
       const idx=entries.findIndex(e=>e.id===mobCurId);
       if(idx!==-1) entries[idx]={...entries[idx],...data};
     } else {
-      data.createdAt=serverTimestamp();
+      if(mobSelectedDate){
+        const{y,m,d}=mobSelectedDate;
+        const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
+        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'users','diary','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};document.getElementById('mob-btn-del').style.display='inline-block';setSyncState('idle');renderMobCalendar();return;}
+        data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));
+      } else { data.createdAt=serverTimestamp(); }
       const ref=await addDoc(collection(db,'users','diary','entries'),data);
       mobCurId=ref.id;
       document.getElementById('mob-btn-del').style.display='inline-block';
@@ -1021,7 +1210,7 @@ document.getElementById('mob-entry-body').addEventListener('input',()=>mobSchedu
 
 async function mobSaveEntry(){
   clearTimeout(mobAutoSaveTimer);
-  const{db,collection,addDoc,doc,updateDoc,serverTimestamp}=window._fb;
+  const{db,collection,addDoc,doc,updateDoc,serverTimestamp,Timestamp}=window._fb;
   const body=document.getElementById('mob-entry-body').value.trim();
   if(!body){showToast('請輸入內容');return;}
   setSyncState('syncing');
@@ -1033,9 +1222,16 @@ async function mobSaveEntry(){
       if(idx!==-1) entries[idx]={...entries[idx],...data};
       showToast('已更新 ✦');
     } else {
-      data.createdAt=serverTimestamp();
-      const ref=await addDoc(collection(db,'users','diary','entries'),data);
-      mobCurId=ref.id; await loadEntries(); showToast('已儲存 ✦');
+      if(mobSelectedDate){
+        const{y,m,d}=mobSelectedDate;
+        const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
+        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'users','diary','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};showToast('已更新 ✦');}
+        else{data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));const ref=await addDoc(collection(db,'users','diary','entries'),data);mobCurId=ref.id;await loadEntries();showToast('已儲存 ✦');}
+      } else {
+        data.createdAt=serverTimestamp();
+        const ref=await addDoc(collection(db,'users','diary','entries'),data);
+        mobCurId=ref.id; await loadEntries(); showToast('已儲存 ✦');
+      }
     }
     document.getElementById('mob-btn-del').style.display='inline-block';
     setSyncState('idle');
@@ -1044,12 +1240,19 @@ async function mobSaveEntry(){
 }
 
 async function mobDelEntry(){
-  if(!mobCurId||!confirm('確定刪除這篇記事？'))return;
+  if(!mobCurId)return;
+  const curEntry=entries.find(e=>e.id===mobCurId);if(!curEntry)return;
+  const curDt=curEntry.createdAt?.toDate?curEntry.createdAt.toDate():null;
+  const sameDay=curDt?entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===curDt.getFullYear()&&dt.getMonth()===curDt.getMonth()&&dt.getDate()===curDt.getDate();}):[curEntry];
+  const msg=sameDay.length>1?`確定刪除這天的全部記事（共 ${sameDay.length} 篇，正負能量皆會刪除）？`:'確定刪除這篇記事？';
+  if(!confirm(msg))return;
   const{db,doc,deleteDoc}=window._fb;
   try{
     setSyncState('syncing');
-    await deleteDoc(doc(db,'users','diary','entries',mobCurId));
-    entries=entries.filter(e=>e.id!==mobCurId); mobCurId=null;
+    await Promise.all(sameDay.map(e=>deleteDoc(doc(db,'users','diary','entries',e.id))));
+    const delIds=new Set(sameDay.map(e=>e.id));
+    entries=entries.filter(e=>!delIds.has(e.id));
+    mobCurId=null; mobSelectedDate=null;
     setSyncState('idle');
     mobBack(); showToast('已刪除');
   } catch(e){showToast('刪除失敗');setSyncState('error');}
@@ -1076,6 +1279,19 @@ async function generateToken(){
     };
     tick(); timerInt=setInterval(tick,1000);
   } catch(e){showToast('產生失敗：'+e.message);}
+}
+
+/* ═══════════════════════ REVOKE GUESTS ═══════════════════════ */
+async function revokeAllGuests(){
+  if(!confirm('確定要強制登出所有訪客？他們目前的訪問權限將立即失效。'))return;
+  const{db,collection,getDocs,doc,updateDoc,Timestamp}=window._fb;
+  try{
+    const snap=await getDocs(collection(db,'guest_access'));
+    if(snap.empty){showToast('目前沒有訪客');return;}
+    const expired=new Timestamp(Math.floor(Date.now()/1000)-1,0);
+    await Promise.all(snap.docs.map(d=>updateDoc(doc(db,'guest_access',d.id),{expiresAt:expired})));
+    showToast('已強制登出 '+snap.size+' 位訪客 ✦');
+  }catch(e){showToast('操作失敗：'+e.message);}
 }
 
 /* ═══════════════════════ UTILS ═══════════════════════ */
