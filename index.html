@@ -759,10 +759,13 @@ function setSyncState(state) {
 
 /* ═══════════════════════ AUTH ═══════════════════════ */
 document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
-  // keydown: handle Backspace / arrow / Enter on desktop; digits on desktop keyboards
+  let _keyHandled = false;
+
   inp.addEventListener('keydown', e => {
+    _keyHandled = false;
     if (e.key === 'Backspace') {
       e.preventDefault();
+      _keyHandled = true;
       if (inp.value) {
         inp.value = '';
         all.forEach(x => x.classList.toggle('filled', !!x.value));
@@ -775,12 +778,13 @@ document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
       }
       return;
     }
-    if (e.key === 'ArrowLeft' && i > 0)  { e.preventDefault(); all[i-1].focus(); return; }
-    if (e.key === 'ArrowRight' && i < all.length-1) { e.preventDefault(); all[i+1].focus(); return; }
-    if (e.key === 'Enter') { verifyToken(); return; }
+    if (e.key === 'ArrowLeft' && i > 0)  { e.preventDefault(); _keyHandled = true; all[i-1].focus(); return; }
+    if (e.key === 'ArrowRight' && i < all.length-1) { e.preventDefault(); _keyHandled = true; all[i+1].focus(); return; }
+    if (e.key === 'Enter') { _keyHandled = true; verifyToken(); return; }
     // Desktop: single digit key — fill and advance
     if (/^[0-9]$/.test(e.key)) {
       e.preventDefault();
+      _keyHandled = true;
       inp.value = e.key;
       all.forEach(x => x.classList.toggle('filled', !!x.value));
       const code = [...all].map(x => x.value).join('');
@@ -788,8 +792,9 @@ document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
       if (i < all.length - 1) all[i + 1].focus();
     }
   });
-  // input: handles mobile virtual keyboard (e.key is 'Unidentified' there)
+  // input: handles mobile virtual keyboard only (e.key is 'Unidentified' on mobile)
   inp.addEventListener('input', () => {
+    if (_keyHandled) { _keyHandled = false; return; } // already handled by keydown
     // Take only the last digit entered, discard rest
     const digit = inp.value.replace(/\D/g, '').slice(-1);
     inp.value = digit;
