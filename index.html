@@ -758,30 +758,45 @@ function setSyncState(state) {
 
 /* ═══════════════════════ AUTH ═══════════════════════ */
 document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
-  // Use keydown to intercept digit before any IME/input event fires
+  // keydown: handle Backspace / arrow / Enter on desktop; digits on desktop keyboards
   inp.addEventListener('keydown', e => {
     if (e.key === 'Backspace') {
       e.preventDefault();
-      inp.value = '';
-      all.forEach(x => x.classList.toggle('filled', !!x.value));
-      document.getElementById('btn-verify').disabled = true;
-      if (i > 0) all[i - 1].focus();
+      if (inp.value) {
+        inp.value = '';
+        all.forEach(x => x.classList.toggle('filled', !!x.value));
+        document.getElementById('btn-verify').disabled = true;
+      } else if (i > 0) {
+        all[i-1].value = '';
+        all[i-1].focus();
+        all.forEach(x => x.classList.toggle('filled', !!x.value));
+        document.getElementById('btn-verify').disabled = true;
+      }
       return;
     }
-    if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); all[i-1].focus(); return; }
+    if (e.key === 'ArrowLeft' && i > 0)  { e.preventDefault(); all[i-1].focus(); return; }
     if (e.key === 'ArrowRight' && i < all.length-1) { e.preventDefault(); all[i+1].focus(); return; }
     if (e.key === 'Enter') { verifyToken(); return; }
-    const digit = e.key.replace(/\D/g, '');
-    if (!digit) { if (e.key.length === 1) e.preventDefault(); return; }
-    e.preventDefault();
+    // Desktop: single digit key — fill and advance
+    if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      inp.value = e.key;
+      all.forEach(x => x.classList.toggle('filled', !!x.value));
+      const code = [...all].map(x => x.value).join('');
+      document.getElementById('btn-verify').disabled = code.length < 6;
+      if (i < all.length - 1) all[i + 1].focus();
+    }
+  });
+  // input: handles mobile virtual keyboard (e.key is 'Unidentified' there)
+  inp.addEventListener('input', () => {
+    // Take only the last digit entered, discard rest
+    const digit = inp.value.replace(/\D/g, '').slice(-1);
     inp.value = digit;
     all.forEach(x => x.classList.toggle('filled', !!x.value));
     const code = [...all].map(x => x.value).join('');
     document.getElementById('btn-verify').disabled = code.length < 6;
-    if (i < all.length - 1) all[i + 1].focus();
+    if (digit && i < all.length - 1) all[i + 1].focus();
   });
-  // Block input event entirely to prevent IME double-fire
-  inp.addEventListener('input', e => { e.preventDefault(); e.stopImmediatePropagation(); inp.value = inp.value.slice(0,1).replace(/\D/g,''); });
   inp.addEventListener('paste', e => {
     e.preventDefault();
     const p = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
@@ -1490,22 +1505,37 @@ function setupBackupCodeInputs() {
   inputs.forEach((inp, i) => {
     inp.addEventListener('keydown', e => {
       if (e.key === 'Backspace') {
-        e.preventDefault(); inp.value = '';
-        inputs.forEach(x => x.classList.toggle('filled', !!x.value));
-        document.getElementById('btn-backup-verify').disabled = true;
-        if (i > 0) inputs[i-1].focus(); return;
+        e.preventDefault();
+        if (inp.value) {
+          inp.value = '';
+          inputs.forEach(x => x.classList.toggle('filled', !!x.value));
+          document.getElementById('btn-backup-verify').disabled = true;
+        } else if (i > 0) {
+          inputs[i-1].value = '';
+          inputs[i-1].focus();
+          inputs.forEach(x => x.classList.toggle('filled', !!x.value));
+          document.getElementById('btn-backup-verify').disabled = true;
+        }
+        return;
       }
       if (e.key === 'Enter') { verifyAndExport(); return; }
-      const digit = e.key.replace(/\D/g, '');
-      if (!digit) { if (e.key.length === 1) e.preventDefault(); return; }
-      e.preventDefault();
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        inp.value = e.key;
+        inputs.forEach(x => x.classList.toggle('filled', !!x.value));
+        const code = inputs.map(x => x.value).join('');
+        document.getElementById('btn-backup-verify').disabled = code.length < 6;
+        if (i < inputs.length - 1) inputs[i+1].focus();
+      }
+    });
+    inp.addEventListener('input', () => {
+      const digit = inp.value.replace(/\D/g, '').slice(-1);
       inp.value = digit;
       inputs.forEach(x => x.classList.toggle('filled', !!x.value));
       const code = inputs.map(x => x.value).join('');
       document.getElementById('btn-backup-verify').disabled = code.length < 6;
-      if (i < inputs.length - 1) inputs[i+1].focus();
+      if (digit && i < inputs.length - 1) inputs[i+1].focus();
     });
-    inp.addEventListener('input', e => { e.preventDefault(); e.stopImmediatePropagation(); inp.value = inp.value.slice(0,1).replace(/\D/g,''); });
   });
 }
 
