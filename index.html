@@ -420,6 +420,72 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .mob-btn-del { padding:9px 16px; background:none; border:1px solid var(--border-b); border-radius:var(--radius); font-size:12px; color:var(--blue-soft); cursor:pointer; }
 .mob-btn-del:active { border-color:#b04040; color:#b04040; }
 .mob-btn-save { padding:9px 22px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:13px; letter-spacing:2px; cursor:pointer; font-weight:600; font-family:'Noto Sans TC',sans-serif; }
+
+/* ── Mobile dual-column (split view) ── */
+.mob-btn-split {
+  width:34px; height:34px; border-radius:50%;
+  border:1.5px solid var(--border-b); background:none;
+  font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  color:var(--blue-soft); transition:all .2s; line-height:1;
+}
+.mob-btn-split.active {
+  background:linear-gradient(135deg,var(--gold-faint),var(--gold-pale));
+  border-color:var(--gold-mid); color:var(--navy);
+}
+.mob-split-view {
+  display:none; flex-direction:column; flex:1; overflow:hidden; position:relative; z-index:1;
+}
+.mob-split-col {
+  flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:14px 18px 10px; min-height:0;
+}
+.mob-split-col::-webkit-scrollbar { width:2px; }
+.mob-split-col::-webkit-scrollbar-thumb { background:var(--border-g); }
+.mob-split-pos { background:linear-gradient(180deg,rgba(196,162,74,0.07) 0%,transparent 80%); }
+.mob-split-neg { background:linear-gradient(180deg,rgba(26,48,80,0.06) 0%,transparent 80%); }
+.mob-split-divider { height:1px; background:var(--border-g); flex-shrink:0; margin:0 14px; }
+.mob-split-label {
+  font-size:9px; letter-spacing:2.5px; font-weight:600; margin-bottom:6px; opacity:.55;
+}
+.mob-split-pos .mob-split-label { color:var(--gold-deep); }
+.mob-split-neg .mob-split-label { color:var(--navy-soft); }
+.mob-split-textarea {
+  border:none; outline:none; resize:none; width:100%; flex:1; min-height:80px;
+  background:transparent; font-family:'Noto Serif TC',serif; font-size:14px;
+  line-height:2; color:var(--blue-text); word-break:break-word;
+}
+.mob-split-textarea::placeholder { color:rgba(74,98,132,.18); }
+
+/* ── PC Backup button ── */
+.btn-backup {
+  width:100%; padding:9px; background:none; border:1px solid var(--border-g);
+  border-radius:var(--radius); font-size:11px; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif; color:var(--blue-soft); transition:all .2s;
+  letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:5px;
+}
+.btn-backup:hover { background:var(--gold-faint); border-color:var(--gold); color:var(--navy); }
+
+/* ── Backup verify modal ── */
+.backup-modal-wrap {
+  display:none; position:fixed; inset:0; background:rgba(13,27,46,.5);
+  z-index:300; align-items:center; justify-content:center; backdrop-filter:blur(3px);
+}
+.backup-modal-wrap.open { display:flex; }
+.backup-modal {
+  background:var(--white); border-radius:var(--radius); padding:32px 36px;
+  width:min(360px,92vw); border:1px solid var(--border-g); box-shadow:var(--shadow); position:relative; overflow:hidden;
+}
+.backup-modal::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold-deep),var(--gold-light),var(--gold-deep)); }
+.backup-modal h3 { font-family:'Cormorant Garamond',serif; font-size:17px; margin-bottom:5px; color:var(--navy); letter-spacing:2px; }
+.backup-modal .sub { font-size:11px; color:var(--blue-soft); line-height:1.8; margin-bottom:18px; }
+
+/* ── Backup history popup ── */
+.backup-history-pop {
+  position:fixed; background:var(--navy); color:var(--gold-light);
+  border-radius:4px; padding:10px 14px; font-size:11px; z-index:9999;
+  white-space:nowrap; border:1px solid rgba(201,168,76,0.25); line-height:2;
+  pointer-events:none; opacity:0; transition:opacity .15s;
+}
+.backup-history-pop.show { opacity:1; }
 </style>
 </head>
 <body>
@@ -538,6 +604,41 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     <div class="cal-new-row" id="cal-new-row" style="display:none;">
       <button class="btn-gen" id="btn-gen" onclick="openModal()" style="display:none;flex:1;">🔑 驗證碼</button>
     </div>
+    <!-- Backup button -->
+    <div style="padding:0 13px 12px;display:none;" id="backup-row">
+      <button class="btn-backup" id="btn-backup"
+        onclick="openBackupModal()"
+        onmousedown="startBackupLongPress(event)"
+        onmouseup="cancelBackupLongPress()"
+        onmouseleave="cancelBackupLongPress()"
+        ontouchstart="startBackupLongPress(event)"
+        ontouchend="cancelBackupLongPress()"
+        ontouchcancel="cancelBackupLongPress()">
+        ⬇ 備 份 匯 出
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Backup history popup -->
+<div class="backup-history-pop" id="backup-history-pop"></div>
+
+<!-- Backup verify modal -->
+<div class="backup-modal-wrap" id="backup-modal">
+  <div class="backup-modal">
+    <h3>備份匯出</h3>
+    <p class="sub">請輸入信任裝置產生的驗證碼以確認匯出。</p>
+    <div class="code-inputs" id="backup-code-inputs">
+      <input type="text" maxlength="1" inputmode="numeric">
+      <input type="text" maxlength="1" inputmode="numeric">
+      <input type="text" maxlength="1" inputmode="numeric">
+      <input type="text" maxlength="1" inputmode="numeric">
+      <input type="text" maxlength="1" inputmode="numeric">
+      <input type="text" maxlength="1" inputmode="numeric">
+    </div>
+    <button class="btn-main" id="btn-backup-verify" onclick="verifyAndExport()" disabled>確 認 匯 出</button>
+    <div class="err-msg" id="backup-err"></div>
+    <button class="btn-outline" onclick="closeBackupModal()" style="margin-top:8px;">取 消</button>
   </div>
 </div>
 
@@ -576,16 +677,30 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       <div class="mob-mood-row">
         <button class="mob-mood-sym sym-positive" id="mob-ms-pos" onclick="mobSelMood('positive')">✧</button>
         <button class="mob-mood-sym sym-negative" id="mob-ms-neg" onclick="mobSelMood('negative')">✦</button>
+        <button class="mob-btn-split" id="mob-btn-split" onclick="mobToggleSplit()" title="雙欄對照">⊞</button>
       </div>
       <span class="mob-sync-icon" id="mob-sync-icon">✦</span>
     </div>
-    <div class="mob-ed-body">
+    <!-- Single entry body -->
+    <div class="mob-ed-body" id="mob-ed-body">
       <div id="mob-entry-date"></div>
       <textarea id="mob-entry-body" placeholder="寫下此刻的想法…"></textarea>
     </div>
+    <!-- Split (dual-column) view -->
+    <div class="mob-split-view" id="mob-split-view">
+      <div class="mob-split-col mob-split-pos">
+        <div class="mob-split-label">✧ 正能量</div>
+        <textarea class="mob-split-textarea" id="mob-split-pos-text" placeholder="這一天沒有正能量記事…"></textarea>
+      </div>
+      <div class="mob-split-divider"></div>
+      <div class="mob-split-col mob-split-neg">
+        <div class="mob-split-label">✦ 負能量</div>
+        <textarea class="mob-split-textarea" id="mob-split-neg-text" placeholder="這一天沒有負能量記事…"></textarea>
+      </div>
+    </div>
     <div class="mob-ed-bottom">
       <button class="mob-btn-del" id="mob-btn-del" style="display:none" onclick="mobDelEntry()">刪除</button>
-      <button class="mob-btn-save" onclick="mobSaveEntry()">儲 存</button>
+      <button class="mob-btn-save" id="mob-btn-save-btn" onclick="mobSaveActive()">儲 存</button>
     </div>
   </div>
 </div>
@@ -643,20 +758,30 @@ function setSyncState(state) {
 
 /* ═══════════════════════ AUTH ═══════════════════════ */
 document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
-  inp.addEventListener('input', e => {
-    // Clear first to avoid double-character from IME / browser auto-fill double-fire
-    const raw = e.target.value;
-    e.target.value = '';
-    const digits = raw.replace(/\D/g, '');
-    const ch = digits.slice(-1);
-    e.target.value = ch;
-    if (ch && i < all.length - 1) all[i + 1].focus();
-    all.forEach(x => x.classList.toggle('filled', !!x.value));
-    document.getElementById('btn-verify').disabled = [...all].map(x => x.value).join('').length < 6;
-  });
+  // Use keydown to intercept digit before any IME/input event fires
   inp.addEventListener('keydown', e => {
-    if (e.key === 'Backspace' && !inp.value && i > 0) all[i - 1].focus();
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      inp.value = '';
+      all.forEach(x => x.classList.toggle('filled', !!x.value));
+      document.getElementById('btn-verify').disabled = true;
+      if (i > 0) all[i - 1].focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); all[i-1].focus(); return; }
+    if (e.key === 'ArrowRight' && i < all.length-1) { e.preventDefault(); all[i+1].focus(); return; }
+    if (e.key === 'Enter') { verifyToken(); return; }
+    const digit = e.key.replace(/\D/g, '');
+    if (!digit) { if (e.key.length === 1) e.preventDefault(); return; }
+    e.preventDefault();
+    inp.value = digit;
+    all.forEach(x => x.classList.toggle('filled', !!x.value));
+    const code = [...all].map(x => x.value).join('');
+    document.getElementById('btn-verify').disabled = code.length < 6;
+    if (i < all.length - 1) all[i + 1].focus();
   });
+  // Block input event entirely to prevent IME double-fire
+  inp.addEventListener('input', e => { e.preventDefault(); e.stopImmediatePropagation(); inp.value = inp.value.slice(0,1).replace(/\D/g,''); });
   inp.addEventListener('paste', e => {
     e.preventDefault();
     const p = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
@@ -704,6 +829,7 @@ window.enterApp = function(role) {
       // Show key button for trusted
       document.getElementById('cal-new-row').style.display='flex';
       document.getElementById('btn-gen').style.display='flex';
+      document.getElementById('backup-row').style.display='block';
     } else {
       b.textContent='◈ 訪客模式'; b.className='role-badge guest';
       document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
@@ -1216,6 +1342,11 @@ function showMobEditor(){
 }
 
 function mobBack(){
+  // Reset split view state
+  mobSplitOn = false;
+  document.getElementById('mob-btn-split').classList.remove('active');
+  document.getElementById('mob-split-view').style.display = 'none';
+  document.getElementById('mob-ed-body').style.display = 'flex';
   document.getElementById('mob-editor').style.display='none';
   document.getElementById('mob-home').style.display='flex';
   renderMobCalendar();
@@ -1332,6 +1463,228 @@ async function generateToken(){
     };
     tick(); timerInt=setInterval(tick,1000);
   } catch(e){showToast('產生失敗：'+e.message);}
+}
+
+/* ═══════════════════════ BACKUP EXPORT ═══════════════════════ */
+let backupLongPressTimer = null;
+
+function openBackupModal() {
+  document.getElementById('backup-modal').classList.add('open');
+  document.getElementById('backup-err').textContent = '';
+  document.getElementById('btn-backup-verify').disabled = true;
+  setupBackupCodeInputs();
+}
+function closeBackupModal() {
+  document.getElementById('backup-modal').classList.remove('open');
+  document.querySelectorAll('#backup-code-inputs input').forEach(x => { x.value = ''; x.classList.remove('filled','err'); });
+}
+
+function setupBackupCodeInputs() {
+  const all = [...document.querySelectorAll('#backup-code-inputs input')];
+  all.forEach((inp, i) => {
+    // Remove old listeners by cloning
+    const fresh = inp.cloneNode(true);
+    inp.parentNode.replaceChild(fresh, inp);
+  });
+  const inputs = [...document.querySelectorAll('#backup-code-inputs input')];
+  inputs.forEach((inp, i) => {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace') {
+        e.preventDefault(); inp.value = '';
+        inputs.forEach(x => x.classList.toggle('filled', !!x.value));
+        document.getElementById('btn-backup-verify').disabled = true;
+        if (i > 0) inputs[i-1].focus(); return;
+      }
+      if (e.key === 'Enter') { verifyAndExport(); return; }
+      const digit = e.key.replace(/\D/g, '');
+      if (!digit) { if (e.key.length === 1) e.preventDefault(); return; }
+      e.preventDefault();
+      inp.value = digit;
+      inputs.forEach(x => x.classList.toggle('filled', !!x.value));
+      const code = inputs.map(x => x.value).join('');
+      document.getElementById('btn-backup-verify').disabled = code.length < 6;
+      if (i < inputs.length - 1) inputs[i+1].focus();
+    });
+    inp.addEventListener('input', e => { e.preventDefault(); e.stopImmediatePropagation(); inp.value = inp.value.slice(0,1).replace(/\D/g,''); });
+  });
+}
+
+async function verifyAndExport() {
+  const { db, doc, getDoc } = window._fb;
+  const code = [...document.querySelectorAll('#backup-code-inputs input')].map(x=>x.value).join('');
+  const errEl = document.getElementById('backup-err');
+  errEl.textContent = '';
+  document.getElementById('btn-backup-verify').disabled = true;
+  document.getElementById('btn-backup-verify').textContent = '驗證中…';
+  try {
+    const td = await getDoc(doc(db,'tokens',code));
+    if (!td.exists()) throw new Error('驗證碼不存在');
+    if ((td.data().expiresAt?.toMillis?.() || 0) < Date.now()) throw new Error('驗證碼已過期');
+    // Export
+    const exportData = entries.map(e => {
+      const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+      return { id: e.id, date: dt ? dt.toISOString() : null, mood: e.mood || '', body: e.body || '' };
+    });
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    a.href = url;
+    a.download = `diary_backup_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    // Save history
+    saveBackupHistory(now);
+    closeBackupModal();
+    showToast('匯出成功 ✦');
+  } catch(e) {
+    errEl.textContent = e.message;
+    document.querySelectorAll('#backup-code-inputs input').forEach(x=>{ x.classList.add('err'); setTimeout(()=>x.classList.remove('err'),400); });
+    document.getElementById('btn-backup-verify').disabled = false;
+    document.getElementById('btn-backup-verify').textContent = '確 認 匯 出';
+  }
+}
+
+function saveBackupHistory(date) {
+  try {
+    const key = 'backup_history';
+    const hist = JSON.parse(localStorage.getItem(key) || '[]');
+    hist.unshift(date.toISOString());
+    localStorage.setItem(key, JSON.stringify(hist.slice(0, 5)));
+  } catch(_) {}
+}
+
+function getBackupHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('backup_history') || '[]');
+  } catch(_) { return []; }
+}
+
+function startBackupLongPress(e) {
+  cancelBackupLongPress();
+  backupLongPressTimer = setTimeout(() => {
+    showBackupHistory(e);
+  }, 600);
+}
+function cancelBackupLongPress() {
+  if (backupLongPressTimer) { clearTimeout(backupLongPressTimer); backupLongPressTimer = null; }
+  // Hide popup after short delay
+  setTimeout(hideBackupHistory, 2500);
+}
+function showBackupHistory(e) {
+  const hist = getBackupHistory();
+  const pop = document.getElementById('backup-history-pop');
+  if (!hist.length) { pop.innerHTML = '尚無匯出記錄'; }
+  else {
+    pop.innerHTML = hist.map(iso => {
+      const d = new Date(iso);
+      return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }).join('<br>');
+  }
+  const rect = document.getElementById('btn-backup').getBoundingClientRect();
+  pop.style.left = rect.left + 'px';
+  pop.style.top = (rect.top - pop.offsetHeight - 8) + 'px';
+  pop.classList.add('show');
+  // Position after render
+  requestAnimationFrame(() => {
+    pop.style.left = rect.left + 'px';
+    pop.style.top = (rect.top - pop.offsetHeight - 8) + 'px';
+  });
+}
+function hideBackupHistory() {
+  document.getElementById('backup-history-pop').classList.remove('show');
+}
+document.addEventListener('mouseup', () => { cancelBackupLongPress(); hideBackupHistory(); });
+document.addEventListener('touchend', () => { cancelBackupLongPress(); });
+
+/* ═══════════════════════ MOBILE SPLIT VIEW ═══════════════════════ */
+let mobSplitOn = false;
+let _mobSplitPosId = null, _mobSplitNegId = null;
+
+function mobToggleSplit() {
+  mobSplitOn = !mobSplitOn;
+  const btn = document.getElementById('mob-btn-split');
+  const singleView = document.getElementById('mob-ed-body');
+  const splitView = document.getElementById('mob-split-view');
+  btn.classList.toggle('active', mobSplitOn);
+  if (mobSplitOn) {
+    singleView.style.display = 'none';
+    splitView.style.display = 'flex';
+    mobRenderSplit();
+  } else {
+    splitView.style.display = 'none';
+    singleView.style.display = 'flex';
+  }
+}
+
+function mobRenderSplit() {
+  // Determine current date context
+  const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
+  const {y,m,d} = dateCtx;
+  const dayEntries = entries.filter(e => {
+    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
+  });
+  const posEntry = dayEntries.find(e => e.mood === 'positive');
+  const negEntry = dayEntries.find(e => e.mood === 'negative');
+  _mobSplitPosId = posEntry ? posEntry.id : null;
+  _mobSplitNegId = negEntry ? negEntry.id : null;
+  document.getElementById('mob-split-pos-text').value = posEntry ? (posEntry.body||'') : '';
+  document.getElementById('mob-split-neg-text').value = negEntry ? (negEntry.body||'') : '';
+  // Auto-save on change
+  ['mob-split-pos-text','mob-split-neg-text'].forEach(id => {
+    const el = document.getElementById(id);
+    const fresh = el.cloneNode(true); el.parentNode.replaceChild(fresh, el);
+    document.getElementById(id).addEventListener('input', () => mobScheduleSplitSave());
+  });
+}
+
+let mobSplitSaveTimer = null;
+function mobScheduleSplitSave() {
+  clearTimeout(mobSplitSaveTimer);
+  setSyncState('syncing');
+  mobSplitSaveTimer = setTimeout(async () => { await mobSaveSplit(); }, 3000);
+}
+
+async function mobSaveSplit() {
+  const {db,collection,addDoc,doc,updateDoc,Timestamp} = window._fb;
+  const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
+  const {y,m,d} = dateCtx;
+  const posBody = document.getElementById('mob-split-pos-text').value.trim();
+  const negBody = document.getElementById('mob-split-neg-text').value.trim();
+  try {
+    const ops = [];
+    if (posBody) {
+      if (_mobSplitPosId) {
+        ops.push(updateDoc(doc(db,'users','diary','entries',_mobSplitPosId),{body:posBody,mood:'positive'}));
+        const i=entries.findIndex(e=>e.id===_mobSplitPosId); if(i!==-1) entries[i].body=posBody;
+      } else {
+        const ref = await addDoc(collection(db,'users','diary','entries'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
+        _mobSplitPosId = ref.id; await loadEntries();
+      }
+    }
+    if (negBody) {
+      if (_mobSplitNegId) {
+        ops.push(updateDoc(doc(db,'users','diary','entries',_mobSplitNegId),{body:negBody,mood:'negative'}));
+        const i=entries.findIndex(e=>e.id===_mobSplitNegId); if(i!==-1) entries[i].body=negBody;
+      } else {
+        const ref = await addDoc(collection(db,'users','diary','entries'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
+        _mobSplitNegId = ref.id; await loadEntries();
+      }
+    }
+    if (ops.length) await Promise.all(ops);
+    setSyncState('idle');
+  } catch(e) { setSyncState('error'); }
+}
+
+async function mobSaveActive() {
+  if (mobSplitOn) {
+    clearTimeout(mobSplitSaveTimer);
+    await mobSaveSplit();
+    showToast('已儲存 ✦');
+  } else {
+    mobSaveEntry();
+  }
 }
 
 /* ═══════════════════════ REVOKE GUESTS ═══════════════════════ */
