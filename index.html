@@ -318,6 +318,20 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .compare-divider {
   width:1px; background:var(--border-g); flex-shrink:0; margin:20px 0;
 }
+.compare-textarea {
+  border:none; outline:none; resize:none; width:100%; flex:1;
+  min-height:200px; background:transparent;
+  font-family:'Noto Serif TC',serif; font-size:14.5px;
+  line-height:2.1; color:var(--blue-text);
+  word-break:break-word;
+}
+.compare-textarea::placeholder { color:rgba(74,98,132,.18); }
+.compare-actions {
+  display:flex; align-items:center; justify-content:flex-end;
+  gap:8px; padding:8px 28px;
+  border-top:1px solid var(--border-g); background:var(--white);
+  position:relative; z-index:1; flex-shrink:0;
+}
 
 /* ── TOAST ── */
 .toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--navy); color:var(--gold-light); padding:9px 24px; border-radius:24px; font-size:12px; z-index:9999; transition:transform .3s ease; pointer-events:none; white-space:nowrap; border:1px solid rgba(201,168,76,.3); letter-spacing:1px; }
@@ -466,14 +480,18 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div class="compare-col compare-pos">
           <div class="compare-label">✧ 正能量</div>
           <div class="compare-date" id="cmp-date-pos"></div>
-          <div class="compare-text" id="cmp-text-pos"></div>
+          <textarea class="compare-text compare-textarea" id="cmp-text-pos" placeholder="這一天沒有正能量記事"></textarea>
         </div>
         <div class="compare-divider"></div>
         <div class="compare-col compare-neg">
           <div class="compare-label">✦ 負能量</div>
           <div class="compare-date" id="cmp-date-neg"></div>
-          <div class="compare-text" id="cmp-text-neg"></div>
+          <textarea class="compare-text compare-textarea" id="cmp-text-neg" placeholder="這一天沒有負能量記事"></textarea>
         </div>
+      </div>
+      <div class="compare-actions" id="compare-actions" style="display:none;">
+        <button class="btn-del" id="btn-del-both" onclick="_delBoth()">刪除（正＋負）</button>
+        <button class="btn-save" id="btn-save-both" onclick="_saveBoth()">儲 存</button>
       </div>
       <div class="statusbar">
         <span class="sdot"></span>
@@ -895,8 +913,11 @@ function exitCompare() {
   const btn = document.getElementById('btn-compare');
   if (btn) btn.classList.remove('active');
   document.getElementById('compare-view').style.display = 'none';
+  document.getElementById('compare-actions').style.display = 'none';
   document.getElementById('ed-body').style.display = 'flex';
 }
+
+let _cmpPosId = null, _cmpNegId = null;
 
 function renderCompare() {
   if (!selectedDate) return;
@@ -907,6 +928,8 @@ function renderCompare() {
   });
   const posEntry = de.find(e => e.mood === 'positive');
   const negEntry = de.find(e => e.mood === 'negative');
+  _cmpPosId = posEntry ? posEntry.id : null;
+  _cmpNegId = negEntry ? negEntry.id : null;
 
   const fmt = e => {
     const dt = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
@@ -914,17 +937,34 @@ function renderCompare() {
   };
 
   document.getElementById('cmp-date-pos').textContent = posEntry ? fmt(posEntry) : '';
-  document.getElementById('cmp-text-pos').innerHTML = posEntry
-    ? `<span>${posEntry.body||''}</span>`
-    : '<span class="compare-empty">這一天沒有正能量記事</span>';
+  document.getElementById('cmp-text-pos').value = posEntry ? (posEntry.body||'') : '';
+  document.getElementById('cmp-text-pos').disabled = !posEntry;
 
   document.getElementById('cmp-date-neg').textContent = negEntry ? fmt(negEntry) : '';
-  document.getElementById('cmp-text-neg').innerHTML = negEntry
-    ? `<span>${negEntry.body||''}</span>`
-    : '<span class="compare-empty">這一天沒有負能量記事</span>';
+  document.getElementById('cmp-text-neg').value = negEntry ? (negEntry.body||'') : '';
+  document.getElementById('cmp-text-neg').disabled = !negEntry;
 
   document.getElementById('ed-body').style.display = 'none';
   document.getElementById('compare-view').style.display = 'flex';
+  document.getElementById('compare-actions').style.display = 'flex';
+}
+
+async function _saveBoth() {
+  const { db, doc, updateDoc } = window._fb;
+  const posBody = document.getElementById('cmp-text-pos').value.trim();
+  const negBody = document.getElementById('cmp-text-neg').value.trim();
+  setSyncState('syncing');
+  try {
+    const ops = [];
+    if (_cmpPosId && posBody) { ops.push(updateDoc(doc(db,'users','diary','entries',_cmpPosId),{body:posBody,mood:'positive'})); const i=entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody; }
+    if (_cmpNegId && negBody) { ops.push(updateDoc(doc(db,'users','diary','entries',_cmpNegId),{body:negBody,mood:'negative'})); const i=entries.findIndex(e=>e.id===_cmpNegId); if(i!==-1) entries[i].body=negBody; }
+    await Promise.all(ops);
+    setSyncState('idle'); showToast('已更新 ✦');
+  } catch(e) { setSyncState('error'); showToast('儲存失敗'); }
+}
+
+function _delBoth() {
+  delBothEntries(_cmpPosId, _cmpNegId);
 }
 
 
@@ -1072,22 +1112,35 @@ async function saveEntry() {
 
 async function delEntry() {
   if (!curId) return;
-  const curEntry = entries.find(e => e.id === curId);
-  if (!curEntry) return;
-  const curDt = curEntry.createdAt?.toDate ? curEntry.createdAt.toDate() : null;
-  const sameDay = curDt ? entries.filter(e => {
-    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-    return dt && dt.getFullYear()===curDt.getFullYear() && dt.getMonth()===curDt.getMonth() && dt.getDate()===curDt.getDate();
-  }) : [curEntry];
-  const msg = sameDay.length > 1 ? `確定刪除這天的全部記事（共 ${sameDay.length} 篇，正負能量皆會刪除）？` : '確定刪除這篇記事？';
-  if (!confirm(msg)) return;
+  if (!confirm('確定刪除這篇記事？')) return;
   const { db, doc, deleteDoc } = window._fb;
   try {
     setSyncState('syncing');
-    await Promise.all(sameDay.map(e => deleteDoc(doc(db,'users','diary','entries',e.id))));
-    const delIds = new Set(sameDay.map(e => e.id));
-    entries = entries.filter(e => !delIds.has(e.id));
+    await deleteDoc(doc(db,'users','diary','entries',curId));
+    entries = entries.filter(e => e.id !== curId);
     curId = null; selectedDate = null;
+    setSyncState('idle');
+    const t = new Date();
+    selectDay(t.getFullYear(), t.getMonth(), t.getDate());
+    renderCalendar(); updateEnergyBar(); showToast('已刪除');
+  } catch(e) { showToast('刪除失敗'); setSyncState('error'); }
+}
+
+async function delBothEntries(posId, negId) {
+  const toDelete = [posId, negId].filter(Boolean);
+  if (!toDelete.length) return;
+  const count = toDelete.length;
+  if (!confirm(`確定刪除這天的正負能量記事（共 ${count} 篇）？`)) return;
+  const { db, doc, deleteDoc } = window._fb;
+  try {
+    setSyncState('syncing');
+    await Promise.all(toDelete.map(id => deleteDoc(doc(db,'users','diary','entries',id))));
+    const delIds = new Set(toDelete);
+    entries = entries.filter(e => !delIds.has(e.id));
+    curId = null; selectedDate = null; compareOn = false;
+    document.getElementById('btn-compare').classList.remove('active');
+    document.getElementById('compare-view').style.display = 'none';
+    document.getElementById('ed-body').style.display = 'flex';
     setSyncState('idle');
     const t = new Date();
     selectDay(t.getFullYear(), t.getMonth(), t.getDate());
@@ -1284,12 +1337,12 @@ async function generateToken(){
 /* ═══════════════════════ REVOKE GUESTS ═══════════════════════ */
 async function revokeAllGuests(){
   if(!confirm('確定要強制登出所有訪客？他們目前的訪問權限將立即失效。'))return;
-  const{db,collection,getDocs,doc,updateDoc,Timestamp}=window._fb;
+  const{db,collection,getDocs,doc,setDoc,Timestamp}=window._fb;
   try{
     const snap=await getDocs(collection(db,'guest_access'));
     if(snap.empty){showToast('目前沒有訪客');return;}
     const expired=new Timestamp(Math.floor(Date.now()/1000)-1,0);
-    await Promise.all(snap.docs.map(d=>updateDoc(doc(db,'guest_access',d.id),{expiresAt:expired})));
+    await Promise.all(snap.docs.map(d=>setDoc(doc(db,'guest_access',d.id),{expiresAt:expired},{merge:true})));
     showToast('已強制登出 '+snap.size+' 位訪客 ✦');
   }catch(e){showToast('操作失敗：'+e.message);}
 }
