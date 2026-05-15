@@ -760,7 +760,7 @@ function setSyncState(state) {
 }
 
 /* ═══════════════════════ AUTH ═══════════════════════ */
-document.querySelectorAll('.code-inputs input').forEach((inp, i, all) => {
+document.querySelectorAll('#code-inputs input').forEach((inp, i, all) => {
   let _keyHandled = false;
 
   inp.addEventListener('keydown', e => {
@@ -866,6 +866,19 @@ window.enterApp = function(role) {
       document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
       document.getElementById('backup-row').style.display='block';
       if(!stealthOn){toggleStealth();}
+      // 訪客：每 30 秒輪詢，若 guest_access 被刪除或過期則 reload 回驗證碼畫面
+      if (!window._guestPollInterval) {
+        window._guestPollInterval = setInterval(async () => {
+          try {
+            const { db, doc, getDoc } = window._fb;
+            const gd = await getDoc(doc(db, 'guest_access', window._me.uid));
+            if (!gd.exists() || (gd.data().expiresAt?.toMillis?.() || 0) <= Date.now()) {
+              clearInterval(window._guestPollInterval);
+              location.reload();
+            }
+          } catch(_) {}
+        }, 30000);
+      }
     }
   }
   // Mobile badges
@@ -880,6 +893,16 @@ window.enterApp = function(role) {
 
 /* ═══════════════════════ DATA ═══════════════════════ */
 async function loadEntries() {
+  // 訪客：先確認 guest_access 仍有效，否則 reload
+  if (window._role === 'guest') {
+    try {
+      const { db, doc, getDoc } = window._fb;
+      const gd = await getDoc(doc(db, 'guest_access', window._me.uid));
+      if (!gd.exists() || (gd.data().expiresAt?.toMillis?.() || 0) <= Date.now()) {
+        location.reload(); return;
+      }
+    } catch(_) {}
+  }
   const { db, collection, query, orderBy, getDocs } = window._fb;
   try {
     setSyncState('syncing');
