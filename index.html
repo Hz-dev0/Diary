@@ -213,6 +213,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .role-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 8px; border-radius:20px; margin-top:5px; font-weight:500; }
 .role-badge.trusted { background:rgba(196,162,74,.18); color:var(--gold-light); }
 .role-badge.guest { background:rgba(255,255,255,.08); color:rgba(255,255,255,.5); }
+.role-badge.guest:hover { background:rgba(180,60,60,.25); color:rgba(255,180,180,.85); }
 
 /* Calendar */
 .calendar-wrap { padding:14px 13px 10px; background:var(--white); flex-shrink:0; }
@@ -847,7 +848,15 @@ window.enterApp = function(role) {
       document.getElementById('backup-row').style.display='block';
     } else {
       b.textContent='◈ 訪客模式'; b.className='role-badge guest';
+      b.title='點擊登出'; b.style.cursor='pointer';
+      b.onclick = async function() {
+        if(!confirm('確定要登出訪客模式？')) return;
+        const {auth} = window._fb;
+        try { await auth.signOut(); } catch(_) {}
+        location.reload();
+      };
       document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
+      document.getElementById('backup-row').style.display='block';
       if(!stealthOn){toggleStealth();}
     }
   }
@@ -1720,12 +1729,15 @@ async function mobSaveActive() {
 /* ═══════════════════════ REVOKE GUESTS ═══════════════════════ */
 async function revokeAllGuests(){
   if(!confirm('確定要強制登出所有訪客？他們目前的訪問權限將立即失效。'))return;
-  const{db,collection,getDocs,doc,setDoc,Timestamp}=window._fb;
+  const{db,collection,getDocs,doc,deleteDoc,setDoc,Timestamp}=window._fb;
   try{
     const snap=await getDocs(collection(db,'guest_access'));
     if(snap.empty){showToast('目前沒有訪客');return;}
     const expired=new Timestamp(Math.floor(Date.now()/1000)-1,0);
-    await Promise.all(snap.docs.map(d=>setDoc(doc(db,'guest_access',d.id),{expiresAt:expired},{merge:true})));
+    await Promise.all(snap.docs.map(d=>{
+      try{ return deleteDoc(doc(db,'guest_access',d.id)); }
+      catch(_){ return setDoc(doc(db,'guest_access',d.id),{expiresAt:expired},{merge:true}); }
+    }));
     showToast('已強制登出 '+snap.size+' 位訪客 ✦');
   }catch(e){showToast('操作失敗：'+e.message);}
 }
