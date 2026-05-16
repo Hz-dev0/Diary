@@ -760,14 +760,36 @@ function setSyncState(state) {
 }
 
 /* ═══════════════════════ AUTH ═══════════════════════ */
+/*
+ * ⚠️ BUG 說明：「輸入一個數字卻填入兩格」
+ * ─────────────────────────────────────────
+ * 原本的設計：
+ *   - keydown 攔截數字鍵 → 填值 + 跳格，並設 _keyHandled = true
+ *   - input 事件若 _keyHandled = true 則略過
+ *
+ * 問題原因：
+ *   在某些瀏覽器（尤其手機、部分桌機 IME 輸入法）中，
+ *   keydown 裡的 e.preventDefault() **無法阻止** input 事件觸發。
+ *   結果：keydown 填了一次（跳到下一格），
+ *         input 再對「已跳到的那格」填一次 → 一個按鍵填入兩格。
+ *
+ * 修正策略（統一由 input 事件處理）：
+ *   - keydown 只處理「無字元動作」：Backspace、方向鍵、Enter
+ *   - 數字輸入完全交給 input 事件處理（桌機 / 手機通用）
+ *   - 用 _skipInput flag 讓 keydown 的 Backspace 能告知 input 跳過一次
+ *   （因為 Backspace 按下後某些瀏覽器仍會觸發 input）
+ *
+ * 每次修改這段邏輯前，請先閱讀以上說明，避免重蹈覆轍。
+ */
 document.querySelectorAll('#code-inputs input').forEach((inp, i, all) => {
-  let _keyHandled = false;
+  // _skipInput：用來讓 keydown（Backspace）告訴 input 事件「這次不用處理」
+  let _skipInput = false;
 
   inp.addEventListener('keydown', e => {
-    _keyHandled = false;
+    // Backspace：清空當格或退到上一格
     if (e.key === 'Backspace') {
       e.preventDefault();
-      _keyHandled = true;
+      _skipInput = true; // 通知 input 事件跳過
       if (inp.value) {
         inp.value = '';
         all.forEach(x => x.classList.toggle('filled', !!x.value));
@@ -780,29 +802,26 @@ document.querySelectorAll('#code-inputs input').forEach((inp, i, all) => {
       }
       return;
     }
-    if (e.key === 'ArrowLeft' && i > 0)  { e.preventDefault(); _keyHandled = true; all[i-1].focus(); return; }
-    if (e.key === 'ArrowRight' && i < all.length-1) { e.preventDefault(); _keyHandled = true; all[i+1].focus(); return; }
-    if (e.key === 'Enter') { _keyHandled = true; verifyToken(); return; }
-    // Desktop: single digit key — fill and advance
-    if (/^[0-9]$/.test(e.key)) {
-      e.preventDefault();
-      _keyHandled = true;
-      inp.value = e.key;
-      all.forEach(x => x.classList.toggle('filled', !!x.value));
-      const code = [...all].map(x => x.value).join('');
-      document.getElementById('btn-verify').disabled = code.length < 6;
-      if (i < all.length - 1) all[i + 1].focus();
-    }
+    // 方向鍵：移動焦點
+    if (e.key === 'ArrowLeft'  && i > 0)             { e.preventDefault(); all[i-1].focus(); return; }
+    if (e.key === 'ArrowRight' && i < all.length - 1) { e.preventDefault(); all[i+1].focus(); return; }
+    // Enter：送出驗證
+    if (e.key === 'Enter') { verifyToken(); return; }
+    // ⚠️ 數字鍵：不在這裡處理！交給下方 input 事件統一處理。
+    // 原因見上方 BUG 說明。
   });
-  // input: handles mobile virtual keyboard only (e.key is 'Unidentified' on mobile)
+
+  // input：桌機與手機通用的數字填入處理
   inp.addEventListener('input', () => {
-    if (_keyHandled) { _keyHandled = false; return; } // already handled by keydown
-    // Take only the last digit entered, discard rest
+    // 若是 Backspace 觸發的 input，跳過
+    if (_skipInput) { _skipInput = false; return; }
+    // 只取最後一個數字（相容手機自動補字、IME、貼上）
     const digit = inp.value.replace(/\D/g, '').slice(-1);
     inp.value = digit;
     all.forEach(x => x.classList.toggle('filled', !!x.value));
     const code = [...all].map(x => x.value).join('');
     document.getElementById('btn-verify').disabled = code.length < 6;
+    // 有值才跳到下一格，避免清空時誤跳
     if (digit && i < all.length - 1) all[i + 1].focus();
   });
   inp.addEventListener('paste', e => {
@@ -1557,19 +1576,33 @@ function closeBackupModal() {
 }
 
 function setupBackupCodeInputs() {
+  /*
+   * ⚠️ 同樣的 BUG 修正：「輸入一個數字卻填入兩格」
+   * ─────────────────────────────────────────────────
+   * 原因與 #code-inputs 相同：
+   *   keydown 對數字鍵呼叫 e.preventDefault()，但部分瀏覽器
+   *   仍會觸發 input 事件，造成 keydown + input 各填一次 → 跑兩格。
+   *
+   * 修正：keydown 只負責 Backspace / Enter，
+   *       數字輸入統一由 input 事件處理，用 _skipInput 旗標
+   *       讓 Backspace 的 input 不誤動作。
+   *
+   * 如果未來要修改這段，請先看上面的說明再動手。
+   */
   const all = [...document.querySelectorAll('#backup-code-inputs input')];
-  all.forEach((inp, i) => {
-    // Remove old listeners by cloning
+  // 移除舊監聽器（透過 clone 節點）
+  all.forEach((inp) => {
     const fresh = inp.cloneNode(true);
     inp.parentNode.replaceChild(fresh, inp);
   });
   const inputs = [...document.querySelectorAll('#backup-code-inputs input')];
   inputs.forEach((inp, i) => {
-    let _kh = false;
+    let _skipInput = false;
     inp.addEventListener('keydown', e => {
-      _kh = false;
+      // Backspace：清空當格或退到上一格
       if (e.key === 'Backspace') {
-        e.preventDefault(); _kh = true;
+        e.preventDefault();
+        _skipInput = true; // 通知 input 事件跳過這次
         if (inp.value) {
           inp.value = '';
           inputs.forEach(x => x.classList.toggle('filled', !!x.value));
@@ -1582,18 +1615,13 @@ function setupBackupCodeInputs() {
         }
         return;
       }
-      if (e.key === 'Enter') { _kh = true; verifyAndExport(); return; }
-      if (/^[0-9]$/.test(e.key)) {
-        e.preventDefault(); _kh = true;
-        inp.value = e.key;
-        inputs.forEach(x => x.classList.toggle('filled', !!x.value));
-        const code = inputs.map(x => x.value).join('');
-        document.getElementById('btn-backup-verify').disabled = code.length < 6;
-        if (i < inputs.length - 1) inputs[i+1].focus();
-      }
+      // Enter：送出驗證
+      if (e.key === 'Enter') { verifyAndExport(); return; }
+      // ⚠️ 數字鍵不在這裡處理，交給 input 事件（避免雙填 bug）
     });
     inp.addEventListener('input', () => {
-      if (_kh) { _kh = false; return; }
+      // 若是 Backspace 觸發的 input，略過
+      if (_skipInput) { _skipInput = false; return; }
       const digit = inp.value.replace(/\D/g, '').slice(-1);
       inp.value = digit;
       inputs.forEach(x => x.classList.toggle('filled', !!x.value));
