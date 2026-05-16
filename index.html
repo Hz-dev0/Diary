@@ -860,23 +860,26 @@ window.enterApp = function(role) {
       b.title='點擊登出'; b.style.cursor='pointer';
       b.onclick = async function() {
         if(!confirm('確定要登出訪客模式？')) return;
-        const {auth, db, doc, deleteDoc} = window._fb;
+        const {db, doc, deleteDoc} = window._fb;
         try { await deleteDoc(doc(db,'guest_access',window._me.uid)); } catch(_) {}
-        try { await auth.signOut(); } catch(_) {}
-        location.reload();
+        // 取消監聽
+        if(window._guestUnsub){ window._guestUnsub(); window._guestUnsub=null; }
+        // 切換到驗證碼畫面
+        window._showGuestScreen();
       };
       document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
       document.getElementById('backup-row').style.display='block';
       if(!stealthOn){toggleStealth();}
-      // 訪客：用 onSnapshot 即時監聽 guest_access，一旦被刪除或過期立刻 reload
+      // 訪客：用 onSnapshot 即時監聽 guest_access，一旦被刪除或過期立刻切換畫面
       if (!window._guestUnsub) {
         const { db, doc, onSnapshot } = window._fb;
         window._guestUnsub = onSnapshot(doc(db, 'guest_access', window._me.uid), (snap) => {
           if (!snap.exists() || (snap.data().expiresAt?.toMillis?.() || 0) <= Date.now()) {
             window._guestUnsub && window._guestUnsub();
-            location.reload();
+            window._guestUnsub = null;
+            window._showGuestScreen();
           }
-        }, () => { location.reload(); });
+        }, () => { window._showGuestScreen(); });
       }
     }
   }
@@ -888,6 +891,22 @@ window.enterApp = function(role) {
   const mobToken = document.getElementById('mob-btn-token');
   if (mobToken) mobToken.style.display = role === 'trusted' ? '' : 'none';
   loadEntries();
+};
+
+/* 切換回驗證碼畫面（訪客登出 / 被踢出時使用） */
+window._showGuestScreen = function() {
+  // 隱藏 app 畫面
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-mobile').style.display = 'none';
+  // 清空驗證碼輸入
+  document.querySelectorAll('#code-inputs input').forEach(x => { x.value = ''; x.classList.remove('filled','err'); });
+  document.getElementById('btn-verify').disabled = true;
+  document.getElementById('btn-verify').textContent = '驗 證 進 入';
+  document.getElementById('guest-err').textContent = '';
+  // 顯示驗證碼畫面
+  document.getElementById('screen-guest').style.display = 'flex';
+  // 更新畫面上的 UID 顯示
+  document.querySelectorAll('.display-uid').forEach(el => el.textContent = window._me?.uid || '—');
 };
 
 /* ═══════════════════════ DATA ═══════════════════════ */
@@ -1782,14 +1801,12 @@ async function revokeAllGuests(){
   if(!confirm('確定要強制登出所有訪客？他們目前的訪問權限將立即失效。'))return;
   const{db,collection,getDocs,doc,deleteDoc,setDoc,Timestamp}=window._fb;
   try{
-    const snap=await getDocs(collection(db,'guest_access'));
-    if(snap.empty){showToast('目前沒有訪客');return;}
-    const expired=new Timestamp(Math.floor(Date.now()/1000)-1,0);
-    await Promise.all(snap.docs.map(d=>{
-      try{ return deleteDoc(doc(db,'guest_access',d.id)); }
-      catch(_){ return setDoc(doc(db,'guest_access',d.id),{expiresAt:expired},{merge:true}); }
-    }));
-    showToast('已強制登出 '+snap.size+' 位訪客 ✦');
+    const[guestSnap,tokenSnap]=await Promise.all([getDocs(collection(db,'guest_access')),getDocs(collection(db,'tokens'))]);
+    const ops=[];
+    guestSnap.docs.forEach(d=>{ops.push(deleteDoc(doc(db,'guest_access',d.id)).catch(()=>setDoc(doc(db,'guest_access',d.id),{expiresAt:new Timestamp(Math.floor(Date.now()/1000)-1,0)},{merge:true})));});
+    tokenSnap.docs.forEach(d=>{ops.push(deleteDoc(doc(db,'tokens',d.id)).catch(()=>{}));});
+    await Promise.all(ops);
+    showToast(guestSnap.size?'已強制登出 '+guestSnap.size+' 位訪客 ✦':'已清除所有驗證碼 ✦');
   }catch(e){showToast('操作失敗：'+e.message);}
 }
 
