@@ -849,6 +849,8 @@ window.enterApp = function(role) {
     if (role === 'trusted') {
       b.textContent='✦ 信任裝置'; b.className='role-badge trusted';
       document.getElementById('status-txt').textContent='信任裝置 · 完整存取';
+      // 自動清除過期訪客紀錄
+      purgeExpiredGuests();
       // Show key button for trusted
       document.getElementById('cal-new-row').style.display='flex';
       document.getElementById('btn-gen').style.display='flex';
@@ -1759,6 +1761,20 @@ async function mobSaveActive() {
   } else {
     mobSaveEntry();
   }
+}
+
+/* ═══════════════════════ PURGE EXPIRED GUESTS ═══════════════════════ */
+async function purgeExpiredGuests(){
+  const{db,collection,getDocs,doc,deleteDoc}=window._fb;
+  try{
+    const snap=await getDocs(collection(db,'guest_access'));
+    if(snap.empty) return;
+    const now=Date.now();
+    const expired=snap.docs.filter(d=>(d.data().expiresAt?.toMillis?.()??0)<=now);
+    if(!expired.length) return;
+    await Promise.all(expired.map(d=>deleteDoc(doc(db,'guest_access',d.id)).catch(()=>{})));
+    console.log('[片刻留白] 已清除 '+expired.length+' 筆過期訪客紀錄');
+  }catch(_){}
 }
 
 /* ═══════════════════════ REVOKE GUESTS ═══════════════════════ */
