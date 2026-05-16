@@ -9,7 +9,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-  import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, query, orderBy, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
   const firebaseConfig = { apiKey:"AIzaSyD-ZPtk7SgDdZ-BBGmGjcXuRuO1Hh-Tj0o", authDomain:"diary-1d399.firebaseapp.com", projectId:"diary-1d399", storageBucket:"diary-1d399.firebasestorage.app", messagingSenderId:"230492568365", appId:"1:230492568365:web:cf04c2e0f6c73838b5b1a4" };
   const TRUSTED_UIDS = ["rEAVYuPlDrTjZsqmqGE5TeHFSX73"];
@@ -17,7 +17,7 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  window._fb = { auth, db, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, query, orderBy, serverTimestamp, Timestamp, TRUSTED_UIDS };
+  window._fb = { auth, db, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, TRUSTED_UIDS };
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { await signInAnonymously(auth); return; }
@@ -866,18 +866,15 @@ window.enterApp = function(role) {
       document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
       document.getElementById('backup-row').style.display='block';
       if(!stealthOn){toggleStealth();}
-      // 訪客：每 30 秒輪詢，若 guest_access 被刪除或過期則 reload 回驗證碼畫面
-      if (!window._guestPollInterval) {
-        window._guestPollInterval = setInterval(async () => {
-          try {
-            const { db, doc, getDoc } = window._fb;
-            const gd = await getDoc(doc(db, 'guest_access', window._me.uid));
-            if (!gd.exists() || (gd.data().expiresAt?.toMillis?.() || 0) <= Date.now()) {
-              clearInterval(window._guestPollInterval);
-              location.reload();
-            }
-          } catch(_) {}
-        }, 30000);
+      // 訪客：用 onSnapshot 即時監聽 guest_access，一旦被刪除或過期立刻 reload
+      if (!window._guestUnsub) {
+        const { db, doc, onSnapshot } = window._fb;
+        window._guestUnsub = onSnapshot(doc(db, 'guest_access', window._me.uid), (snap) => {
+          if (!snap.exists() || (snap.data().expiresAt?.toMillis?.() || 0) <= Date.now()) {
+            window._guestUnsub && window._guestUnsub();
+            location.reload();
+          }
+        }, () => { location.reload(); });
       }
     }
   }
@@ -1547,9 +1544,11 @@ function setupBackupCodeInputs() {
   });
   const inputs = [...document.querySelectorAll('#backup-code-inputs input')];
   inputs.forEach((inp, i) => {
+    let _kh = false;
     inp.addEventListener('keydown', e => {
+      _kh = false;
       if (e.key === 'Backspace') {
-        e.preventDefault();
+        e.preventDefault(); _kh = true;
         if (inp.value) {
           inp.value = '';
           inputs.forEach(x => x.classList.toggle('filled', !!x.value));
@@ -1562,9 +1561,9 @@ function setupBackupCodeInputs() {
         }
         return;
       }
-      if (e.key === 'Enter') { verifyAndExport(); return; }
+      if (e.key === 'Enter') { _kh = true; verifyAndExport(); return; }
       if (/^[0-9]$/.test(e.key)) {
-        e.preventDefault();
+        e.preventDefault(); _kh = true;
         inp.value = e.key;
         inputs.forEach(x => x.classList.toggle('filled', !!x.value));
         const code = inputs.map(x => x.value).join('');
@@ -1573,6 +1572,7 @@ function setupBackupCodeInputs() {
       }
     });
     inp.addEventListener('input', () => {
+      if (_kh) { _kh = false; return; }
       const digit = inp.value.replace(/\D/g, '').slice(-1);
       inp.value = digit;
       inputs.forEach(x => x.classList.toggle('filled', !!x.value));
