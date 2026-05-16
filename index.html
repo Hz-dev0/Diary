@@ -821,8 +821,13 @@ document.querySelectorAll('#code-inputs input').forEach((inp, i, all) => {
     all.forEach(x => x.classList.toggle('filled', !!x.value));
     const code = [...all].map(x => x.value).join('');
     document.getElementById('btn-verify').disabled = code.length < 6;
-    // 有值才跳到下一格，避免清空時誤跳
-    if (digit && i < all.length - 1) all[i + 1].focus();
+    // ⚠️ 跳格邏輯：不能只看 i，因為填滿後刪掉再輸入，
+    // 焦點可能停在最後一格但中間有空格，導致「輸入後不跳格」的假象。
+    // 修正：填入後找「下一個空格」跳過去，確保焦點永遠在正確位置。
+    if (digit) {
+      const nextEmpty = [...all].findIndex((x, idx) => idx > i && !x.value);
+      if (nextEmpty !== -1) all[nextEmpty].focus();
+    }
   });
   inp.addEventListener('paste', e => {
     e.preventDefault();
@@ -1627,7 +1632,12 @@ function setupBackupCodeInputs() {
       inputs.forEach(x => x.classList.toggle('filled', !!x.value));
       const code = inputs.map(x => x.value).join('');
       document.getElementById('btn-backup-verify').disabled = code.length < 6;
-      if (digit && i < inputs.length - 1) inputs[i+1].focus();
+      // ⚠️ 同 #code-inputs 修正：跳到「下一個空格」而非固定 i+1，
+      // 避免填滿刪除後重新輸入時焦點停在最後一格不跳格的問題。
+      if (digit) {
+        const nextEmpty = inputs.findIndex((x, idx) => idx > i && !x.value);
+        if (nextEmpty !== -1) inputs[nextEmpty].focus();
+      }
     });
   });
 }
