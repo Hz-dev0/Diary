@@ -143,6 +143,11 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .code-inputs input:focus { border-color:var(--gold); background:var(--white); box-shadow:0 0 0 3px rgba(201,168,76,0.12); }
 .code-inputs input.filled { border-color:var(--gold-mid); }
 .code-inputs input.err { border-color:#b04040; animation:shake .3s; }
+/* ⚠️ 視覺假格：搭配單一隱藏 input 使用，請勿改回多 input 設計（見 HTML 註解） */
+.code-cell { width:46px; height:56px; border:1px solid var(--border-g); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:500; color:var(--navy); background:var(--gold-faint); font-family:'Noto Serif TC',serif; transition:all .2s; cursor:text; user-select:none; }
+.code-cell.active { border-color:var(--gold); background:var(--white); box-shadow:0 0 0 3px rgba(201,168,76,0.12); }
+.code-cell.filled { border-color:var(--gold-mid); }
+.code-cell.err { border-color:#b04040; animation:shake .3s; }
 @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
 .btn-main { width:100%; padding:13px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:13px; font-weight:600; letter-spacing:3px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all .2s; }
 .btn-main:hover { background:var(--navy-light); }
@@ -506,13 +511,23 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       <h1>片刻留白</h1>
       <p>請從信任裝置取得 6 位數驗證碼</p>
     </div>
-    <div class="code-inputs" id="code-inputs">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
+    <!-- ⚠️ 驗證碼輸入區：使用「單一隱藏 input + 視覺假格」架構
+         原因：多個 input 各自監聽的設計，在 iOS / Android 數字鍵盤、
+         部分瀏覽器的 composition 流程下會觸發多次 input 事件，
+         導致一個數字填入兩格。改用單一 input 從根本解決此問題。
+         請勿改回多 input 設計。 -->
+    <div class="code-inputs" id="code-inputs" style="position:relative;">
+      <div id="code-cells" style="display:flex;gap:8px;justify-content:center;">
+        <div class="code-cell" data-idx="0"></div>
+        <div class="code-cell" data-idx="1"></div>
+        <div class="code-cell" data-idx="2"></div>
+        <div class="code-cell" data-idx="3"></div>
+        <div class="code-cell" data-idx="4"></div>
+        <div class="code-cell" data-idx="5"></div>
+      </div>
+      <input id="code-real-input" type="text" inputmode="numeric" pattern="[0-9]*"
+        maxlength="6" autocomplete="one-time-code"
+        style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;">
     </div>
     <button class="btn-main" id="btn-verify" onclick="verifyToken()" disabled>驗 證 進 入</button>
     <div class="err-msg" id="guest-err"></div>
@@ -630,13 +645,19 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   <div class="backup-modal">
     <h3>備份匯出</h3>
     <p class="sub">請輸入信任裝置產生的驗證碼以確認匯出。</p>
-    <div class="code-inputs" id="backup-code-inputs">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
-      <input type="text" maxlength="1" inputmode="numeric">
+    <!-- ⚠️ 同上：單一隱藏 input + 視覺假格，請勿改回多 input 設計 -->
+    <div class="code-inputs" id="backup-code-inputs" style="position:relative;">
+      <div id="backup-code-cells" style="display:flex;gap:8px;justify-content:center;">
+        <div class="code-cell" data-idx="0"></div>
+        <div class="code-cell" data-idx="1"></div>
+        <div class="code-cell" data-idx="2"></div>
+        <div class="code-cell" data-idx="3"></div>
+        <div class="code-cell" data-idx="4"></div>
+        <div class="code-cell" data-idx="5"></div>
+      </div>
+      <input id="backup-real-input" type="text" inputmode="numeric" pattern="[0-9]*"
+        maxlength="6" autocomplete="one-time-code"
+        style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;">
     </div>
     <button class="btn-main" id="btn-backup-verify" onclick="verifyAndExport()" disabled>確 認 匯 出</button>
     <div class="err-msg" id="backup-err"></div>
@@ -761,88 +782,79 @@ function setSyncState(state) {
 
 /* ═══════════════════════ AUTH ═══════════════════════ */
 /*
- * ⚠️ BUG 說明：「輸入一個數字卻填入兩格」
- * ─────────────────────────────────────────
- * 原本的設計：
- *   - keydown 攔截數字鍵 → 填值 + 跳格，並設 _keyHandled = true
- *   - input 事件若 _keyHandled = true 則略過
+ * ⚠️ 驗證碼輸入區架構說明（重要，修改前必讀）
+ * ────────────────────────────────────────────────
+ * 【為什麼不用多個 input？】
+ * 每格一個 input 的設計看似直覺，但有根本性問題：
+ *   - 桌機：keydown 的 e.preventDefault() 在部分瀏覽器無法阻止 input 事件，
+ *     導致 keydown + input 各執行一次 → 一個數字填兩格。
+ *   - iOS / Android：數字鍵盤走 composition 流程，一次輸入觸發多次 input。
+ *   - focus() 跳格時，新獲焦點的 input 也可能觸發 input 事件。
+ * 以上問題交織在一起，無法用 flag 完全防堵，每次修改都會讓 bug 復發。
  *
- * 問題原因：
- *   在某些瀏覽器（尤其手機、部分桌機 IME 輸入法）中，
- *   keydown 裡的 e.preventDefault() **無法阻止** input 事件觸發。
- *   結果：keydown 填了一次（跳到下一格），
- *         input 再對「已跳到的那格」填一次 → 一個按鍵填入兩格。
+ * 【現在的架構：單一隱藏 input + 視覺假格】
+ * - 一個透明 input 鋪滿整個 .code-inputs 區域，接收所有鍵盤輸入
+ * - 六個 .code-cell div 純粹負責顯示，不接收輸入
+ * - input 事件只會觸發一次，不存在跳格、雙填問題
+ * - 支援貼上、手機數字鍵盤、autocomplete="one-time-code"
  *
- * 修正策略（統一由 input 事件處理）：
- *   - keydown 只處理「無字元動作」：Backspace、方向鍵、Enter
- *   - 數字輸入完全交給 input 事件處理（桌機 / 手機通用）
- *   - 用 _skipInput flag 讓 keydown 的 Backspace 能告知 input 跳過一次
- *   （因為 Backspace 按下後某些瀏覽器仍會觸發 input）
- *
- * 每次修改這段邏輯前，請先閱讀以上說明，避免重蹈覆轍。
+ * 請勿改回多 input 設計。
  */
-document.querySelectorAll('#code-inputs input').forEach((inp, i, all) => {
-  // _skipInput：用來讓 keydown（Backspace）告訴 input 事件「這次不用處理」
-  let _skipInput = false;
+function setupOtpInput(realInputId, cellsId, btnId, onComplete) {
+  const realInput = document.getElementById(realInputId);
+  const cells = [...document.getElementById(cellsId).querySelectorAll('.code-cell')];
 
-  inp.addEventListener('keydown', e => {
-    // Backspace：清空當格或退到上一格
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      _skipInput = true; // 通知 input 事件跳過
-      if (inp.value) {
-        inp.value = '';
-        all.forEach(x => x.classList.toggle('filled', !!x.value));
-        document.getElementById('btn-verify').disabled = true;
-      } else if (i > 0) {
-        all[i-1].value = '';
-        all[i-1].focus();
-        all.forEach(x => x.classList.toggle('filled', !!x.value));
-        document.getElementById('btn-verify').disabled = true;
-      }
-      return;
+  function render(val, hasFocus) {
+    cells.forEach((cell, i) => {
+      cell.textContent = val[i] || '';
+      cell.classList.toggle('filled', !!val[i]);
+      cell.classList.remove('active');
+    });
+    if (hasFocus) {
+      const activeIdx = Math.min(val.length, cells.length - 1);
+      cells[activeIdx].classList.add('active');
     }
-    // 方向鍵：移動焦點
-    if (e.key === 'ArrowLeft'  && i > 0)             { e.preventDefault(); all[i-1].focus(); return; }
-    if (e.key === 'ArrowRight' && i < all.length - 1) { e.preventDefault(); all[i+1].focus(); return; }
-    // Enter：送出驗證
-    if (e.key === 'Enter') { verifyToken(); return; }
-    // ⚠️ 數字鍵：不在這裡處理！交給下方 input 事件統一處理。
-    // 原因見上方 BUG 說明。
+  }
+
+  realInput.addEventListener('input', () => {
+    // 只保留數字，最多6位
+    const digits = realInput.value.replace(/\D/g, '').slice(0, 6);
+    realInput.value = digits;
+    render(digits, true);
+    const btn = document.getElementById(btnId);
+    if (btn) btn.disabled = digits.length < 6;
+    if (digits.length === 6 && onComplete) onComplete();
   });
 
-  // input：桌機與手機通用的數字填入處理
-  inp.addEventListener('input', () => {
-    // 若是 Backspace 觸發的 input，跳過
-    if (_skipInput) { _skipInput = false; return; }
-    // 只取最後一個數字（相容手機自動補字、IME、貼上）
-    const digit = inp.value.replace(/\D/g, '').slice(-1);
-    inp.value = digit;
-    all.forEach(x => x.classList.toggle('filled', !!x.value));
-    const code = [...all].map(x => x.value).join('');
-    document.getElementById('btn-verify').disabled = code.length < 6;
-    // ⚠️ 跳格邏輯：不能只看 i，因為填滿後刪掉再輸入，
-    // 焦點可能停在最後一格但中間有空格，導致「輸入後不跳格」的假象。
-    // 修正：填入後找「下一個空格」跳過去，確保焦點永遠在正確位置。
-    if (digit) {
-      const nextEmpty = [...all].findIndex((x, idx) => idx > i && !x.value);
-      if (nextEmpty !== -1) all[nextEmpty].focus();
-    }
-  });
-  inp.addEventListener('paste', e => {
-    e.preventDefault();
-    const p = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-    p.split('').forEach((ch, j) => { if (all[j]) all[j].value = ch; });
-    const focusIdx = Math.min(p.length, all.length - 1);
-    all[focusIdx].focus();
-    document.getElementById('btn-verify').disabled = p.length < 6;
-    all.forEach(x => x.classList.toggle('filled', !!x.value));
-  });
+  realInput.addEventListener('focus', () => render(realInput.value.replace(/\D/g,'').slice(0,6), true));
+  realInput.addEventListener('blur',  () => render(realInput.value.replace(/\D/g,'').slice(0,6), false));
+
+  // 點假格也聚焦真 input
+  document.getElementById(cellsId).addEventListener('click', () => realInput.focus());
+
+  // 對外提供清空與標錯方法
+  realInput._otpClear = () => {
+    realInput.value = '';
+    render('', false);
+    const btn = document.getElementById(btnId);
+    if (btn) btn.disabled = true;
+  };
+  realInput._otpShakeErr = () => {
+    cells.forEach(c => { c.classList.add('err'); setTimeout(() => c.classList.remove('err'), 400); });
+  };
+}
+
+// 初始化登入驗證碼
+setupOtpInput('code-real-input', 'code-cells', 'btn-verify', null);
+
+// Enter 鍵送出
+document.getElementById('code-real-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') verifyToken();
 });
 
 async function verifyToken() {
   const { db, doc, getDoc, setDoc, Timestamp } = window._fb;
-  const code = [...document.querySelectorAll('.code-inputs input')].map(x=>x.value).join('');
+  const code = document.getElementById('code-real-input').value.replace(/\D/g,'');
   const errEl = document.getElementById('guest-err');
   errEl.textContent = '';
   document.getElementById('btn-verify').disabled = true;
@@ -855,7 +867,7 @@ async function verifyToken() {
     window.enterApp('guest');
   } catch(e) {
     errEl.textContent = e.message;
-    document.querySelectorAll('.code-inputs input').forEach(x=>{ x.classList.add('err'); setTimeout(()=>x.classList.remove('err'),400); });
+    document.getElementById('code-real-input')._otpShakeErr?.();
     document.getElementById('btn-verify').disabled = false;
     document.getElementById('btn-verify').textContent = '驗 證 進 入';
   }
@@ -923,7 +935,7 @@ window._showGuestScreen = function() {
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-mobile').style.display = 'none';
   // 清空驗證碼輸入
-  document.querySelectorAll('#code-inputs input').forEach(x => { x.value = ''; x.classList.remove('filled','err'); });
+  document.getElementById('code-real-input')._otpClear?.();
   document.getElementById('btn-verify').disabled = true;
   document.getElementById('btn-verify').textContent = '驗 證 進 入';
   document.getElementById('guest-err').textContent = '';
@@ -1577,74 +1589,20 @@ function openBackupModal() {
 }
 function closeBackupModal() {
   document.getElementById('backup-modal').classList.remove('open');
-  document.querySelectorAll('#backup-code-inputs input').forEach(x => { x.value = ''; x.classList.remove('filled','err'); });
+  document.getElementById('backup-real-input')._otpClear?.();
 }
 
 function setupBackupCodeInputs() {
-  /*
-   * ⚠️ 同樣的 BUG 修正：「輸入一個數字卻填入兩格」
-   * ─────────────────────────────────────────────────
-   * 原因與 #code-inputs 相同：
-   *   keydown 對數字鍵呼叫 e.preventDefault()，但部分瀏覽器
-   *   仍會觸發 input 事件，造成 keydown + input 各填一次 → 跑兩格。
-   *
-   * 修正：keydown 只負責 Backspace / Enter，
-   *       數字輸入統一由 input 事件處理，用 _skipInput 旗標
-   *       讓 Backspace 的 input 不誤動作。
-   *
-   * 如果未來要修改這段，請先看上面的說明再動手。
-   */
-  const all = [...document.querySelectorAll('#backup-code-inputs input')];
-  // 移除舊監聽器（透過 clone 節點）
-  all.forEach((inp) => {
-    const fresh = inp.cloneNode(true);
-    inp.parentNode.replaceChild(fresh, inp);
-  });
-  const inputs = [...document.querySelectorAll('#backup-code-inputs input')];
-  inputs.forEach((inp, i) => {
-    let _skipInput = false;
-    inp.addEventListener('keydown', e => {
-      // Backspace：清空當格或退到上一格
-      if (e.key === 'Backspace') {
-        e.preventDefault();
-        _skipInput = true; // 通知 input 事件跳過這次
-        if (inp.value) {
-          inp.value = '';
-          inputs.forEach(x => x.classList.toggle('filled', !!x.value));
-          document.getElementById('btn-backup-verify').disabled = true;
-        } else if (i > 0) {
-          inputs[i-1].value = '';
-          inputs[i-1].focus();
-          inputs.forEach(x => x.classList.toggle('filled', !!x.value));
-          document.getElementById('btn-backup-verify').disabled = true;
-        }
-        return;
-      }
-      // Enter：送出驗證
-      if (e.key === 'Enter') { verifyAndExport(); return; }
-      // ⚠️ 數字鍵不在這裡處理，交給 input 事件（避免雙填 bug）
-    });
-    inp.addEventListener('input', () => {
-      // 若是 Backspace 觸發的 input，略過
-      if (_skipInput) { _skipInput = false; return; }
-      const digit = inp.value.replace(/\D/g, '').slice(-1);
-      inp.value = digit;
-      inputs.forEach(x => x.classList.toggle('filled', !!x.value));
-      const code = inputs.map(x => x.value).join('');
-      document.getElementById('btn-backup-verify').disabled = code.length < 6;
-      // ⚠️ 同 #code-inputs 修正：跳到「下一個空格」而非固定 i+1，
-      // 避免填滿刪除後重新輸入時焦點停在最後一格不跳格的問題。
-      if (digit) {
-        const nextEmpty = inputs.findIndex((x, idx) => idx > i && !x.value);
-        if (nextEmpty !== -1) inputs[nextEmpty].focus();
-      }
-    });
+  // ⚠️ 同登入區：單一隱藏 input + 視覺假格，請勿改回多 input（見上方架構說明）
+  setupOtpInput('backup-real-input', 'backup-code-cells', 'btn-backup-verify', null);
+  document.getElementById('backup-real-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifyAndExport();
   });
 }
 
 async function verifyAndExport() {
   const { db, doc, getDoc } = window._fb;
-  const code = [...document.querySelectorAll('#backup-code-inputs input')].map(x=>x.value).join('');
+  const code = document.getElementById('backup-real-input').value.replace(/\D/g,'');
   const errEl = document.getElementById('backup-err');
   errEl.textContent = '';
   document.getElementById('btn-backup-verify').disabled = true;
@@ -1672,7 +1630,7 @@ async function verifyAndExport() {
     showToast('匯出成功 ✦');
   } catch(e) {
     errEl.textContent = e.message;
-    document.querySelectorAll('#backup-code-inputs input').forEach(x=>{ x.classList.add('err'); setTimeout(()=>x.classList.remove('err'),400); });
+    document.getElementById('backup-real-input')._otpShakeErr?.();
     document.getElementById('btn-backup-verify').disabled = false;
     document.getElementById('btn-backup-verify').textContent = '確 認 匯 出';
   }
