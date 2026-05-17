@@ -30,7 +30,7 @@
   };
 
   const APP_ROOT = 'SanctuaryOfReed';
-  const ENTRIES_PATH = 'SanctuaryOfReed/entries';   // 日記集合路徑
+  const ENTRIES_PATH = 'SanctuaryOfReed';   // 日記集合路徑
 
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -1161,7 +1161,7 @@ async function _negSave() {
   const data = { body, mood: 'negative' };
   try {
     if (curId) {
-      await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
+      await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
       const idx = entries.findIndex(e => e.id === curId);
       if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
     } else {
@@ -1171,7 +1171,7 @@ async function _negSave() {
       } else {
         data.createdAt = serverTimestamp();
       }
-      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
+      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
       curId = ref.id;
       document.getElementById('btn-del').style.display = 'inline-block';
       await loadEntries(); setSyncState('idle'); return;
@@ -1262,7 +1262,7 @@ async function _mobNegSave() {
   const data = { body, mood: 'negative' };
   try {
     if (mobCurId) {
-      await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId), data);
+      await updateDoc(doc(db,'SanctuaryOfReed',mobCurId), data);
       const idx = entries.findIndex(e => e.id === mobCurId);
       if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
       setSyncState('idle');
@@ -1277,7 +1277,7 @@ async function _mobNegSave() {
         });
         if (existing) {
           mobCurId = existing.id;
-          await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId), data);
+          await updateDoc(doc(db,'SanctuaryOfReed',mobCurId), data);
           const idx = entries.findIndex(e => e.id === mobCurId);
           if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
           document.getElementById('mob-btn-del').style.display = 'inline-block';
@@ -1287,7 +1287,7 @@ async function _mobNegSave() {
       } else {
         data.createdAt = serverTimestamp();
       }
-      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
+      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
       mobCurId = ref.id;
       document.getElementById('mob-btn-del').style.display = 'inline-block';
       await loadEntries(); setSyncState('idle'); return;
@@ -1569,7 +1569,7 @@ async function loadEntries() {
   const { db, collection, query, orderBy, getDocs } = window._fb;
   try {
     setSyncState('syncing');
-    const q = query(collection(db,'SanctuaryOfReed','entries'), orderBy('createdAt','desc'));
+    const q = query(collection(db,'SanctuaryOfReed'), orderBy('createdAt','desc'));
     const snap = await getDocs(q);
     const wasEmpty = entries.length === 0;
     entries = snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1823,28 +1823,28 @@ async function _saveBoth() {
     // Save positive
     if (posBody) {
       if (_cmpPosId) {
-        await updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpPosId),{body:posBody,mood:'positive'});
+        await updateDoc(doc(db,'SanctuaryOfReed',_cmpPosId),{body:posBody,mood:'positive'});
         const i=entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody;
       } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
         _cmpPosId = ref.id;
       }
     } else if (_cmpPosId) {
       // Text cleared — delete entry
-      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed','entries',_cmpPosId));
+      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpPosId));
       entries = entries.filter(e=>e.id!==_cmpPosId); _cmpPosId=null;
     }
     // Save negative
     if (negBody) {
       if (_cmpNegId) {
-        await updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpNegId),{body:negBody,mood:'negative'});
+        await updateDoc(doc(db,'SanctuaryOfReed',_cmpNegId),{body:negBody,mood:'negative'});
         const i=entries.findIndex(e=>e.id===_cmpNegId); if(i!==-1) entries[i].body=negBody;
       } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
         _cmpNegId = ref.id;
       }
     } else if (_cmpNegId) {
-      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed','entries',_cmpNegId));
+      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpNegId));
       entries = entries.filter(e=>e.id!==_cmpNegId); _cmpNegId=null;
     }
     await loadEntries();
@@ -1985,12 +1985,12 @@ async function autoSave() {
   const data = { body, mood };
   try {
     if (curId) {
-      await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
+      await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
       const idx = entries.findIndex(e=>e.id===curId);
       if (idx!==-1) entries[idx]={...entries[idx],...data};
     } else {
       data.createdAt = serverTimestamp();
-      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
+      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
       curId = ref.id;
       document.getElementById('btn-del').style.display='inline-block';
       await loadEntries(); setSyncState('idle'); return;
@@ -2023,13 +2023,13 @@ async function saveEntry() {
     const data = { body, mood: 'negative' };
     try {
       if (curId) {
-        await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
+        await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
         const idx = entries.findIndex(e=>e.id===curId); if(idx!==-1) entries[idx]={...entries[idx],...data};
         showToast('已更新 ✦');
       } else {
         if (selectedDate) { const {y,m,d}=selectedDate; data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,1,0)); }
         else { data.createdAt=serverTimestamp(); }
-        const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);
+        const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);
         curId=ref.id; await loadEntries(); showToast('已儲存 ✦');
       }
       document.getElementById('btn-del').style.display='inline-block';
@@ -2049,13 +2049,13 @@ async function saveEntry() {
   const data = { body, mood };
   try {
     if (curId) {
-      await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
+      await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
       const idx = entries.findIndex(e=>e.id===curId);
       if (idx!==-1) entries[idx]={...entries[idx],...data};
       showToast('已更新 ✦');
     } else {
       data.createdAt = serverTimestamp();
-      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
+      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
       curId=ref.id; await loadEntries(); showToast('已儲存 ✦');
     }
     document.getElementById('btn-del').style.display='inline-block';
@@ -2071,7 +2071,7 @@ async function delEntry() {
   const { db, doc, deleteDoc } = window._fb;
   try {
     setSyncState('syncing');
-    await deleteDoc(doc(db,'SanctuaryOfReed','entries',curId));
+    await deleteDoc(doc(db,'SanctuaryOfReed',curId));
     entries = entries.filter(e => e.id !== curId);
     curId = null; selectedDate = null;
     setSyncState('idle');
@@ -2089,7 +2089,7 @@ async function delBothEntries(posId, negId) {
   const { db, doc, deleteDoc } = window._fb;
   try {
     setSyncState('syncing');
-    await Promise.all(toDelete.map(id => deleteDoc(doc(db,'SanctuaryOfReed','entries',id))));
+    await Promise.all(toDelete.map(id => deleteDoc(doc(db,'SanctuaryOfReed',id))));
     const delIds = new Set(toDelete);
     entries = entries.filter(e => !delIds.has(e.id));
     curId = null; selectedDate = null; compareOn = false;
@@ -2247,17 +2247,17 @@ async function mobAutoSave(){
   const data={body,mood:mobMood};
   try{
     if(mobCurId){
-      await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);
+      await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);
       const idx=entries.findIndex(e=>e.id===mobCurId);
       if(idx!==-1) entries[idx]={...entries[idx],...data};
     } else {
       if(mobSelectedDate){
         const{y,m,d}=mobSelectedDate;
         const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
-        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};document.getElementById('mob-btn-del').style.display='inline-block';setSyncState('idle');renderMobCalendar();return;}
+        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};document.getElementById('mob-btn-del').style.display='inline-block';setSyncState('idle');renderMobCalendar();return;}
         data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));
       } else { data.createdAt=serverTimestamp(); }
-      const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);
+      const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);
       mobCurId=ref.id;
       document.getElementById('mob-btn-del').style.display='inline-block';
       await loadEntries(); setSyncState('idle'); return;
@@ -2278,7 +2278,7 @@ async function mobSaveEntry(){
   const data={body,mood:mobMood};
   try{
     if(mobCurId){
-      await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);
+      await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);
       const idx=entries.findIndex(e=>e.id===mobCurId);
       if(idx!==-1) entries[idx]={...entries[idx],...data};
       showToast('已更新 ✦');
@@ -2286,11 +2286,11 @@ async function mobSaveEntry(){
       if(mobSelectedDate){
         const{y,m,d}=mobSelectedDate;
         const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
-        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};showToast('已更新 ✦');}
-        else{data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);mobCurId=ref.id;await loadEntries();showToast('已儲存 ✦');}
+        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};showToast('已更新 ✦');}
+        else{data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);mobCurId=ref.id;await loadEntries();showToast('已儲存 ✦');}
       } else {
         data.createdAt=serverTimestamp();
-        const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);
+        const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);
         mobCurId=ref.id; await loadEntries(); showToast('已儲存 ✦');
       }
     }
@@ -2310,7 +2310,7 @@ async function mobDelEntry(){
   const{db,doc,deleteDoc}=window._fb;
   try{
     setSyncState('syncing');
-    await Promise.all(sameDay.map(e=>deleteDoc(doc(db,'SanctuaryOfReed','entries',e.id))));
+    await Promise.all(sameDay.map(e=>deleteDoc(doc(db,'SanctuaryOfReed',e.id))));
     const delIds=new Set(sameDay.map(e=>e.id));
     entries=entries.filter(e=>!delIds.has(e.id));
     mobCurId=null; mobSelectedDate=null;
@@ -2541,19 +2541,19 @@ async function mobSaveSplit() {
     const ops = [];
     if (posBody) {
       if (_mobSplitPosId) {
-        ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_mobSplitPosId),{body:posBody,mood:'positive'}));
+        ops.push(updateDoc(doc(db,'SanctuaryOfReed',_mobSplitPosId),{body:posBody,mood:'positive'}));
         const i=entries.findIndex(e=>e.id===_mobSplitPosId); if(i!==-1) entries[i].body=posBody;
       } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
         _mobSplitPosId = ref.id; await loadEntries();
       }
     }
     if (negBody) {
       if (_mobSplitNegId) {
-        ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_mobSplitNegId),{body:negBody,mood:'negative'}));
+        ops.push(updateDoc(doc(db,'SanctuaryOfReed',_mobSplitNegId),{body:negBody,mood:'negative'}));
         const i=entries.findIndex(e=>e.id===_mobSplitNegId); if(i!==-1) entries[i].body=negBody;
       } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
         _mobSplitNegId = ref.id; await loadEntries();
       }
     }
