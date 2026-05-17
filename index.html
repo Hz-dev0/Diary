@@ -550,6 +550,157 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   pointer-events:none; opacity:0; transition:opacity .15s;
 }
 .backup-history-pop.show { opacity:1; }
+
+/* ═══════════════════════════════════════
+   NEGATIVE ENERGY — BULLET LAUNCHER
+═══════════════════════════════════════ */
+
+/* ── PC single-col neg panel ── */
+#neg-panel {
+  display:none; flex-direction:column; flex:1; overflow:hidden;
+  position:relative; z-index:1;
+}
+.neg-input-wrap {
+  padding:18px 48px 12px;
+  border-bottom:1px solid var(--border-b);
+  flex-shrink:0;
+  background:linear-gradient(180deg,rgba(26,48,80,0.05) 0%,transparent 100%);
+}
+.neg-fire-input {
+  width:100%; border:none; outline:none;
+  border-bottom:1.5px solid rgba(26,48,80,0.12);
+  background:transparent;
+  font-family:'Noto Serif TC',serif; font-size:15px;
+  line-height:1.8; color:var(--blue-text); padding:6px 0;
+  transition:border-color .2s;
+}
+.neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
+.neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
+.neg-fire-hint {
+  font-size:10px; color:var(--blue-faint); margin-top:5px; letter-spacing:1px;
+}
+#neg-list-container {
+  flex:1; overflow-y:auto; padding:16px 48px 20px;
+}
+#neg-list-container::-webkit-scrollbar { width:3px; }
+#neg-list-container::-webkit-scrollbar-thumb { background:var(--border-g); }
+
+/* ── PC compare view neg col ── */
+.cmp-neg-panel {
+  display:flex; flex-direction:column; flex:1; overflow:hidden;
+}
+.cmp-neg-input-wrap {
+  padding:6px 0 10px;
+  border-bottom:1px solid rgba(26,48,80,0.07);
+  flex-shrink:0;
+}
+.cmp-neg-fire-input {
+  width:100%; border:none; outline:none;
+  border-bottom:1.5px solid rgba(26,48,80,0.12);
+  background:transparent;
+  font-family:'Noto Serif TC',serif; font-size:14px;
+  line-height:1.8; color:var(--blue-text); padding:4px 0;
+  transition:border-color .2s;
+}
+.cmp-neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
+.cmp-neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
+#cmp-neg-list {
+  flex:1; overflow-y:auto; margin-top:8px;
+}
+#cmp-neg-list::-webkit-scrollbar { width:2px; }
+#cmp-neg-list::-webkit-scrollbar-thumb { background:var(--border-g); }
+
+/* ── NEG ITEM (shared by all contexts) ── */
+.neg-item {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:7px 0; border-bottom:1px solid rgba(28,48,78,0.05);
+  cursor:pointer; user-select:none;
+  transition:filter .3s ease, opacity .3s ease;
+}
+.neg-item:last-child { border-bottom:none; }
+
+/* Old items (not latest today) — blurred */
+.neg-item.blurred {
+  filter:blur(5px); opacity:0.4;
+}
+/* Reveal on hover or click-active */
+.neg-item.blurred:hover,
+.neg-item.blurred.peek {
+  filter:blur(0); opacity:1;
+}
+
+.neg-bullet {
+  flex-shrink:0; width:5px; height:5px; border-radius:50%;
+  background:var(--navy-soft); margin-top:8px; opacity:.5;
+}
+.neg-item-text {
+  font-family:'Noto Serif TC',serif; font-size:14.5px;
+  line-height:2; color:var(--blue-text); word-break:break-word; flex:1;
+}
+.neg-item-del {
+  flex-shrink:0; width:18px; height:18px; border-radius:50%;
+  border:none; background:none; cursor:pointer;
+  font-size:14px; color:var(--blue-faint); line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .15s, color .15s;
+  padding:0;
+}
+.neg-item:hover .neg-item-del { opacity:1; }
+.neg-item-del:hover { color:#b04040; }
+.neg-empty {
+  font-size:12px; color:var(--blue-faint); opacity:.4;
+  font-style:italic; padding:20px 0 0;
+}
+
+/* ── Mobile neg panel (single view) ── */
+#mob-neg-panel {
+  display:none; flex-direction:column; flex:1; overflow:hidden;
+  min-height:0; position:relative; z-index:1;
+}
+.mob-neg-input-wrap {
+  padding:12px 18px 10px;
+  border-bottom:1px solid var(--border-b);
+  flex-shrink:0;
+  background:linear-gradient(180deg,rgba(26,48,80,0.04) 0%,transparent 100%);
+}
+.mob-neg-fire-input {
+  width:100%; border:none; outline:none;
+  border-bottom:1.5px solid rgba(26,48,80,0.12);
+  background:transparent;
+  font-family:'Noto Serif TC',serif; font-size:15px;
+  line-height:1.9; color:var(--blue-text); padding:4px 0;
+  transition:border-color .2s;
+}
+.mob-neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
+.mob-neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
+#mob-neg-list {
+  flex:1; overflow-y:auto; padding:10px 18px 12px; min-height:0;
+}
+#mob-neg-list::-webkit-scrollbar { width:2px; }
+#mob-neg-list::-webkit-scrollbar-thumb { background:var(--border-g); }
+
+/* ── Mobile split view neg col ── */
+.mob-split-neg-inner {
+  display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0;
+}
+.mob-split-neg-input-wrap {
+  padding:6px 0 8px;
+  border-bottom:1px solid rgba(26,48,80,0.07);
+  flex-shrink:0;
+}
+.mob-split-neg-fire-input {
+  width:100%; border:none; outline:none;
+  border-bottom:1px solid rgba(26,48,80,0.10);
+  background:transparent;
+  font-family:'Noto Serif TC',serif; font-size:14px;
+  line-height:1.8; color:var(--blue-text); padding:3px 0;
+}
+.mob-split-neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
+.mob-split-neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
+#mob-split-neg-list {
+  flex:1; overflow-y:auto; padding-top:6px; min-height:0;
+}
+
 </style>
 </head>
 <body>
@@ -628,6 +779,17 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div id="entry-date"></div>
         <textarea id="entry-body" placeholder="寫下此刻的想法…"></textarea>
       </div>
+      <!-- Negative energy bullet launcher (PC single-col) -->
+      <div id="neg-panel">
+        <div style="padding:14px 48px 0;flex-shrink:0;">
+          <div id="neg-entry-date" style="font-size:10px;color:var(--gold-mid);letter-spacing:2.5px;margin-bottom:10px;font-weight:500;"></div>
+        </div>
+        <div class="neg-input-wrap">
+          <input class="neg-fire-input" id="neg-fire-input" type="text" placeholder="此刻有什麼鳥事？直接開噴…" autocomplete="off">
+          <div class="neg-fire-hint">按 Enter 發射一條 · 點擊舊條目暫時解鎖</div>
+        </div>
+        <div id="neg-list-container"></div>
+      </div>
       <div class="compare-view" id="compare-view" style="display:none;">
         <div class="compare-col compare-pos">
           <div class="compare-label">✧ 正能量</div>
@@ -638,7 +800,15 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div class="compare-col compare-neg">
           <div class="compare-label">✦ 負能量</div>
           <div class="compare-date" id="cmp-date-neg"></div>
-          <textarea class="compare-text compare-textarea" id="cmp-text-neg" placeholder="這一天沒有負能量記事"></textarea>
+          <!-- Bullet launcher in compare view -->
+          <div class="cmp-neg-panel">
+            <div class="cmp-neg-input-wrap">
+              <input class="cmp-neg-fire-input" id="cmp-neg-fire-input" type="text" placeholder="此刻有什麼鳥事？直接開噴…" autocomplete="off">
+            </div>
+            <div id="cmp-neg-list"></div>
+          </div>
+          <!-- Hidden textarea kept for _saveBoth compatibility — synced by JS -->
+          <textarea id="cmp-text-neg" style="display:none;"></textarea>
         </div>
       </div>
       <div class="compare-actions" id="compare-actions" style="display:none;">
@@ -658,9 +828,11 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     <div class="sb-head">
       <div class="sb-head-row">
         <span class="sb-title">Sanctuary Of Reed</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <div class="role-badge" id="role-badge"></div>
         <button class="stealth-btn" id="stealth-btn" onclick="toggleStealth()">████</button>
       </div>
-      <div class="role-badge" id="role-badge"></div>
     </div>
 
     <!-- Calendar -->
@@ -779,6 +951,16 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       <div id="mob-entry-date"></div>
       <textarea id="mob-entry-body" placeholder="寫下此刻的想法…"></textarea>
     </div>
+    <!-- Mobile negative energy bullet launcher (single view) -->
+    <div id="mob-neg-panel">
+      <div style="padding:10px 18px 0;flex-shrink:0;">
+        <div id="mob-neg-entry-date" style="font-size:10px;color:var(--gold-mid);letter-spacing:2px;margin-bottom:6px;font-weight:500;"></div>
+      </div>
+      <div class="mob-neg-input-wrap">
+        <input class="mob-neg-fire-input" id="mob-neg-fire-input" type="text" placeholder="此刻有什麼鳥事？直接開噴…" autocomplete="off">
+      </div>
+      <div id="mob-neg-list"></div>
+    </div>
     <!-- Split (dual-column) view -->
     <div class="mob-split-view" id="mob-split-view">
       <div class="mob-split-col mob-split-pos">
@@ -788,7 +970,15 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       <div class="mob-split-divider"></div>
       <div class="mob-split-col mob-split-neg">
         <div class="mob-split-label">✦ 負能量</div>
-        <textarea class="mob-split-textarea" id="mob-split-neg-text" placeholder="這一天沒有負能量記事…"></textarea>
+        <!-- Bullet launcher in split view -->
+        <div class="mob-split-neg-inner">
+          <div class="mob-split-neg-input-wrap">
+            <input class="mob-split-neg-fire-input" id="mob-split-neg-fire-input" type="text" placeholder="開噴…" autocomplete="off">
+          </div>
+          <div id="mob-split-neg-list"></div>
+        </div>
+        <!-- Hidden for save compat -->
+        <textarea id="mob-split-neg-text" style="display:none;"></textarea>
       </div>
     </div>
     <div class="mob-ed-bottom">
@@ -830,6 +1020,321 @@ let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
 let mobCalYear = new Date().getFullYear(), mobCalMonth = new Date().getMonth();
 let autoSaveTimer = null, stealthOn = false, selectedDate = null;
 let mobCurId = null, mobMood = '', mobAutoSaveTimer = null;
+
+
+/* ═══════════════════════════════════════
+   NEGATIVE ENERGY — BULLET ENGINE
+   Storage: body field as \n-joined string (Firebase-compatible)
+   isLatestToday: only the last-added bullet of today stays unblurred
+═══════════════════════════════════════ */
+
+// Parse body string → array of non-empty bullet strings
+function negBodyToItems(body) {
+  return (body || '').split('\n').map(s => s.trim()).filter(Boolean);
+}
+
+// Join bullet array → body string
+function negItemsToBody(items) {
+  return items.filter(Boolean).join('\n');
+}
+
+/* Render a neg list into a container element.
+   items: string[]
+   isToday: whether this is today's entry (last item unblurred)
+   onDelete: function(idx) called when item × clicked
+   onFire: function(text) called when Enter in the input fires a new item
+   (onFire is handled separately via input event binding)
+*/
+function renderNegList(container, items, isToday) {
+  container.innerHTML = '';
+  if (!items.length) {
+    const e = document.createElement('div');
+    e.className = 'neg-empty';
+    e.textContent = '還沒有任何鳥事 —';
+    container.appendChild(e);
+    return;
+  }
+  items.forEach((txt, idx) => {
+    const isLatest = isToday && idx === items.length - 1;
+    const item = document.createElement('div');
+    item.className = 'neg-item' + (isLatest ? '' : ' blurred');
+    item.dataset.idx = idx;
+
+    const bullet = document.createElement('span');
+    bullet.className = 'neg-bullet';
+
+    const text = document.createElement('span');
+    text.className = 'neg-item-text';
+    text.textContent = txt;
+
+    const del = document.createElement('button');
+    del.className = 'neg-item-del';
+    del.textContent = '×';
+    del.title = '刪除';
+    del.setAttribute('aria-label', '刪除');
+    del.onclick = (e) => {
+      e.stopPropagation();
+      item._negOnDelete && item._negOnDelete(idx);
+    };
+
+    item.appendChild(bullet);
+    item.appendChild(text);
+    item.appendChild(del);
+
+    // Peek on click (toggle), reveal on hover handled by CSS
+    if (!isLatest) {
+      item.addEventListener('click', () => {
+        item.classList.add('peek');
+        clearTimeout(item._peekTimer);
+        item._peekTimer = setTimeout(() => {
+          item.classList.remove('peek');
+        }, 5000);
+      });
+    }
+
+    container.appendChild(item);
+  });
+  // Scroll to bottom so latest is visible
+  container.scrollTop = container.scrollHeight;
+}
+
+/* Check whether a given date is today */
+function isDateToday(y, m, d) {
+  const t = new Date();
+  return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d;
+}
+
+/* ── PC Single-col neg state ── */
+let negItems = [];   // working copy of current neg entry items
+
+function showNegPanel(body, dateStr) {
+  document.getElementById('ed-body').style.display = 'none';
+  document.getElementById('neg-panel').style.display = 'flex';
+  document.getElementById('neg-entry-date').textContent = dateStr || '';
+  negItems = negBodyToItems(body);
+  const today = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : true;
+  const container = document.getElementById('neg-list-container');
+  _negListBindDelete(container, negItems, today, () => negAutoSave());
+  renderNegList(container, negItems, today);
+  document.getElementById('neg-fire-input').value = '';
+  setTimeout(() => document.getElementById('neg-fire-input').focus(), 80);
+}
+
+function hideNegPanel() {
+  document.getElementById('neg-panel').style.display = 'none';
+}
+
+function _negListBindDelete(container, items, today, onSave) {
+  // Items get their delete handler via item._negOnDelete set during render
+  // We re-render after every delete, so we just need the callback to trigger save+re-render
+  // Actual binding happens in renderNegList via item._negOnDelete
+  // This function wires up delete callbacks after render
+  container.querySelectorAll('.neg-item').forEach(item => {
+    item._negOnDelete = (idx) => {
+      items.splice(idx, 1);
+      renderNegList(container, items, today);
+      // Re-wire delete after re-render
+      _negListBindDelete(container, items, today, onSave);
+      onSave();
+    };
+  });
+}
+
+function negAutoSave() {
+  clearTimeout(autoSaveTimer);
+  setSyncState('syncing');
+  autoSaveTimer = setTimeout(async () => { await _negSave(); }, 2000);
+}
+
+async function _negSave() {
+  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
+  const body = negItemsToBody(negItems);
+  if (!body && !curId) { setSyncState('idle'); return; }
+  const data = { body, mood: 'negative' };
+  try {
+    if (curId) {
+      await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
+      const idx = entries.findIndex(e => e.id === curId);
+      if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
+    } else {
+      if (selectedDate) {
+        const { y, m, d } = selectedDate;
+        data.createdAt = Timestamp.fromDate(new Date(y, m, d, 12, 1, 0));
+      } else {
+        data.createdAt = serverTimestamp();
+      }
+      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
+      curId = ref.id;
+      document.getElementById('btn-del').style.display = 'inline-block';
+      await loadEntries(); setSyncState('idle'); return;
+    }
+    setSyncState('idle');
+    renderCalendar(); updateEnergyBar();
+  } catch(e) { setSyncState('error'); }
+}
+
+// Wire up PC single-col neg fire input
+document.getElementById('neg-fire-input').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const val = this.value.trim();
+  if (!val) return;
+  negItems.push(val);
+  this.value = '';
+  const today = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : true;
+  const container = document.getElementById('neg-list-container');
+  renderNegList(container, negItems, today);
+  _negListBindDelete(container, negItems, today, () => negAutoSave());
+  negAutoSave();
+});
+
+/* ── PC saveEntry override for neg mood ── */
+// Called by btn-save. We intercept here to handle neg mood saving.
+// We keep the original saveEntry but it checks mood.
+
+/* ── Compare view neg state ── */
+let cmpNegItems = [];
+
+function showCmpNegPanel(body, isToday) {
+  cmpNegItems = negBodyToItems(body);
+  const container = document.getElementById('cmp-neg-list');
+  renderNegList(container, cmpNegItems, isToday);
+  _negListBindDelete(container, cmpNegItems, isToday, () => _cmpNegSync());
+  document.getElementById('cmp-neg-fire-input').value = '';
+}
+
+function _cmpNegSync() {
+  // Keep hidden textarea in sync so _saveBoth() can read it
+  document.getElementById('cmp-text-neg').value = negItemsToBody(cmpNegItems);
+}
+
+document.getElementById('cmp-neg-fire-input').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const val = this.value.trim();
+  if (!val) return;
+  cmpNegItems.push(val);
+  this.value = '';
+  const isToday = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : true;
+  const container = document.getElementById('cmp-neg-list');
+  renderNegList(container, cmpNegItems, isToday);
+  _negListBindDelete(container, cmpNegItems, isToday, () => _cmpNegSync());
+  _cmpNegSync();
+});
+
+/* ── Mobile single-col neg state ── */
+let mobNegItems = [];
+
+function showMobNegPanel(body, dateStr) {
+  document.getElementById('mob-ed-body').style.display = 'none';
+  document.getElementById('mob-neg-panel').style.display = 'flex';
+  document.getElementById('mob-neg-entry-date').textContent = dateStr || '';
+  mobNegItems = negBodyToItems(body);
+  const today = mobSelectedDate ? isDateToday(mobSelectedDate.y, mobSelectedDate.m, mobSelectedDate.d) : true;
+  const container = document.getElementById('mob-neg-list');
+  renderNegList(container, mobNegItems, today);
+  _negListBindDelete(container, mobNegItems, today, () => mobNegAutoSave());
+  document.getElementById('mob-neg-fire-input').value = '';
+  setTimeout(() => document.getElementById('mob-neg-fire-input').focus(), 80);
+}
+
+function hideMobNegPanel() {
+  document.getElementById('mob-neg-panel').style.display = 'none';
+  document.getElementById('mob-ed-body').style.display = 'flex';
+}
+
+function mobNegAutoSave() {
+  clearTimeout(mobAutoSaveTimer);
+  setSyncState('syncing');
+  mobAutoSaveTimer = setTimeout(async () => { await _mobNegSave(); }, 2000);
+}
+
+async function _mobNegSave() {
+  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
+  const body = negItemsToBody(mobNegItems);
+  if (!body && !mobCurId) { setSyncState('idle'); return; }
+  const data = { body, mood: 'negative' };
+  try {
+    if (mobCurId) {
+      await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId), data);
+      const idx = entries.findIndex(e => e.id === mobCurId);
+      if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
+      setSyncState('idle');
+      renderMobCalendar();
+    } else {
+      if (mobSelectedDate) {
+        const { y, m, d } = mobSelectedDate;
+        // Check for existing entry on the same date+mood before creating
+        const existing = entries.find(e => {
+          const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+          return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d && e.mood==='negative';
+        });
+        if (existing) {
+          mobCurId = existing.id;
+          await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId), data);
+          const idx = entries.findIndex(e => e.id === mobCurId);
+          if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
+          document.getElementById('mob-btn-del').style.display = 'inline-block';
+          setSyncState('idle'); renderMobCalendar(); return;
+        }
+        data.createdAt = Timestamp.fromDate(new Date(y, m, d, 12, 1, 0));
+      } else {
+        data.createdAt = serverTimestamp();
+      }
+      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
+      mobCurId = ref.id;
+      document.getElementById('mob-btn-del').style.display = 'inline-block';
+      await loadEntries(); setSyncState('idle'); return;
+    }
+  } catch(e) { setSyncState('error'); }
+}
+
+document.getElementById('mob-neg-fire-input').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const val = this.value.trim();
+  if (!val) return;
+  mobNegItems.push(val);
+  this.value = '';
+  const today = mobSelectedDate ? isDateToday(mobSelectedDate.y, mobSelectedDate.m, mobSelectedDate.d) : true;
+  const container = document.getElementById('mob-neg-list');
+  renderNegList(container, mobNegItems, today);
+  _negListBindDelete(container, mobNegItems, today, () => mobNegAutoSave());
+  mobNegAutoSave();
+});
+
+// Mobile: also support "send" button on soft keyboards via input event
+document.getElementById('mob-neg-fire-input').addEventListener('keyup', function(e) {
+  // some Android keyboards fire keyup only — handled by keydown already
+});
+
+/* ── Mobile split neg state ── */
+let mobSplitNegItems = [];
+
+function showMobSplitNegPanel(body, isToday) {
+  mobSplitNegItems = negBodyToItems(body);
+  const container = document.getElementById('mob-split-neg-list');
+  renderNegList(container, mobSplitNegItems, isToday);
+  _negListBindDelete(container, mobSplitNegItems, isToday, () => _mobSplitNegSync());
+  document.getElementById('mob-split-neg-fire-input').value = '';
+}
+
+function _mobSplitNegSync() {
+  document.getElementById('mob-split-neg-text').value = negItemsToBody(mobSplitNegItems);
+}
+
+document.getElementById('mob-split-neg-fire-input').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const val = this.value.trim();
+  if (!val) return;
+  mobSplitNegItems.push(val);
+  this.value = '';
+  const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
+  const isToday = isDateToday(dateCtx.y, dateCtx.m, dateCtx.d);
+  const container = document.getElementById('mob-split-neg-list');
+  renderNegList(container, mobSplitNegItems, isToday);
+  _negListBindDelete(container, mobSplitNegItems, isToday, () => _mobSplitNegSync());
+  _mobSplitNegSync();
+  mobScheduleSplitSave();
+});
+
 
 /* ═══════════════════════ SYNC ICON ═══════════════════════ */
 function setSyncState(state) {
@@ -1092,8 +1597,10 @@ function renderCalendar() {
   const months = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
   document.getElementById('cal-month-label').textContent = `${calYear} · ${months[calMonth]}`;
   const grid = document.getElementById('cal-grid');
-  const headers = [...grid.querySelectorAll('.cal-dow')];
-  grid.innerHTML = ''; headers.forEach(h => grid.appendChild(h));
+  grid.innerHTML = '';
+  ['日','一','二','三','四','五','六'].forEach(label => {
+    const h = document.createElement('div'); h.className = 'cal-dow'; h.textContent = label; grid.appendChild(h);
+  });
   const today = new Date();
   const dates = getEntryDateSet();
   const first = new Date(calYear, calMonth, 1).getDay();
@@ -1158,7 +1665,8 @@ function updateEnergyBar() {
     if (hasPos && hasNeg) mixed++;
     else if (hasPos) pure_pos++;
     else if (hasNeg) pure_neg++;
-    else pure_pos++; // no mood → treat neutral as pos
+    // no mood → skip (do not count as pos)
+    else { total--; continue; }
     total++;
   }
   if (!total) { setBar('energy-fill', 0, 0, 0); setBar('mob-energy-fill', 0, 0, 0); return; }
@@ -1183,7 +1691,7 @@ function setBar(id, pP, pM, pN) {
   push('#7a8a6a', pM); // gold-navy mix
   push('#2a4a7a', pN);
   el.style.width = '100%';
-  el.style.background = stops.length > 0 ? `linear-gradient(90deg, ${stops.join(', ')})` : '#c9a84c';
+  el.style.background = `linear-gradient(90deg, ${stops.join(', ')})`;
 }
 
 /* ═══════════════════════ DAY SELECTION ═══════════════════════ */
@@ -1201,10 +1709,12 @@ function selectDay(y, m, d) {
     const posEntry = dayEntries.find(e => e.mood === 'positive');
     openEntry((posEntry || dayEntries[0]).id);
   } else {
-    curId=null; mood='positive';
+    curId=null; mood='positive'; negItems=[];
     const dateObj = new Date(y, m, d);
-    document.getElementById('entry-date').textContent = dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+    const dateStr = dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+    document.getElementById('entry-date').textContent = dateStr;
     document.getElementById('entry-body').value='';
+    hideNegPanel();
     updateMoodUI();
     document.getElementById('btn-del').style.display='none';
     document.getElementById('edview').style.display='flex';
@@ -1239,7 +1749,13 @@ function exitCompare() {
   if (btn) btn.classList.remove('active');
   document.getElementById('compare-view').style.display = 'none';
   document.getElementById('compare-actions').style.display = 'none';
-  document.getElementById('ed-body').style.display = 'flex';
+  if (mood === 'negative') {
+    document.getElementById('ed-body').style.display = 'none';
+    document.getElementById('neg-panel').style.display = 'flex';
+  } else {
+    document.getElementById('neg-panel').style.display = 'none';
+    document.getElementById('ed-body').style.display = 'flex';
+  }
 }
 
 let _cmpPosId = null, _cmpNegId = null;
@@ -1263,11 +1779,13 @@ function renderCompare() {
   document.getElementById('cmp-text-pos').placeholder = '寫下正能量記事…';
 
   document.getElementById('cmp-date-neg').textContent = dateStr;
-  document.getElementById('cmp-text-neg').value = negEntry ? (negEntry.body||''): '';
-  document.getElementById('cmp-text-neg').disabled = false;
-  document.getElementById('cmp-text-neg').placeholder = '寫下負能量記事…';
+  // Neg col: bullet panel
+  const cmpIsToday = isDateToday(y, m, d);
+  showCmpNegPanel(negEntry ? (negEntry.body||'') : '', cmpIsToday);
+  _cmpNegSync(); // sync hidden textarea
 
   document.getElementById('ed-body').style.display = 'none';
+  document.getElementById('neg-panel').style.display = 'none';
   document.getElementById('compare-view').style.display = 'flex';
   document.getElementById('compare-actions').style.display = 'flex';
 }
@@ -1276,6 +1794,10 @@ async function _saveBoth() {
   if (!selectedDate) return;
   const { db, doc, updateDoc, addDoc, collection, Timestamp } = window._fb;
   const { y, m, d } = selectedDate;
+  // Fire any pending cmp neg input
+  const cmpNegFireEl = document.getElementById('cmp-neg-fire-input');
+  const cmpNegPending = cmpNegFireEl.value.trim();
+  if (cmpNegPending) { cmpNegItems.push(cmpNegPending); cmpNegFireEl.value=''; _cmpNegSync(); }
   const posBody = document.getElementById('cmp-text-pos').value.trim();
   const negBody = document.getElementById('cmp-text-neg').value.trim();
   setSyncState('syncing');
@@ -1328,10 +1850,12 @@ document.addEventListener('keydown', e => { if (e.ctrlKey&&e.shiftKey&&e.key==='
 function newEntry() {
   curId=null; mood='positive'; selectedDate=null;
   compareOn=false;
+  negItems=[];
   document.getElementById('btn-compare').style.display='none';
   document.getElementById('btn-compare').classList.remove('active');
   document.getElementById('compare-view').style.display='none';
   document.getElementById('compare-actions').style.display='none';
+  hideNegPanel();
   document.getElementById('ed-body').style.display='flex';
   renderCalendar();
   document.getElementById('entry-body').value='';
@@ -1346,16 +1870,25 @@ function openEntry(id) {
   const e = entries.find(x=>x.id===id); if (!e) return;
   curId=id; mood=e.mood||'positive';
   const dt = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
-  document.getElementById('entry-date').textContent = dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  const dateStr = dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  document.getElementById('entry-date').textContent = dateStr;
   document.getElementById('entry-body').value = e.body||'';
-  updateMoodUI();
   document.getElementById('btn-del').style.display='inline-block';
   document.getElementById('edview').style.display='flex';
-  document.getElementById('ed-body').style.display='flex';
   document.getElementById('compare-view').style.display='none';
   document.getElementById('compare-actions').style.display='none';
   if (compareOn) { compareOn=false; document.getElementById('btn-compare').classList.remove('active'); }
-  updateWordCount();
+  if (mood === 'negative') {
+    // Show neg bullet panel
+    const isToday = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : false;
+    showNegPanel(e.body||'', dateStr);
+    document.getElementById('neg-entry-date').textContent = dateStr;
+  } else {
+    hideNegPanel();
+    document.getElementById('ed-body').style.display='flex';
+    updateWordCount();
+  }
+  updateMoodUI();
   if (selectedDate) updateCompareBtn(selectedDate.y, selectedDate.m, selectedDate.d);
 }
 
@@ -1383,17 +1916,38 @@ function selMood(m) {
       document.getElementById('entry-body').value = '';
       document.getElementById('btn-del').style.display = 'none';
     }
-    updateWordCount();
+    const dateStr = new Date(y,mo,d).toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+    if (mood === 'negative') {
+      showNegPanel(target ? (target.body||'') : '', dateStr);
+    } else {
+      hideNegPanel();
+      updateWordCount();
+    }
+    updateMoodUI();
     updateCompareBtn(y, mo, d);
     return;
   }
-  // No date context (new entry mode) — just update UI, no auto-save
-  updateWordCount();
+  // No date context (new entry mode) — just update UI
+  if (mood === 'negative') {
+    showNegPanel('', '');
+  } else {
+    hideNegPanel();
+    updateWordCount();
+  }
+  updateMoodUI();
 }
 function updateMoodUI() {
   document.getElementById('ms-pos').className='mood-sym sym-positive'+(mood==='positive'?' on':'');
   document.getElementById('ms-neg').className='mood-sym sym-negative'+(mood==='negative'?' on':'');
   document.getElementById('ed-body').className='ed-body'+(mood==='positive'?' tint-pos':mood==='negative'?' tint-neg':'');
+  // Show/hide neg panel
+  if (mood === 'negative') {
+    document.getElementById('ed-body').style.display = 'none';
+    document.getElementById('neg-panel').style.display = 'flex';
+  } else {
+    document.getElementById('neg-panel').style.display = 'none';
+    document.getElementById('ed-body').style.display = 'flex';
+  }
 }
 
 function scheduleAutoSave() {
@@ -1405,6 +1959,8 @@ function scheduleAutoSave() {
 }
 
 async function autoSave() {
+  // Neg mood auto-save is handled by _negSave via negAutoSave()
+  if (mood === 'negative') { setSyncState('idle'); return; }
   const { db, collection, addDoc, doc, updateDoc, serverTimestamp } = window._fb;
   const body = document.getElementById('entry-body').value.trim();
   if (!body) { setSyncState('idle'); return; }
@@ -1434,12 +1990,44 @@ function updateWordCount() {
 
 async function saveEntry() {
   clearTimeout(autoSaveTimer);
-  const { db, collection, addDoc, doc, updateDoc, serverTimestamp } = window._fb;
-  const body = document.getElementById('entry-body').value.trim();
-  if (!body) { showToast('請輸入內容'); return; }
+  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
   const bs = document.getElementById('btn-save');
   bs.disabled=true; bs.textContent='儲存中…';
   setSyncState('syncing');
+  // Neg mood: save bullet list
+  if (mood === 'negative') {
+    // Fire any pending input text
+    const fireEl = document.getElementById('neg-fire-input');
+    const pending = fireEl.value.trim();
+    if (pending) { negItems.push(pending); fireEl.value=''; }
+    const body = negItemsToBody(negItems);
+    if (!body && !curId) { showToast('請輸入內容'); bs.disabled=false; bs.textContent='儲 存'; setSyncState('idle'); return; }
+    const data = { body, mood: 'negative' };
+    try {
+      if (curId) {
+        await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
+        const idx = entries.findIndex(e=>e.id===curId); if(idx!==-1) entries[idx]={...entries[idx],...data};
+        showToast('已更新 ✦');
+      } else {
+        if (selectedDate) { const {y,m,d}=selectedDate; data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,1,0)); }
+        else { data.createdAt=serverTimestamp(); }
+        const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);
+        curId=ref.id; await loadEntries(); showToast('已儲存 ✦');
+      }
+      document.getElementById('btn-del').style.display='inline-block';
+      setSyncState('idle'); renderCalendar(); updateEnergyBar();
+      // Re-render list
+      const today = selectedDate ? isDateToday(selectedDate.y,selectedDate.m,selectedDate.d) : true;
+      const container = document.getElementById('neg-list-container');
+      renderNegList(container, negItems, today);
+      _negListBindDelete(container, negItems, today, () => negAutoSave());
+    } catch(e) { showToast('儲存失敗：'+e.message); setSyncState('error'); }
+    bs.disabled=false; bs.textContent='儲 存';
+    return;
+  }
+  // Positive mood: original behavior
+  const body = document.getElementById('entry-body').value.trim();
+  if (!body) { showToast('請輸入內容'); bs.disabled=false; bs.textContent='儲 存'; return; }
   const data = { body, mood };
   try {
     if (curId) {
@@ -1502,8 +2090,8 @@ function renderMobCalendar() {
   const months=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
   document.getElementById('mob-cal-month').textContent=`${mobCalYear} · ${months[mobCalMonth]}`;
   const grid=document.getElementById('mob-cal-grid');
-  const headers=[...grid.querySelectorAll('.mob-cal-dow')];
-  grid.innerHTML=''; headers.forEach(h=>grid.appendChild(h));
+  grid.innerHTML='';
+  ['日','一','二','三','四','五','六'].forEach(label=>{const h=document.createElement('div');h.className='mob-cal-dow';h.textContent=label;grid.appendChild(h);});
   const today=new Date(), dates=getEntryDateSet();
   const first=new Date(mobCalYear,mobCalMonth,1).getDay();
   const daysInMonth=new Date(mobCalYear,mobCalMonth+1,0).getDate();
@@ -1527,41 +2115,53 @@ function mobSelectDay(y,m,d){
   const dayEntries=entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;});
   if(dayEntries.length>0){const posEntry=dayEntries.find(e=>e.mood==='positive');mobOpenEntry((posEntry||dayEntries[0]).id);}
   else {
-    mobCurId=null; mobMood='positive';
+    mobCurId=null; mobMood='positive'; mobNegItems=[];
     const dateObj=new Date(y,m,d);
     document.getElementById('mob-entry-date').textContent=dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
     document.getElementById('mob-entry-body').value='';
+    hideMobNegPanel();
     mobUpdateMoodUI();
     document.getElementById('mob-btn-del').style.display='none';
     showMobEditor();
+    setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
   }
 }
 
 function mobNewEntry(){
-  mobCurId=null; mobMood='positive';
+  mobCurId=null; mobMood='positive'; mobNegItems=[];
   document.getElementById('mob-entry-date').textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('mob-entry-body').value='';
+  hideMobNegPanel();
   mobUpdateMoodUI();
   document.getElementById('mob-btn-del').style.display='none';
   showMobEditor();
+  setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
 }
 
 function mobOpenEntry(id){
   const e=entries.find(x=>x.id===id); if(!e) return;
   mobCurId=id; mobMood=e.mood||'positive';
   const dt=e.createdAt?.toDate?e.createdAt.toDate():new Date();
-  document.getElementById('mob-entry-date').textContent=dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  const dateStr=dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  document.getElementById('mob-entry-date').textContent=dateStr;
   document.getElementById('mob-entry-body').value=e.body||'';
-  mobUpdateMoodUI();
   document.getElementById('mob-btn-del').style.display='inline-block';
   showMobEditor();
+  if(mobMood==='negative'){
+    mobNegItems=[];
+    showMobNegPanel(e.body||'', dateStr);
+  } else {
+    hideMobNegPanel();
+    setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
+  }
+  mobUpdateMoodUI();
 }
 
 function showMobEditor(){
   document.getElementById('mob-home').style.display='none';
   const ed=document.getElementById('mob-editor');
   ed.style.display='flex';
-  setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
+  // Focus handled by mobOpenEntry/mobNewEntry per mood
 }
 
 function mobBack(){
@@ -1570,6 +2170,9 @@ function mobBack(){
   document.getElementById('mob-btn-split').classList.remove('active');
   document.getElementById('mob-split-view').style.display = 'none';
   document.getElementById('mob-ed-body').style.display = 'flex';
+  // Reset neg panel
+  hideMobNegPanel();
+  mobNegItems = [];
   document.getElementById('mob-editor').style.display='none';
   document.getElementById('mob-home').style.display='flex';
   renderMobCalendar();
@@ -1595,7 +2198,16 @@ function mobSelMood(m){
       document.getElementById('mob-entry-body').value='';
       document.getElementById('mob-btn-del').style.display='none';
     }
+    const dsEl=document.getElementById('mob-entry-date');
+    const dateStr=dsEl?dsEl.textContent:'';
+    if(mobMood==='negative'){
+      mobNegItems=[];
+      showMobNegPanel(target?(target.body||''):'', dateStr);
+    } else {
+      hideMobNegPanel();
+    }
   }
+  mobUpdateMoodUI();
 }
 function mobUpdateMoodUI(){
   document.getElementById('mob-ms-pos').className='mob-mood-sym sym-positive'+(mobMood==='positive'?' on':'');
@@ -1609,6 +2221,8 @@ function mobScheduleAutoSave(){
 }
 
 async function mobAutoSave(){
+  // Neg mood auto-save is handled by _mobNegSave
+  if(mobMood==='negative'){setSyncState('idle');return;}
   const{db,collection,addDoc,doc,updateDoc,serverTimestamp,Timestamp}=window._fb;
   const body=document.getElementById('mob-entry-body').value.trim();
   if(!body){setSyncState('idle');return;}
@@ -1637,6 +2251,7 @@ async function mobAutoSave(){
 document.getElementById('mob-entry-body').addEventListener('input',()=>mobScheduleAutoSave());
 
 async function mobSaveEntry(){
+  if(mobMood==='negative'){await mobSaveActive();return;}
   clearTimeout(mobAutoSaveTimer);
   const{db,collection,addDoc,doc,updateDoc,serverTimestamp,Timestamp}=window._fb;
   const body=document.getElementById('mob-entry-body').value.trim();
@@ -1835,7 +2450,6 @@ function mobToggleSplit() {
     mobRenderSplit();
   } else {
     splitView.style.display = 'none';
-    singleView.style.display = 'flex';
     // Restore single view to current mood entry
     if (mobSelectedDate) {
       const {y,m,d} = mobSelectedDate;
@@ -1850,6 +2464,16 @@ function mobToggleSplit() {
         document.getElementById('mob-entry-body').value='';
         document.getElementById('mob-btn-del').style.display='none';
       }
+    }
+    if (mobMood === 'negative') {
+      singleView.style.display = 'none';
+      const target = mobSelectedDate ? entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;const {y,m,d}=mobSelectedDate;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood==='negative';}) : null;
+      mobNegItems = [];
+      const dateStr = document.getElementById('mob-entry-date').textContent;
+      showMobNegPanel(target?(target.body||''):'', dateStr);
+    } else {
+      singleView.style.display = 'flex';
+      hideMobNegPanel();
     }
   }
 }
@@ -1867,13 +2491,15 @@ function mobRenderSplit() {
   _mobSplitPosId = posEntry ? posEntry.id : null;
   _mobSplitNegId = negEntry ? negEntry.id : null;
   document.getElementById('mob-split-pos-text').value = posEntry ? (posEntry.body||'') : '';
-  document.getElementById('mob-split-neg-text').value = negEntry ? (negEntry.body||'') : '';
-  // Auto-save on change
-  ['mob-split-pos-text','mob-split-neg-text'].forEach(id => {
-    const el = document.getElementById(id);
-    const fresh = el.cloneNode(true); el.parentNode.replaceChild(fresh, el);
-    document.getElementById(id).addEventListener('input', () => mobScheduleSplitSave());
-  });
+  // Neg col: bullet panel
+  const splitIsToday = isDateToday(y, m, d);
+  mobSplitNegItems = [];
+  showMobSplitNegPanel(negEntry ? (negEntry.body||'') : '', splitIsToday);
+  _mobSplitNegSync();
+  // Auto-save on change for pos textarea
+  const posTA = document.getElementById('mob-split-pos-text');
+  const freshPos = posTA.cloneNode(true); posTA.parentNode.replaceChild(freshPos, posTA);
+  document.getElementById('mob-split-pos-text').addEventListener('input', () => mobScheduleSplitSave());
 }
 
 let mobSplitSaveTimer = null;
@@ -1888,7 +2514,9 @@ async function mobSaveSplit() {
   const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
   const {y,m,d} = dateCtx;
   const posBody = document.getElementById('mob-split-pos-text').value.trim();
-  const negBody = document.getElementById('mob-split-neg-text').value.trim();
+  const negBody = negItemsToBody(mobSplitNegItems).trim();
+  // Sync hidden textarea too
+  document.getElementById('mob-split-neg-text').value = negBody;
   try {
     const ops = [];
     if (posBody) {
@@ -1916,9 +2544,25 @@ async function mobSaveSplit() {
 
 async function mobSaveActive() {
   if (mobSplitOn) {
+    // Fire any pending neg split input
+    const splitNegFireEl = document.getElementById('mob-split-neg-fire-input');
+    const splitNegPending = splitNegFireEl.value.trim();
+    if (splitNegPending) { mobSplitNegItems.push(splitNegPending); splitNegFireEl.value=''; _mobSplitNegSync(); }
     clearTimeout(mobSplitSaveTimer);
     await mobSaveSplit();
     showToast('已儲存 ✦');
+  } else if (mobMood === 'negative') {
+    // Fire any pending neg single input
+    const negFireEl = document.getElementById('mob-neg-fire-input');
+    const negPending = negFireEl.value.trim();
+    if (negPending) { mobNegItems.push(negPending); negFireEl.value=''; }
+    await _mobNegSave();
+    showToast('已儲存 ✦');
+    // Re-render list
+    const today = mobSelectedDate ? isDateToday(mobSelectedDate.y,mobSelectedDate.m,mobSelectedDate.d) : true;
+    const container = document.getElementById('mob-neg-list');
+    renderNegList(container, mobNegItems, today);
+    _negListBindDelete(container, mobNegItems, today, () => mobNegAutoSave());
   } else {
     mobSaveEntry();
   }
