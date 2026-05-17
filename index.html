@@ -3,38 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-<title>片刻留白</title>
+<title>Sanctuary Of Reed</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-  import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import { initializeApp }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getAuth, signInWithEmailAndPassword, signInAnonymously,
+    onAuthStateChanged, browserLocalPersistence, setPersistence,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import {
+    getFirestore, collection, addDoc, getDocs, doc, deleteDoc,
+    updateDoc, setDoc, getDoc, onSnapshot, query, orderBy,
+    serverTimestamp, Timestamp,
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-  const firebaseConfig = { apiKey:"AIzaSyD-ZPtk7SgDdZ-BBGmGjcXuRuO1Hh-Tj0o", authDomain:"diary-1d399.firebaseapp.com", projectId:"diary-1d399", storageBucket:"diary-1d399.firebasestorage.app", messagingSenderId:"230492568365", appId:"1:230492568365:web:cf04c2e0f6c73838b5b1a4" };
-  const TRUSTED_UIDS = ["rEAVYuPlDrTjZsqmqGE5TeHFSX73", "tMlirqnGQGaY7YbGp7JA61ki9bz1"];
+  // ★ 三個 App 共用同一個 Firebase 專案
+  const firebaseConfig = {
+    apiKey:            'AIzaSyD0S4gVD5OHiztOaL6JRMmWA0grH8NkOxU',
+    authDomain:        'auroraenvoy.firebaseapp.com',
+    projectId:         'auroraenvoy',
+    storageBucket:     'auroraenvoy.firebasestorage.app',
+    messagingSenderId: '456319814884',
+    appId:             '1:456319814884:web:06b046a8a1667d25ceb0f1',
+  };
 
-  const app = initializeApp(firebaseConfig);
+  const APP_ROOT = 'SanctuaryOfReed';
+  const ENTRIES_PATH = 'SanctuaryOfReed/entries';   // 日記集合路徑
+
+  const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db = getFirestore(app);
-  window._fb = { auth, db, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, TRUSTED_UIDS };
+  const db   = getFirestore(app);
+
+  window._fb = {
+    auth, db, collection, addDoc, getDocs, doc, deleteDoc,
+    updateDoc, setDoc, getDoc, onSnapshot, query, orderBy,
+    serverTimestamp, Timestamp,
+    ENTRIES_PATH,
+  };
+
+  // Owner 登入（Email/Password）
+  window._fbSignInOwner = async (email, password) => {
+    await setPersistence(auth, browserLocalPersistence);
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+
+  // 即時監聽訪客通行證
+  let _guestUnsubscribe = null;
+  window._fbStartGuestWatch = (guestUid) => {
+    if (_guestUnsubscribe) _guestUnsubscribe();
+    const ref = doc(db, 'guest_access', guestUid);
+    _guestUnsubscribe = onSnapshot(ref, (snap) => {
+      if (!snap.exists() || Date.now() > (snap.data().expiresAt?.toMillis?.() || 0)) {
+        if (_guestUnsubscribe) { _guestUnsubscribe(); _guestUnsubscribe = null; }
+        window._showGuestScreen();
+      }
+    }, () => {
+      window._showGuestScreen();
+    });
+  };
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) { await signInAnonymously(auth); return; }
+    if (!user) {
+      // 未登入 → 匿名登入，等待 OTP 驗證
+      await signInAnonymously(auth).catch(e => {
+        document.getElementById('screen-loading').innerHTML =
+          '<p style="color:#c44;font-size:13px">Firebase 連線失敗：' + e.message + '</p>';
+      });
+      return;
+    }
     window._me = user;
     document.querySelectorAll('.display-uid').forEach(el => el.textContent = user.uid);
-    if (TRUSTED_UIDS.includes(user.uid)) { window.enterApp('trusted'); }
-    else {
+
+    if (!user.isAnonymous) {
+      // Owner（Email 登入）
+      window.enterApp('trusted');
+    } else {
+      // 匿名用戶：檢查是否有有效的 guest_access
       try {
-        const gd = await getDoc(doc(db,'guest_access',user.uid));
-        if (gd.exists() && (gd.data().expiresAt?.toMillis?.() || 0) > Date.now()) { window.enterApp('guest'); return; }
+        const gd = await getDoc(doc(db, 'guest_access', user.uid));
+        if (gd.exists() && (gd.data().expiresAt?.toMillis?.() || 0) > Date.now()) {
+          window.enterApp('guest');
+          window._fbStartGuestWatch(user.uid);
+          return;
+        }
       } catch(_) {}
       document.getElementById('screen-loading').style.display = 'none';
       document.getElementById('screen-guest').style.display = 'flex';
     }
-  });
-  signInAnonymously(auth).catch(e => {
-    document.getElementById('screen-loading').innerHTML = '<p style="color:#c44;font-size:13px">Firebase 連線失敗：' + e.message + '</p>';
   });
 </script>
 
@@ -508,7 +565,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   <div class="auth-card">
     <div class="brand">
       <span class="ico">✦</span>
-      <h1>片刻留白</h1>
+      <h1>Sanctuary Of Reed</h1>
       <p>請從信任裝置取得 6 位數驗證碼</p>
     </div>
     <!-- ⚠️ 驗證碼輸入區：使用「單一隱藏 input + 視覺假格」架構
@@ -531,6 +588,18 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     </div>
     <button class="btn-main" id="btn-verify" onclick="verifyToken()" disabled>驗 證 進 入</button>
     <div class="err-msg" id="guest-err"></div>
+    <!-- Owner 登入區 -->
+    <div id="owner-login-area" style="margin-top:18px;border-top:1px solid var(--border-g);padding-top:16px;">
+      <div id="owner-toggle" onclick="toggleOwnerLogin()" style="font-size:11px;color:var(--blue-faint);text-align:center;cursor:pointer;letter-spacing:1px;">Owner 登入 ▾</div>
+      <div id="owner-fields" style="display:none;margin-top:12px;">
+        <input id="owner-email" type="email" placeholder="Email" autocomplete="email"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border-g);border-radius:var(--radius);font-size:13px;color:var(--navy);background:var(--gold-faint);outline:none;margin-bottom:8px;font-family:'Noto Sans TC',sans-serif;">
+        <input id="owner-password" type="password" placeholder="Password" autocomplete="current-password"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border-g);border-radius:var(--radius);font-size:13px;color:var(--navy);background:var(--gold-faint);outline:none;margin-bottom:12px;font-family:'Noto Sans TC',sans-serif;">
+        <button class="btn-main" id="btn-owner-login" onclick="ownerLogin()">Owner 登 入</button>
+        <div class="err-msg" id="owner-err"></div>
+      </div>
+    </div>
     <div class="uid-hint">此裝置 UID：<br><code class="display-uid">—</code></div>
   </div>
 </div>
@@ -541,7 +610,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   <div class="editor">
     <div class="ed-header">
       <span class="sync-icon" id="sync-icon">✦</span>
-      <span class="ed-header-title">片刻留白</span>
+      <span class="ed-header-title">Sanctuary Of Reed</span>
     </div>
     <div id="edview" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
@@ -588,7 +657,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   <div class="sidebar">
     <div class="sb-head">
       <div class="sb-head-row">
-        <span class="sb-title">片刻留白</span>
+        <span class="sb-title">Sanctuary Of Reed</span>
         <button class="stealth-btn" id="stealth-btn" onclick="toggleStealth()">████</button>
       </div>
       <div class="role-badge" id="role-badge"></div>
@@ -670,7 +739,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   <!-- Home -->
   <div class="mob-home" id="mob-home">
     <div class="mob-header">
-      <h1>片刻留白</h1>
+      <h1>Sanctuary Of Reed</h1>
       <div class="mob-badge" id="mob-badge"></div>
     </div>
     <div class="mob-cal-area">
@@ -863,13 +932,44 @@ async function verifyToken() {
     const td = await getDoc(doc(db,'tokens',code));
     if (!td.exists()) throw new Error('驗證碼不存在');
     if ((td.data().expiresAt?.toMillis?.() || 0) < Date.now()) throw new Error('驗證碼已過期');
-    await setDoc(doc(db,'guest_access',window._me.uid), { grantedAt:Timestamp.now(), expiresAt:td.data().expiresAt });
+    await setDoc(doc(db,'guest_access',window._me.uid), { ownerUid: td.data().ownerUid || td.data().createdBy, grantedAt:Timestamp.now(), expiresAt:td.data().expiresAt });
+    // 刪除已使用的驗證碼（即刪即用）
+    try { await window._fb.deleteDoc(doc(db,'tokens',code)); } catch(_) {}
+    window._fbStartGuestWatch && window._fbStartGuestWatch(window._me.uid);
     window.enterApp('guest');
   } catch(e) {
     errEl.textContent = e.message;
     document.getElementById('code-real-input')._otpShakeErr?.();
     document.getElementById('btn-verify').disabled = false;
     document.getElementById('btn-verify').textContent = '驗 證 進 入';
+  }
+}
+
+function toggleOwnerLogin() {
+  const fields = document.getElementById('owner-fields');
+  const toggle = document.getElementById('owner-toggle');
+  if (fields.style.display === 'none') {
+    fields.style.display = 'block';
+    toggle.textContent = 'Owner 登入 ▴';
+  } else {
+    fields.style.display = 'none';
+    toggle.textContent = 'Owner 登入 ▾';
+  }
+}
+
+async function ownerLogin() {
+  const email = document.getElementById('owner-email').value.trim();
+  const password = document.getElementById('owner-password').value;
+  const errEl = document.getElementById('owner-err');
+  errEl.textContent = '';
+  const btn = document.getElementById('btn-owner-login');
+  btn.disabled = true; btn.textContent = '登入中…';
+  try {
+    await window._fbSignInOwner(email, password);
+    // onAuthStateChanged 會接手，自動呼叫 enterApp('trusted')
+  } catch(e) {
+    errEl.textContent = e.message.replace('Firebase: ', '').replace(/ \(auth\/.*\)\.?/, '');
+    btn.disabled = false; btn.textContent = 'Owner 登 入';
   }
 }
 
@@ -883,7 +983,7 @@ window.enterApp = function(role) {
   const b = document.getElementById('role-badge');
   if (b) {
     if (role === 'trusted') {
-      b.textContent='✦ 信任裝置'; b.className='role-badge trusted';
+      b.textContent='✦ Owner'; b.className='role-badge trusted';
       document.getElementById('status-txt').textContent='信任裝置 · 完整存取';
       // 自動清除過期訪客紀錄
       purgeExpiredGuests();
@@ -898,30 +998,16 @@ window.enterApp = function(role) {
         if(!confirm('確定要登出訪客模式？')) return;
         const {db, doc, deleteDoc} = window._fb;
         try { await deleteDoc(doc(db,'guest_access',window._me.uid)); } catch(_) {}
-        // 取消監聽
-        if(window._guestUnsub){ window._guestUnsub(); window._guestUnsub=null; }
-        // 切換到驗證碼畫面
         window._showGuestScreen();
       };
       document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
       document.getElementById('backup-row').style.display='block';
       if(!stealthOn){toggleStealth();}
-      // 訪客：用 onSnapshot 即時監聽 guest_access，一旦被刪除或過期立刻切換畫面
-      if (!window._guestUnsub) {
-        const { db, doc, onSnapshot } = window._fb;
-        window._guestUnsub = onSnapshot(doc(db, 'guest_access', window._me.uid), (snap) => {
-          if (!snap.exists() || (snap.data().expiresAt?.toMillis?.() || 0) <= Date.now()) {
-            window._guestUnsub && window._guestUnsub();
-            window._guestUnsub = null;
-            window._showGuestScreen();
-          }
-        }, () => { window._showGuestScreen(); });
-      }
     }
   }
   // Mobile badges
   const mb = document.getElementById('mob-badge');
-  if (mb) mb.textContent = role === 'trusted' ? '✦ 信任裝置' : '◈ 訪客模式';
+  if (mb) mb.textContent = role === 'trusted' ? '✦ Owner' : '◈ 訪客模式';
   const mobRevoke = document.getElementById('mob-btn-revoke');
   if (mobRevoke) mobRevoke.style.display = role === 'trusted' ? '' : 'none';
   const mobToken = document.getElementById('mob-btn-token');
@@ -960,7 +1046,7 @@ async function loadEntries() {
   const { db, collection, query, orderBy, getDocs } = window._fb;
   try {
     setSyncState('syncing');
-    const q = query(collection(db,'users','diary','entries'), orderBy('createdAt','desc'));
+    const q = query(collection(db,'SanctuaryOfReed','entries'), orderBy('createdAt','desc'));
     const snap = await getDocs(q);
     const wasEmpty = entries.length === 0;
     entries = snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -1195,8 +1281,8 @@ async function _saveBoth() {
   setSyncState('syncing');
   try {
     const ops = [];
-    if (_cmpPosId && posBody) { ops.push(updateDoc(doc(db,'users','diary','entries',_cmpPosId),{body:posBody,mood:'positive'})); const i=entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody; }
-    if (_cmpNegId && negBody) { ops.push(updateDoc(doc(db,'users','diary','entries',_cmpNegId),{body:negBody,mood:'negative'})); const i=entries.findIndex(e=>e.id===_cmpNegId); if(i!==-1) entries[i].body=negBody; }
+    if (_cmpPosId && posBody) { ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpPosId),{body:posBody,mood:'positive'})); const i=entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody; }
+    if (_cmpNegId && negBody) { ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpNegId),{body:negBody,mood:'negative'})); const i=entries.findIndex(e=>e.id===_cmpNegId); if(i!==-1) entries[i].body=negBody; }
     await Promise.all(ops);
     setSyncState('idle'); showToast('已更新 ✦');
   } catch(e) { setSyncState('error'); showToast('儲存失敗'); }
@@ -1301,12 +1387,12 @@ async function autoSave() {
   const data = { body, mood };
   try {
     if (curId) {
-      await updateDoc(doc(db,'users','diary','entries',curId), data);
+      await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
       const idx = entries.findIndex(e=>e.id===curId);
       if (idx!==-1) entries[idx]={...entries[idx],...data};
     } else {
       data.createdAt = serverTimestamp();
-      const ref = await addDoc(collection(db,'users','diary','entries'), data);
+      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
       curId = ref.id;
       document.getElementById('btn-del').style.display='inline-block';
       await loadEntries(); setSyncState('idle'); return;
@@ -1333,13 +1419,13 @@ async function saveEntry() {
   const data = { body, mood };
   try {
     if (curId) {
-      await updateDoc(doc(db,'users','diary','entries',curId), data);
+      await updateDoc(doc(db,'SanctuaryOfReed','entries',curId), data);
       const idx = entries.findIndex(e=>e.id===curId);
       if (idx!==-1) entries[idx]={...entries[idx],...data};
       showToast('已更新 ✦');
     } else {
       data.createdAt = serverTimestamp();
-      const ref = await addDoc(collection(db,'users','diary','entries'), data);
+      const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'), data);
       curId=ref.id; await loadEntries(); showToast('已儲存 ✦');
     }
     document.getElementById('btn-del').style.display='inline-block';
@@ -1355,7 +1441,7 @@ async function delEntry() {
   const { db, doc, deleteDoc } = window._fb;
   try {
     setSyncState('syncing');
-    await deleteDoc(doc(db,'users','diary','entries',curId));
+    await deleteDoc(doc(db,'SanctuaryOfReed','entries',curId));
     entries = entries.filter(e => e.id !== curId);
     curId = null; selectedDate = null;
     setSyncState('idle');
@@ -1373,7 +1459,7 @@ async function delBothEntries(posId, negId) {
   const { db, doc, deleteDoc } = window._fb;
   try {
     setSyncState('syncing');
-    await Promise.all(toDelete.map(id => deleteDoc(doc(db,'users','diary','entries',id))));
+    await Promise.all(toDelete.map(id => deleteDoc(doc(db,'SanctuaryOfReed','entries',id))));
     const delIds = new Set(toDelete);
     entries = entries.filter(e => !delIds.has(e.id));
     curId = null; selectedDate = null; compareOn = false;
@@ -1484,17 +1570,17 @@ async function mobAutoSave(){
   const data={body,mood:mobMood};
   try{
     if(mobCurId){
-      await updateDoc(doc(db,'users','diary','entries',mobCurId),data);
+      await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);
       const idx=entries.findIndex(e=>e.id===mobCurId);
       if(idx!==-1) entries[idx]={...entries[idx],...data};
     } else {
       if(mobSelectedDate){
         const{y,m,d}=mobSelectedDate;
         const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
-        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'users','diary','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};document.getElementById('mob-btn-del').style.display='inline-block';setSyncState('idle');renderMobCalendar();return;}
+        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};document.getElementById('mob-btn-del').style.display='inline-block';setSyncState('idle');renderMobCalendar();return;}
         data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));
       } else { data.createdAt=serverTimestamp(); }
-      const ref=await addDoc(collection(db,'users','diary','entries'),data);
+      const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);
       mobCurId=ref.id;
       document.getElementById('mob-btn-del').style.display='inline-block';
       await loadEntries(); setSyncState('idle'); return;
@@ -1514,7 +1600,7 @@ async function mobSaveEntry(){
   const data={body,mood:mobMood};
   try{
     if(mobCurId){
-      await updateDoc(doc(db,'users','diary','entries',mobCurId),data);
+      await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);
       const idx=entries.findIndex(e=>e.id===mobCurId);
       if(idx!==-1) entries[idx]={...entries[idx],...data};
       showToast('已更新 ✦');
@@ -1522,11 +1608,11 @@ async function mobSaveEntry(){
       if(mobSelectedDate){
         const{y,m,d}=mobSelectedDate;
         const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
-        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'users','diary','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};showToast('已更新 ✦');}
-        else{data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));const ref=await addDoc(collection(db,'users','diary','entries'),data);mobCurId=ref.id;await loadEntries();showToast('已儲存 ✦');}
+        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed','entries',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};showToast('已更新 ✦');}
+        else{data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);mobCurId=ref.id;await loadEntries();showToast('已儲存 ✦');}
       } else {
         data.createdAt=serverTimestamp();
-        const ref=await addDoc(collection(db,'users','diary','entries'),data);
+        const ref=await addDoc(collection(db,'SanctuaryOfReed','entries'),data);
         mobCurId=ref.id; await loadEntries(); showToast('已儲存 ✦');
       }
     }
@@ -1546,7 +1632,7 @@ async function mobDelEntry(){
   const{db,doc,deleteDoc}=window._fb;
   try{
     setSyncState('syncing');
-    await Promise.all(sameDay.map(e=>deleteDoc(doc(db,'users','diary','entries',e.id))));
+    await Promise.all(sameDay.map(e=>deleteDoc(doc(db,'SanctuaryOfReed','entries',e.id))));
     const delIds=new Set(sameDay.map(e=>e.id));
     entries=entries.filter(e=>!delIds.has(e.id));
     mobCurId=null; mobSelectedDate=null;
@@ -1621,7 +1707,7 @@ async function verifyAndExport() {
     const a = document.createElement('a');
     const now = new Date();
     a.href = url;
-    a.download = `diary_backup_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.json`;
+    a.download = `sanctuary_backup_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.json`;
     a.click();
     URL.revokeObjectURL(url);
     // Save history
@@ -1747,19 +1833,19 @@ async function mobSaveSplit() {
     const ops = [];
     if (posBody) {
       if (_mobSplitPosId) {
-        ops.push(updateDoc(doc(db,'users','diary','entries',_mobSplitPosId),{body:posBody,mood:'positive'}));
+        ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_mobSplitPosId),{body:posBody,mood:'positive'}));
         const i=entries.findIndex(e=>e.id===_mobSplitPosId); if(i!==-1) entries[i].body=posBody;
       } else {
-        const ref = await addDoc(collection(db,'users','diary','entries'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
+        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
         _mobSplitPosId = ref.id; await loadEntries();
       }
     }
     if (negBody) {
       if (_mobSplitNegId) {
-        ops.push(updateDoc(doc(db,'users','diary','entries',_mobSplitNegId),{body:negBody,mood:'negative'}));
+        ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_mobSplitNegId),{body:negBody,mood:'negative'}));
         const i=entries.findIndex(e=>e.id===_mobSplitNegId); if(i!==-1) entries[i].body=negBody;
       } else {
-        const ref = await addDoc(collection(db,'users','diary','entries'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
+        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
         _mobSplitNegId = ref.id; await loadEntries();
       }
     }
@@ -1788,7 +1874,7 @@ async function purgeExpiredGuests(){
     const expired=snap.docs.filter(d=>(d.data().expiresAt?.toMillis?.()??0)<=now);
     if(!expired.length) return;
     await Promise.all(expired.map(d=>deleteDoc(doc(db,'guest_access',d.id)).catch(()=>{})));
-    console.log('[片刻留白] 已清除 '+expired.length+' 筆過期訪客紀錄');
+    console.log('[SanctuaryOfReed] 已清除 '+expired.length+' 筆過期訪客紀錄');
   }catch(_){}
 }
 
