@@ -1190,14 +1190,18 @@ function setBar(id, pP, pM, pN) {
 function selectDay(y, m, d) {
   selectedDate = {y, m, d};
   compareOn = false;
+  document.getElementById('compare-actions').style.display='none';
   renderCalendar();
   const dayEntries = entries.filter(e => {
     const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
     return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
   });
-  if (dayEntries.length > 0) openEntry(dayEntries[0].id);
-  else {
-    curId=null; mood='';
+  if (dayEntries.length > 0) {
+    // Prefer positive entry first, then any
+    const posEntry = dayEntries.find(e => e.mood === 'positive');
+    openEntry((posEntry || dayEntries[0]).id);
+  } else {
+    curId=null; mood='positive';
     const dateObj = new Date(y, m, d);
     document.getElementById('entry-date').textContent = dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
     document.getElementById('entry-body').value='';
@@ -1207,7 +1211,6 @@ function selectDay(y, m, d) {
     document.getElementById('ed-body').style.display='flex';
     document.getElementById('compare-view').style.display='none';
     document.getElementById('btn-compare').style.display='none';
-    document.getElementById('ed-body').className='ed-body';
     updateWordCount();
     document.getElementById('entry-body').focus();
   }
@@ -1218,12 +1221,9 @@ function selectDay(y, m, d) {
 let compareOn = false;
 
 function updateCompareBtn(y, m, d) {
-  const { pos, neg, entries: de } = getDayStats(y, m, d);
-  const hasPos = de.some(e => e.mood === 'positive');
-  const hasNeg = de.some(e => e.mood === 'negative');
+  // Show compare (dual-column) button whenever a date is selected
   const btn = document.getElementById('btn-compare');
-  if (btn) btn.style.display = (hasPos && hasNeg) ? 'flex' : 'none';
-  if (!(hasPos && hasNeg) && compareOn) exitCompare();
+  if (btn) btn.style.display = 'flex';
 }
 
 function toggleCompare() {
@@ -1256,18 +1256,16 @@ function renderCompare() {
   _cmpPosId = posEntry ? posEntry.id : null;
   _cmpNegId = negEntry ? negEntry.id : null;
 
-  const fmt = e => {
-    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
-    return dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  };
+  const dateStr = new Date(y,m,d).toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  document.getElementById('cmp-date-pos').textContent = dateStr;
+  document.getElementById('cmp-text-pos').value = posEntry ? (posEntry.body||''): '';
+  document.getElementById('cmp-text-pos').disabled = false;
+  document.getElementById('cmp-text-pos').placeholder = '寫下正能量記事…';
 
-  document.getElementById('cmp-date-pos').textContent = posEntry ? fmt(posEntry) : '';
-  document.getElementById('cmp-text-pos').value = posEntry ? (posEntry.body||'') : '';
-  document.getElementById('cmp-text-pos').disabled = !posEntry;
-
-  document.getElementById('cmp-date-neg').textContent = negEntry ? fmt(negEntry) : '';
-  document.getElementById('cmp-text-neg').value = negEntry ? (negEntry.body||'') : '';
-  document.getElementById('cmp-text-neg').disabled = !negEntry;
+  document.getElementById('cmp-date-neg').textContent = dateStr;
+  document.getElementById('cmp-text-neg').value = negEntry ? (negEntry.body||''): '';
+  document.getElementById('cmp-text-neg').disabled = false;
+  document.getElementById('cmp-text-neg').placeholder = '寫下負能量記事…';
 
   document.getElementById('ed-body').style.display = 'none';
   document.getElementById('compare-view').style.display = 'flex';
@@ -1275,16 +1273,42 @@ function renderCompare() {
 }
 
 async function _saveBoth() {
-  const { db, doc, updateDoc } = window._fb;
+  if (!selectedDate) return;
+  const { db, doc, updateDoc, addDoc, collection, Timestamp } = window._fb;
+  const { y, m, d } = selectedDate;
   const posBody = document.getElementById('cmp-text-pos').value.trim();
   const negBody = document.getElementById('cmp-text-neg').value.trim();
   setSyncState('syncing');
   try {
-    const ops = [];
-    if (_cmpPosId && posBody) { ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpPosId),{body:posBody,mood:'positive'})); const i=entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody; }
-    if (_cmpNegId && negBody) { ops.push(updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpNegId),{body:negBody,mood:'negative'})); const i=entries.findIndex(e=>e.id===_cmpNegId); if(i!==-1) entries[i].body=negBody; }
-    await Promise.all(ops);
-    setSyncState('idle'); showToast('已更新 ✦');
+    // Save positive
+    if (posBody) {
+      if (_cmpPosId) {
+        await updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpPosId),{body:posBody,mood:'positive'});
+        const i=entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody;
+      } else {
+        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
+        _cmpPosId = ref.id;
+      }
+    } else if (_cmpPosId) {
+      // Text cleared — delete entry
+      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed','entries',_cmpPosId));
+      entries = entries.filter(e=>e.id!==_cmpPosId); _cmpPosId=null;
+    }
+    // Save negative
+    if (negBody) {
+      if (_cmpNegId) {
+        await updateDoc(doc(db,'SanctuaryOfReed','entries',_cmpNegId),{body:negBody,mood:'negative'});
+        const i=entries.findIndex(e=>e.id===_cmpNegId); if(i!==-1) entries[i].body=negBody;
+      } else {
+        const ref = await addDoc(collection(db,'SanctuaryOfReed','entries'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
+        _cmpNegId = ref.id;
+      }
+    } else if (_cmpNegId) {
+      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed','entries',_cmpNegId));
+      entries = entries.filter(e=>e.id!==_cmpNegId); _cmpNegId=null;
+    }
+    await loadEntries();
+    setSyncState('idle'); showToast('已儲存 ✦');
   } catch(e) { setSyncState('error'); showToast('儲存失敗'); }
 }
 
@@ -1302,25 +1326,25 @@ document.addEventListener('keydown', e => { if (e.ctrlKey&&e.shiftKey&&e.key==='
 
 /* ═══════════════════════ PC ENTRY ═══════════════════════ */
 function newEntry() {
-  curId=null; mood=''; selectedDate=null;
+  curId=null; mood='positive'; selectedDate=null;
   compareOn=false;
   document.getElementById('btn-compare').style.display='none';
   document.getElementById('btn-compare').classList.remove('active');
   document.getElementById('compare-view').style.display='none';
+  document.getElementById('compare-actions').style.display='none';
   document.getElementById('ed-body').style.display='flex';
   renderCalendar();
   document.getElementById('entry-body').value='';
   document.getElementById('entry-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   updateMoodUI();
   document.getElementById('btn-del').style.display='none';
-  document.getElementById('ed-body').className='ed-body';
   updateWordCount();
   document.getElementById('entry-body').focus();
 }
 
 function openEntry(id) {
   const e = entries.find(x=>x.id===id); if (!e) return;
-  curId=id; mood=e.mood||'';
+  curId=id; mood=e.mood||'positive';
   const dt = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
   document.getElementById('entry-date').textContent = dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('entry-body').value = e.body||'';
@@ -1329,42 +1353,42 @@ function openEntry(id) {
   document.getElementById('edview').style.display='flex';
   document.getElementById('ed-body').style.display='flex';
   document.getElementById('compare-view').style.display='none';
+  document.getElementById('compare-actions').style.display='none';
   if (compareOn) { compareOn=false; document.getElementById('btn-compare').classList.remove('active'); }
   updateWordCount();
   if (selectedDate) updateCompareBtn(selectedDate.y, selectedDate.m, selectedDate.d);
 }
 
 function selMood(m) {
-  const newMood = (mood===m) ? '' : m;
-  mood = newMood;
+  // Cannot deselect — must always have a mood selected
+  if (mood === m) return;
+  // Cancel any pending auto-save before switching
+  clearTimeout(autoSaveTimer);
+  mood = m;
   updateMoodUI();
-  // If we have a selected date, try to load the matching mood entry
+  // If we have a selected date, load the matching mood entry (or blank)
   if (selectedDate) {
     const { y, m: mo, d } = selectedDate;
     const dayEntries = entries.filter(e => {
       const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
       return dt && dt.getFullYear()===y && dt.getMonth()===mo && dt.getDate()===d;
     });
-    const target = newMood ? dayEntries.find(e => e.mood === newMood) : null;
+    const target = dayEntries.find(e => e.mood === mood);
     if (target) {
-      // Load existing entry for this mood (don't change curId flow, just update UI)
       curId = target.id;
       document.getElementById('entry-body').value = target.body || '';
       document.getElementById('btn-del').style.display = 'inline-block';
-      updateWordCount();
-      updateCompareBtn(y, mo, d);
-      return;
-    } else if (dayEntries.length > 0) {
-      // No entry for this mood yet — open blank editor for this date
+    } else {
       curId = null;
       document.getElementById('entry-body').value = '';
       document.getElementById('btn-del').style.display = 'none';
-      updateWordCount();
-      updateCompareBtn(y, mo, d);
-      return;
     }
+    updateWordCount();
+    updateCompareBtn(y, mo, d);
+    return;
   }
-  scheduleAutoSave();
+  // No date context (new entry mode) — just update UI, no auto-save
+  updateWordCount();
 }
 function updateMoodUI() {
   document.getElementById('ms-pos').className='mood-sym sym-positive'+(mood==='positive'?' on':'');
@@ -1501,9 +1525,9 @@ function mobCalNext(){mobCalMonth++;if(mobCalMonth>11){mobCalMonth=0;mobCalYear+
 function mobSelectDay(y,m,d){
   mobSelectedDate={y,m,d};
   const dayEntries=entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;});
-  if(dayEntries.length>0){const moodEntry=mobMood?dayEntries.find(e=>e.mood===mobMood):null;mobOpenEntry((moodEntry||dayEntries[0]).id);}
+  if(dayEntries.length>0){const posEntry=dayEntries.find(e=>e.mood==='positive');mobOpenEntry((posEntry||dayEntries[0]).id);}
   else {
-    mobCurId=null; mobMood='';
+    mobCurId=null; mobMood='positive';
     const dateObj=new Date(y,m,d);
     document.getElementById('mob-entry-date').textContent=dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
     document.getElementById('mob-entry-body').value='';
@@ -1514,7 +1538,7 @@ function mobSelectDay(y,m,d){
 }
 
 function mobNewEntry(){
-  mobCurId=null; mobMood='';
+  mobCurId=null; mobMood='positive';
   document.getElementById('mob-entry-date').textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('mob-entry-body').value='';
   mobUpdateMoodUI();
@@ -1524,7 +1548,7 @@ function mobNewEntry(){
 
 function mobOpenEntry(id){
   const e=entries.find(x=>x.id===id); if(!e) return;
-  mobCurId=id; mobMood=e.mood||'';
+  mobCurId=id; mobMood=e.mood||'positive';
   const dt=e.createdAt?.toDate?e.createdAt.toDate():new Date();
   document.getElementById('mob-entry-date').textContent=dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('mob-entry-body').value=e.body||'';
@@ -1551,7 +1575,28 @@ function mobBack(){
   renderMobCalendar();
 }
 
-function mobSelMood(m){mobMood=(mobMood===m)?'':m;mobUpdateMoodUI();mobScheduleAutoSave();}
+function mobSelMood(m){
+  if(mobMood===m) return; // cannot deselect
+  clearTimeout(mobAutoSaveTimer);
+  mobMood=m;
+  mobUpdateMoodUI();
+  // Load the correct mood entry for current date context
+  const dateCtx = mobSelectedDate || null;
+  if(dateCtx){
+    const {y,mo2,d} = {y:dateCtx.y, mo2:dateCtx.m, d:dateCtx.d};
+    const dayEntries=entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===mo2&&dt.getDate()===d;});
+    const target=dayEntries.find(e=>e.mood===mobMood);
+    if(target){
+      mobCurId=target.id;
+      document.getElementById('mob-entry-body').value=target.body||'';
+      document.getElementById('mob-btn-del').style.display='inline-block';
+    } else {
+      mobCurId=null;
+      document.getElementById('mob-entry-body').value='';
+      document.getElementById('mob-btn-del').style.display='none';
+    }
+  }
+}
 function mobUpdateMoodUI(){
   document.getElementById('mob-ms-pos').className='mob-mood-sym sym-positive'+(mobMood==='positive'?' on':'');
   document.getElementById('mob-ms-neg').className='mob-mood-sym sym-negative'+(mobMood==='negative'?' on':'');
@@ -1791,6 +1836,21 @@ function mobToggleSplit() {
   } else {
     splitView.style.display = 'none';
     singleView.style.display = 'flex';
+    // Restore single view to current mood entry
+    if (mobSelectedDate) {
+      const {y,m,d} = mobSelectedDate;
+      const dayEntries = entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;});
+      const target = dayEntries.find(e=>e.mood===mobMood);
+      if (target) {
+        mobCurId=target.id;
+        document.getElementById('mob-entry-body').value=target.body||'';
+        document.getElementById('mob-btn-del').style.display='inline-block';
+      } else {
+        mobCurId=null;
+        document.getElementById('mob-entry-body').value='';
+        document.getElementById('mob-btn-del').style.display='none';
+      }
+    }
   }
 }
 
