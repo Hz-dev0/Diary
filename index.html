@@ -55,7 +55,10 @@
     if (_guestUnsubscribe) _guestUnsubscribe();
     const ref = doc(db, 'guest_access', guestUid);
     _guestUnsubscribe = onSnapshot(ref, (snap) => {
-      if (!snap.exists() || Date.now() > (snap.data().expiresAt?.toMillis?.() || 0)) {
+      if (!snap.exists()) { if (_guestUnsubscribe) { _guestUnsubscribe(); _guestUnsubscribe = null; } window._showGuestScreen(); return; }
+      const raw = snap.data().expiresAt;
+      const expiresAtMs = typeof raw === 'number' ? raw : (raw?.toMillis?.() ?? 0);
+      if (Date.now() > expiresAtMs) {
         if (_guestUnsubscribe) { _guestUnsubscribe(); _guestUnsubscribe = null; }
         window._showGuestScreen();
       }
@@ -83,10 +86,15 @@
       // 匿名用戶：檢查是否有有效的 guest_access
       try {
         const gd = await getDoc(doc(db, 'guest_access', user.uid));
-        if (gd.exists() && (gd.data().expiresAt?.toMillis?.() || 0) > Date.now()) {
-          window.enterApp('guest');
-          window._fbStartGuestWatch(user.uid);
-          return;
+        if (gd.exists()) {
+          const raw = gd.data().expiresAt;
+          const expiresAtMs = typeof raw === 'number' ? raw : (raw?.toMillis?.() ?? 0);
+          if (expiresAtMs > Date.now()) {
+            window._fbOwnerUid = gd.data().ownerUid;
+            window.enterApp('guest');
+            window._fbStartGuestWatch(user.uid);
+            return;
+          }
         }
       } catch(_) {}
       document.getElementById('screen-loading').style.display = 'none';
@@ -1436,10 +1444,19 @@ async function verifyToken() {
   try {
     const td = await getDoc(doc(db,'tokens',code));
     if (!td.exists()) throw new Error('驗證碼不存在');
-    if ((td.data().expiresAt?.toMillis?.() || 0) < Date.now()) throw new Error('驗證碼已過期');
-    await setDoc(doc(db,'guest_access',window._me.uid), { ownerUid: td.data().ownerUid || td.data().createdBy, grantedAt:Timestamp.now(), expiresAt:td.data().expiresAt });
+    const raw = td.data();
+    // 相容毫秒數（A/B/C 新格式）或 Firestore Timestamp（舊格式）
+    const expiresAtMs = typeof raw.expiresAt === 'number'
+      ? raw.expiresAt
+      : (raw.expiresAt?.toMillis?.() ?? 0);
+    if (expiresAtMs < Date.now()) throw new Error('驗證碼已過期');
+    const ownerUid = raw.ownerUid || raw.createdBy;
+    if (!ownerUid) throw new Error('驗證碼格式錯誤（缺少 ownerUid）');
+    // 統一格式：expiresAt 存毫秒數
+    await setDoc(doc(db,'guest_access',window._me.uid), { ownerUid, grantedAt: Timestamp.now(), expiresAt: expiresAtMs });
     // 刪除已使用的驗證碼（即刪即用）
     try { await window._fb.deleteDoc(doc(db,'tokens',code)); } catch(_) {}
+    window._fbOwnerUid = ownerUid;
     window._fbStartGuestWatch && window._fbStartGuestWatch(window._me.uid);
     window.enterApp('guest');
   } catch(e) {
@@ -1543,9 +1560,10 @@ async function loadEntries() {
     try {
       const { db, doc, getDoc } = window._fb;
       const gd = await getDoc(doc(db, 'guest_access', window._me.uid));
-      if (!gd.exists() || (gd.data().expiresAt?.toMillis?.() || 0) <= Date.now()) {
-        location.reload(); return;
-      }
+      if (!gd.exists()) { location.reload(); return; }
+      const rawExp = gd.data().expiresAt;
+      const expiresAtMs = typeof rawExp === 'number' ? rawExp : (rawExp?.toMillis?.() ?? 0);
+      if (expiresAtMs <= Date.now()) { location.reload(); return; }
     } catch(_) {}
   }
   const { db, collection, query, orderBy, getDocs } = window._fb;
@@ -2309,9 +2327,9 @@ async function generateToken(){
   const{db,doc,setDoc,Timestamp}=window._fb;
   clearInterval(timerInt);
   const code=String(Math.floor(100000+Math.random()*900000));
-  const expiresAt=new Timestamp(Math.floor(Date.now()/1000)+durMin*60,0);
+  const expiresAt=Date.now()+durMin*60000;  // 統一格式：毫秒數
   try{
-    await setDoc(doc(db,'tokens',code),{createdBy:window._me.uid,createdAt:Timestamp.now(),expiresAt,durationMinutes:durMin});
+    await setDoc(doc(db,'tokens',code),{ownerUid:window._me.uid,createdAt:Timestamp.now(),expiresAt,durationMinutes:durMin});
     document.getElementById('token-num').textContent=code;
     let rem=durMin*60;
     const tick=()=>{
@@ -2356,7 +2374,9 @@ async function verifyAndExport() {
   try {
     const td = await getDoc(doc(db,'tokens',code));
     if (!td.exists()) throw new Error('驗證碼不存在');
-    if ((td.data().expiresAt?.toMillis?.() || 0) < Date.now()) throw new Error('驗證碼已過期');
+    const rawExp = td.data().expiresAt;
+    const expiresAtMs = typeof rawExp === 'number' ? rawExp : (rawExp?.toMillis?.() ?? 0);
+    if (expiresAtMs < Date.now()) throw new Error('驗證碼已過期');
     // Export
     const exportData = entries.map(e => {
       const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
@@ -2575,7 +2595,11 @@ async function purgeExpiredGuests(){
     const snap=await getDocs(collection(db,'guest_access'));
     if(snap.empty) return;
     const now=Date.now();
-    const expired=snap.docs.filter(d=>(d.data().expiresAt?.toMillis?.()??0)<=now);
+    const expired=snap.docs.filter(d=>{
+      const raw=d.data().expiresAt;
+      const ms=typeof raw==='number'?raw:(raw?.toMillis?.()??0);
+      return ms<=now;
+    });
     if(!expired.length) return;
     await Promise.all(expired.map(d=>deleteDoc(doc(db,'guest_access',d.id)).catch(()=>{})));
     console.log('[SanctuaryOfReed] 已清除 '+expired.length+' 筆過期訪客紀錄');
@@ -2585,11 +2609,12 @@ async function purgeExpiredGuests(){
 /* ═══════════════════════ REVOKE GUESTS ═══════════════════════ */
 async function revokeAllGuests(){
   if(!confirm('確定要強制登出所有訪客？他們目前的訪問權限將立即失效。'))return;
-  const{db,collection,getDocs,doc,deleteDoc,setDoc,Timestamp}=window._fb;
+  const{db,collection,getDocs,doc,deleteDoc,setDoc}=window._fb;
   try{
     const[guestSnap,tokenSnap]=await Promise.all([getDocs(collection(db,'guest_access')),getDocs(collection(db,'tokens'))]);
     const ops=[];
-    guestSnap.docs.forEach(d=>{ops.push(deleteDoc(doc(db,'guest_access',d.id)).catch(()=>setDoc(doc(db,'guest_access',d.id),{expiresAt:new Timestamp(Math.floor(Date.now()/1000)-1,0)},{merge:true})));});
+    const expiredMs=Date.now()-1000;
+    guestSnap.docs.forEach(d=>{ops.push(deleteDoc(doc(db,'guest_access',d.id)).catch(()=>setDoc(doc(db,'guest_access',d.id),{expiresAt:expiredMs},{merge:true})));});
     tokenSnap.docs.forEach(d=>{ops.push(deleteDoc(doc(db,'tokens',d.id)).catch(()=>{}));});
     await Promise.all(ops);
     showToast(guestSnap.size?'已強制登出 '+guestSnap.size+' 位訪客 ✦':'已清除所有驗證碼 ✦');
