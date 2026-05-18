@@ -2331,7 +2331,7 @@ async function generateToken(){
   const code=String(Math.floor(100000+Math.random()*900000));
   const expiresAt=Date.now()+durMin*60000;  // 統一格式：毫秒數
   try{
-    await setDoc(doc(db,'tokens',code),{ownerUid:window._me.uid,createdAt:Timestamp.now(),expiresAt,durationMinutes:durMin});
+    await setDoc(doc(db,'tokens',code),{ownerUid:window._me.uid,expiresAt});
     document.getElementById('token-num').textContent=code;
     let rem=durMin*60;
     const tick=()=>{
