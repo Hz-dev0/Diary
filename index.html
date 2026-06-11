@@ -890,7 +890,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div class="compare-col compare-pos">
           <div class="compare-label">✧ 正能量</div>
           <div class="compare-date" id="cmp-date-pos"></div>
-          <textarea class="compare-text compare-textarea" id="cmp-text-pos" placeholder="這一天沒有正能量記事"></textarea>
+          <textarea class="compare-text compare-textarea" id="cmp-text-pos" placeholder="這一天沒有正能量記事" oninput="cmpPosScheduleSave()"></textarea>
         </div>
         <!-- English translation column -->
         <div class="compare-divider"></div>
@@ -2716,6 +2716,34 @@ async function mobSaveActive() {
 }
 
 /* ═══════════════════════ ENGLISH COLUMN AUTO-SAVE ═══════════════════════ */
+let cmpPosSaveTimer = null;
+function cmpPosScheduleSave() {
+  clearTimeout(cmpPosSaveTimer);
+  setSyncState('syncing');
+  cmpPosSaveTimer = setTimeout(async () => {
+    if (!selectedDate || !_cmpPosId && !document.getElementById('cmp-text-pos').value.trim()) {
+      setSyncState('idle'); return;
+    }
+    const { db, doc, updateDoc, addDoc, collection, Timestamp } = window._fb;
+    const posBody = document.getElementById('cmp-text-pos').value.trim();
+    const { y, m, d } = selectedDate;
+    try {
+      if (_cmpPosId) {
+        if (posBody) {
+          await updateDoc(doc(db,'SanctuaryOfReed',_cmpPosId), {body:posBody, mood:'positive'});
+          const i = entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody;
+        }
+        // 清空時不自動刪除，留給手動儲存的確認機制處理
+      } else if (posBody) {
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
+        _cmpPosId = ref.id;
+        await loadEntries();
+      }
+      setSyncState('idle');
+    } catch(e) { setSyncState('error'); }
+  }, 2000);
+}
+
 let cmpEnSaveTimer = null;
 function cmpEnScheduleSave() {
   clearTimeout(cmpEnSaveTimer);
