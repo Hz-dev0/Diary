@@ -2120,7 +2120,7 @@ function scheduleAutoSave() {
 async function autoSave() {
   // Neg mood auto-save is handled by _negSave via negAutoSave()
   if (mood === 'negative') { setSyncState('idle'); return; }
-  const { db, collection, addDoc, doc, updateDoc, serverTimestamp } = window._fb;
+  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
   const body = document.getElementById('entry-body').value.trim();
   if (!body) { setSyncState('idle'); return; }
   const data = { body, mood };
@@ -2130,7 +2130,12 @@ async function autoSave() {
       const idx = entries.findIndex(e=>e.id===curId);
       if (idx!==-1) entries[idx]={...entries[idx],...data};
     } else {
-      data.createdAt = serverTimestamp();
+      if (selectedDate) {
+        const {y,m,d} = selectedDate;
+        data.createdAt = Timestamp.fromDate(new Date(y,m,d,12,0,0));
+      } else {
+        data.createdAt = serverTimestamp();
+      }
       const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
       curId = ref.id;
       document.getElementById('btn-del').style.display='inline-block';
