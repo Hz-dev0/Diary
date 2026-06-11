@@ -1819,6 +1819,7 @@ function setBar(id, pP, pM, pN) {
 
 /* ═══════════════════════ DAY SELECTION ═══════════════════════ */
 function selectDay(y, m, d) {
+  const wasCompareOn = compareOn;
   selectedDate = {y, m, d};
   compareOn = false;
   document.getElementById('compare-actions').style.display='none';
@@ -1827,6 +1828,14 @@ function selectDay(y, m, d) {
     const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
     return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
   });
+  if (wasCompareOn) {
+    // Compare 模式中切換日期：維持 Compare 模式，重新載入該天
+    compareOn = true;
+    document.getElementById('btn-compare').classList.add('active');
+    renderCompare();
+    updateCompareBtn(y, m, d);
+    return;
+  }
   if (dayEntries.length > 0) {
     // Prefer positive entry first, then any
     const posEntry = dayEntries.find(e => e.mood === 'positive');
