@@ -1926,6 +1926,17 @@ async function _saveBoth() {
   const posBody = document.getElementById('cmp-text-pos').value.trim();
   const negBody = document.getElementById('cmp-text-neg').value.trim();
   const enBody  = document.getElementById('cmp-text-en').value.trim();
+
+  // 方案一：若原本有內容但現在清空，跳出確認
+  const willDelete = [];
+  if (_cmpPosId && !posBody) willDelete.push('正能量日記');
+  if (_cmpNegId && !negBody) willDelete.push('負能量日記');
+  if (_cmpEnId  && !enBody)  willDelete.push('英文日記');
+  if (willDelete.length > 0) {
+    const ok = confirm('以下欄位已清空，儲存將永久刪除：\n\n・' + willDelete.join('\n・') + '\n\n確定要繼續嗎？');
+    if (!ok) { setSyncState('idle'); return; }
+  }
+
   setSyncState('syncing');
   try {
     // Save positive
