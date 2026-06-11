@@ -151,7 +151,8 @@ body.stealth .mob-btn-save,
 body.stealth .cal-day.selected,
 body.stealth .mob-cal-day.selected,
 body.stealth .stealth-btn,
-body.stealth .role-badge {
+body.stealth .role-badge,
+body.stealth .en-tts-btn {
   background: rgba(210,195,160,0.18) !important;
   color: rgba(120,105,70,0.55) !important;
   border-color: rgba(180,160,110,0.15) !important;
@@ -402,6 +403,76 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   gap:8px; padding:8px 28px;
   border-top:1px solid var(--border-g); background:var(--white);
   position:relative; z-index:1; flex-shrink:0;
+}
+
+/* ── ENGLISH TRANSLATION COLUMN ── */
+.compare-en {
+  background:linear-gradient(180deg,rgba(100,160,120,0.07) 0%,transparent 60%);
+}
+.compare-en .compare-label { color:#2e6b4a; }
+.compare-en .compare-date { color:#3d8a5c; }
+
+.en-col-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+}
+.en-col-label {
+  font-size:10px; letter-spacing:2.5px; font-weight:600; opacity:.55; color:#2e6b4a;
+}
+.en-tts-controls {
+  display:flex; align-items:center; gap:5px;
+}
+.en-tts-btn {
+  width:28px; height:28px; border-radius:50%;
+  border:1.5px solid rgba(46,107,74,0.25); background:none;
+  font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  color:#3d8a5c; transition:all .2s; line-height:1;
+}
+.en-tts-btn:hover { background:rgba(46,107,74,0.08); border-color:rgba(46,107,74,0.5); }
+.en-tts-btn.playing { background:rgba(46,107,74,0.12); border-color:#3d8a5c; color:#1e5c38; }
+.en-tts-btn.settings-open { background:rgba(46,107,74,0.12); border-color:#3d8a5c; }
+
+/* TTS settings panel */
+.tts-settings-panel {
+  display:none; position:absolute; right:0; top:calc(100% + 6px);
+  background:var(--white); border:1px solid var(--border-g);
+  border-radius:6px; padding:14px 16px; min-width:220px;
+  box-shadow:0 8px 32px rgba(11,25,41,0.12); z-index:100;
+}
+.tts-settings-panel.open { display:block; }
+.tts-setting-row {
+  margin-bottom:10px;
+}
+.tts-setting-row:last-child { margin-bottom:0; }
+.tts-setting-label {
+  font-size:10px; letter-spacing:1.5px; color:var(--blue-soft);
+  font-weight:600; margin-bottom:5px; display:block;
+}
+.tts-select {
+  width:100%; padding:6px 8px; border:1px solid var(--border-g);
+  border-radius:var(--radius); font-size:11px; color:var(--blue-text);
+  background:var(--gold-faint); outline:none; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+  appearance:none; -webkit-appearance:none;
+}
+.tts-select:focus { border-color:rgba(46,107,74,0.5); }
+.tts-speed-row {
+  display:flex; align-items:center; gap:8px;
+}
+.tts-speed-slider {
+  flex:1; height:3px; accent-color:#3d8a5c; cursor:pointer;
+}
+.tts-speed-val {
+  font-size:11px; color:#3d8a5c; font-weight:600; min-width:28px; text-align:right;
+}
+
+/* Position wrapper for settings panel */
+.en-tts-settings-wrap {
+  position:relative;
+}
+
+.compare-en .compare-textarea {
+  flex:1; min-height:200px;
 }
 
 /* ── TOAST ── */
@@ -817,6 +888,38 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
           </div>
           <!-- Hidden textarea kept for _saveBoth compatibility — synced by JS -->
           <textarea id="cmp-text-neg" style="display:none;"></textarea>
+        </div>
+        <!-- English translation column -->
+        <div class="compare-divider"></div>
+        <div class="compare-col compare-en" id="compare-col-en">
+          <div class="en-col-header">
+            <div class="en-col-label">✦ ENGLISH</div>
+            <div class="en-tts-controls">
+              <button class="en-tts-btn" id="en-tts-play" onclick="ttsToggle()" title="播放 / 暫停">▶</button>
+              <button class="en-tts-btn" id="en-tts-stop" onclick="ttsStop()" title="停止">■</button>
+              <div class="en-tts-settings-wrap">
+                <button class="en-tts-btn" id="en-tts-settings-btn" onclick="ttsToggleSettings()" title="聲音設定">⚙</button>
+                <div class="tts-settings-panel" id="tts-settings-panel">
+                  <div class="tts-setting-row">
+                    <span class="tts-setting-label">VOICE 聲線</span>
+                    <select class="tts-select" id="tts-voice-select" onchange="ttsSavePref()"></select>
+                  </div>
+                  <div class="tts-setting-row">
+                    <span class="tts-setting-label">SPEED 速度</span>
+                    <div class="tts-speed-row">
+                      <input type="range" class="tts-speed-slider" id="tts-speed"
+                        min="0.5" max="2" step="0.1" value="1" oninput="ttsSpeedChange(this)">
+                      <span class="tts-speed-val" id="tts-speed-val">1.0×</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="compare-date" id="cmp-date-en"></div>
+          <textarea class="compare-text compare-textarea" id="cmp-text-en"
+            placeholder="Paste your English translation here…"
+            oninput="cmpEnScheduleSave()"></textarea>
         </div>
       </div>
       <div class="compare-actions" id="compare-actions" style="display:none;">
@@ -1778,7 +1881,7 @@ function exitCompare() {
   }
 }
 
-let _cmpPosId = null, _cmpNegId = null;
+let _cmpPosId = null, _cmpNegId = null, _cmpEnId = null;
 
 function renderCompare() {
   if (!selectedDate) return;
@@ -1789,8 +1892,10 @@ function renderCompare() {
   });
   const posEntry = de.find(e => e.mood === 'positive');
   const negEntry = de.find(e => e.mood === 'negative');
+  const enEntry  = de.find(e => e.mood === 'english');
   _cmpPosId = posEntry ? posEntry.id : null;
   _cmpNegId = negEntry ? negEntry.id : null;
+  _cmpEnId  = enEntry  ? enEntry.id  : null;
 
   const dateStr = new Date(y,m,d).toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('cmp-date-pos').textContent = dateStr;
@@ -1803,6 +1908,10 @@ function renderCompare() {
   const cmpIsToday = isDateToday(y, m, d);
   showCmpNegPanel(negEntry ? (negEntry.body||'') : '', cmpIsToday);
   _cmpNegSync(); // sync hidden textarea
+
+  // English col
+  document.getElementById('cmp-date-en').textContent = dateStr;
+  document.getElementById('cmp-text-en').value = enEntry ? (enEntry.body||'') : '';
 
   document.getElementById('ed-body').style.display = 'none';
   document.getElementById('neg-panel').style.display = 'none';
@@ -1820,6 +1929,7 @@ async function _saveBoth() {
   if (cmpNegPending) { cmpNegItems.push(cmpNegPending); cmpNegFireEl.value=''; _cmpNegSync(); }
   const posBody = document.getElementById('cmp-text-pos').value.trim();
   const negBody = document.getElementById('cmp-text-neg').value.trim();
+  const enBody  = document.getElementById('cmp-text-en').value.trim();
   setSyncState('syncing');
   try {
     // Save positive
@@ -1849,13 +1959,26 @@ async function _saveBoth() {
       await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpNegId));
       entries = entries.filter(e=>e.id!==_cmpNegId); _cmpNegId=null;
     }
+    // Save English translation (stored as mood:'english' entry)
+    if (enBody) {
+      if (_cmpEnId) {
+        await updateDoc(doc(db,'SanctuaryOfReed',_cmpEnId),{body:enBody,mood:'english'});
+        const i=entries.findIndex(e=>e.id===_cmpEnId); if(i!==-1) entries[i].body=enBody;
+      } else {
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:enBody,mood:'english',createdAt:Timestamp.fromDate(new Date(y,m,d,12,2,0))});
+        _cmpEnId = ref.id;
+      }
+    } else if (_cmpEnId) {
+      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpEnId));
+      entries = entries.filter(e=>e.id!==_cmpEnId); _cmpEnId=null;
+    }
     await loadEntries();
     setSyncState('idle'); showToast('已儲存 ✦');
   } catch(e) { setSyncState('error'); showToast('儲存失敗'); }
 }
 
 function _delBoth() {
-  delBothEntries(_cmpPosId, _cmpNegId);
+  delBothEntries(_cmpPosId, _cmpNegId, _cmpEnId);
 }
 
 
@@ -2083,11 +2206,11 @@ async function delEntry() {
   } catch(e) { showToast('刪除失敗'); setSyncState('error'); }
 }
 
-async function delBothEntries(posId, negId) {
-  const toDelete = [posId, negId].filter(Boolean);
+async function delBothEntries(posId, negId, enId) {
+  const toDelete = [posId, negId, enId].filter(Boolean);
   if (!toDelete.length) return;
   const count = toDelete.length;
-  if (!confirm(`確定刪除這天的正負能量記事（共 ${count} 篇）？`)) return;
+  if (!confirm(`確定刪除這天的記事（共 ${count} 篇）？`)) return;
   const { db, doc, deleteDoc } = window._fb;
   try {
     setSyncState('syncing');
@@ -2588,6 +2711,181 @@ async function mobSaveActive() {
   } else {
     mobSaveEntry();
   }
+}
+
+/* ═══════════════════════ ENGLISH COLUMN AUTO-SAVE ═══════════════════════ */
+let cmpEnSaveTimer = null;
+function cmpEnScheduleSave() {
+  clearTimeout(cmpEnSaveTimer);
+  setSyncState('syncing');
+  cmpEnSaveTimer = setTimeout(async () => {
+    if (!selectedDate || !_cmpEnId && !document.getElementById('cmp-text-en').value.trim()) {
+      setSyncState('idle'); return;
+    }
+    const { db, doc, updateDoc, addDoc, collection, Timestamp } = window._fb;
+    const enBody = document.getElementById('cmp-text-en').value.trim();
+    const { y, m, d } = selectedDate;
+    try {
+      if (_cmpEnId) {
+        if (enBody) {
+          await updateDoc(doc(db,'SanctuaryOfReed',_cmpEnId), {body:enBody, mood:'english'});
+          const i = entries.findIndex(e=>e.id===_cmpEnId); if(i!==-1) entries[i].body=enBody;
+        } else {
+          await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpEnId));
+          entries = entries.filter(e=>e.id!==_cmpEnId); _cmpEnId=null;
+        }
+      } else if (enBody) {
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:enBody,mood:'english',createdAt:Timestamp.fromDate(new Date(y,m,d,12,2,0))});
+        _cmpEnId = ref.id;
+        await loadEntries();
+      }
+      setSyncState('idle');
+    } catch(e) { setSyncState('error'); }
+  }, 2000);
+}
+
+/* ═══════════════════════ TTS ENGINE ═══════════════════════ */
+let _ttsUtterance = null;
+let _ttsPlaying = false;
+let _ttsVoices = [];
+let _ttsPref = { voiceURI: '', rate: 1.0 };
+
+function ttsLoadPref() {
+  try {
+    const saved = localStorage.getItem('tts_pref');
+    if (saved) _ttsPref = { ..._ttsPref, ...JSON.parse(saved) };
+  } catch(_) {}
+}
+function ttsSavePref() {
+  const sel = document.getElementById('tts-voice-select');
+  const spd = document.getElementById('tts-speed');
+  _ttsPref.voiceURI = sel ? sel.value : '';
+  _ttsPref.rate = spd ? parseFloat(spd.value) : 1.0;
+  try { localStorage.setItem('tts_pref', JSON.stringify(_ttsPref)); } catch(_) {}
+}
+
+function ttsPopulateVoices() {
+  _ttsVoices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+  const sel = document.getElementById('tts-voice-select');
+  if (!sel) return;
+  sel.innerHTML = '';
+  if (!_ttsVoices.length) {
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '（無可用英文聲線）';
+    sel.appendChild(opt);
+    return;
+  }
+  _ttsVoices.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.voiceURI;
+    opt.textContent = v.name + ' (' + v.lang + ')';
+    sel.appendChild(opt);
+  });
+  // Restore saved preference
+  if (_ttsPref.voiceURI) {
+    const match = [...sel.options].find(o => o.value === _ttsPref.voiceURI);
+    if (match) sel.value = _ttsPref.voiceURI;
+  }
+  // Set speed slider
+  const spd = document.getElementById('tts-speed');
+  if (spd) { spd.value = _ttsPref.rate; document.getElementById('tts-speed-val').textContent = parseFloat(_ttsPref.rate).toFixed(1) + '×'; }
+}
+
+function ttsSpeedChange(el) {
+  document.getElementById('tts-speed-val').textContent = parseFloat(el.value).toFixed(1) + '×';
+  _ttsPref.rate = parseFloat(el.value);
+  ttsSavePref();
+  // If currently playing, restart with new speed
+  if (_ttsPlaying) { ttsStop(); ttsPlay(); }
+}
+
+function ttsToggleSettings() {
+  const panel = document.getElementById('tts-settings-panel');
+  const btn   = document.getElementById('en-tts-settings-btn');
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  btn.classList.toggle('settings-open', !isOpen);
+  if (!isOpen) ttsPopulateVoices();
+}
+
+// Close settings panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('tts-settings-panel');
+  const btn   = document.getElementById('en-tts-settings-btn');
+  if (!panel || !panel.classList.contains('open')) return;
+  if (!panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('open');
+    btn && btn.classList.remove('settings-open');
+  }
+});
+
+function ttsGetVoice() {
+  const all = window.speechSynthesis.getVoices();
+  if (_ttsPref.voiceURI) {
+    const match = all.find(v => v.voiceURI === _ttsPref.voiceURI);
+    if (match) return match;
+  }
+  // Fallback: first English voice
+  return all.find(v => v.lang.startsWith('en')) || null;
+}
+
+function ttsPlay() {
+  const text = (document.getElementById('cmp-text-en') || {}).value || '';
+  if (!text.trim()) { showToast('請先貼上英文翻譯'); return; }
+  window.speechSynthesis.cancel();
+  _ttsUtterance = new SpeechSynthesisUtterance(text);
+  _ttsUtterance.voice = ttsGetVoice();
+  _ttsUtterance.rate  = _ttsPref.rate || 1.0;
+  _ttsUtterance.lang  = 'en';
+  _ttsUtterance.onstart = () => {
+    _ttsPlaying = true;
+    const btn = document.getElementById('en-tts-play');
+    if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
+  };
+  _ttsUtterance.onend = _ttsUtterance.onerror = () => {
+    _ttsPlaying = false;
+    const btn = document.getElementById('en-tts-play');
+    if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+  };
+  window.speechSynthesis.speak(_ttsUtterance);
+}
+
+function ttsPause() {
+  if (window.speechSynthesis.speaking) {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      const btn = document.getElementById('en-tts-play');
+      if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
+    } else {
+      window.speechSynthesis.pause();
+      const btn = document.getElementById('en-tts-play');
+      if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+    }
+  }
+}
+
+function ttsToggle() {
+  if (!window.speechSynthesis) { showToast('此瀏覽器不支援 TTS'); return; }
+  if (_ttsPlaying) {
+    ttsPause();
+  } else {
+    ttsPlay();
+  }
+}
+
+function ttsStop() {
+  window.speechSynthesis.cancel();
+  _ttsPlaying = false;
+  const btn = document.getElementById('en-tts-play');
+  if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+}
+
+// Init TTS
+ttsLoadPref();
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = ttsPopulateVoices;
+  ttsPopulateVoices();
 }
 
 /* ═══════════════════════ PURGE EXPIRED GUESTS ═══════════════════════ */
