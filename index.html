@@ -870,24 +870,14 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div id="neg-list-container"></div>
       </div>
       <div class="compare-view" id="compare-view" style="display:none;">
+        <!-- Hidden neg elements kept for JS compatibility -->
+        <input id="cmp-neg-fire-input" style="display:none;" autocomplete="off">
+        <div id="cmp-neg-list" style="display:none;"></div>
+        <textarea id="cmp-text-neg" style="display:none;"></textarea>
         <div class="compare-col compare-pos">
           <div class="compare-label">✧ 正能量</div>
           <div class="compare-date" id="cmp-date-pos"></div>
           <textarea class="compare-text compare-textarea" id="cmp-text-pos" placeholder="這一天沒有正能量記事"></textarea>
-        </div>
-        <div class="compare-divider"></div>
-        <div class="compare-col compare-neg">
-          <div class="compare-label">✦ 負能量</div>
-          <div class="compare-date" id="cmp-date-neg"></div>
-          <!-- Bullet launcher in compare view -->
-          <div class="cmp-neg-panel">
-            <div class="cmp-neg-input-wrap">
-              <input class="cmp-neg-fire-input" id="cmp-neg-fire-input" type="text" placeholder="此刻有什麼鳥事？直接開噴…" autocomplete="off">
-            </div>
-            <div id="cmp-neg-list"></div>
-          </div>
-          <!-- Hidden textarea kept for _saveBoth compatibility — synced by JS -->
-          <textarea id="cmp-text-neg" style="display:none;"></textarea>
         </div>
         <!-- English translation column -->
         <div class="compare-divider"></div>
@@ -923,7 +913,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         </div>
       </div>
       <div class="compare-actions" id="compare-actions" style="display:none;">
-        <button class="btn-del" id="btn-del-both" onclick="_delBoth()">刪除（正＋負）</button>
+        <button class="btn-del" id="btn-del-both" onclick="_delBoth()">刪除記事</button>
         <button class="btn-save" id="btn-save-both" onclick="_saveBoth()">儲 存</button>
       </div>
       <div class="statusbar">
@@ -1903,11 +1893,7 @@ function renderCompare() {
   document.getElementById('cmp-text-pos').disabled = false;
   document.getElementById('cmp-text-pos').placeholder = '寫下正能量記事…';
 
-  document.getElementById('cmp-date-neg').textContent = dateStr;
-  // Neg col: bullet panel
-  const cmpIsToday = isDateToday(y, m, d);
-  showCmpNegPanel(negEntry ? (negEntry.body||'') : '', cmpIsToday);
-  _cmpNegSync(); // sync hidden textarea
+  // Neg col hidden from UI — keep _cmpNegId for save/delete compat
 
   // English col
   document.getElementById('cmp-date-en').textContent = dateStr;
