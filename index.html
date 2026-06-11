@@ -152,7 +152,8 @@ body.stealth .cal-day.selected,
 body.stealth .mob-cal-day.selected,
 body.stealth .stealth-btn,
 body.stealth .role-badge,
-body.stealth .en-tts-btn {
+body.stealth .en-tts-btn,
+body.stealth .mob-split-tts-btn {
   background: rgba(210,195,160,0.18) !important;
   color: rgba(120,105,70,0.55) !important;
   border-color: rgba(180,160,110,0.15) !important;
@@ -584,19 +585,51 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .mob-split-col::-webkit-scrollbar { width:2px; }
 .mob-split-col::-webkit-scrollbar-thumb { background:var(--border-g); }
 .mob-split-pos { background:linear-gradient(180deg,rgba(196,162,74,0.07) 0%,transparent 80%); }
-.mob-split-neg { background:linear-gradient(180deg,rgba(26,48,80,0.06) 0%,transparent 80%); }
+.mob-split-en  { background:linear-gradient(180deg,rgba(11,25,41,0.04) 0%,transparent 80%); }
 .mob-split-divider { height:1px; background:var(--border-g); flex-shrink:0; margin:0 14px; }
 .mob-split-label {
   font-size:9px; letter-spacing:2.5px; font-weight:600; margin-bottom:6px; opacity:.55;
 }
 .mob-split-pos .mob-split-label { color:var(--gold-deep); }
-.mob-split-neg .mob-split-label { color:var(--navy-soft); }
+.mob-split-en  .mob-split-label { color:var(--navy-soft); }
 .mob-split-textarea {
   border:none; outline:none; resize:none; width:100%; flex:1; min-height:80px;
   background:transparent; font-family:'Noto Serif TC',serif; font-size:14px;
   line-height:2; color:var(--blue-text); word-break:break-word;
 }
 .mob-split-textarea::placeholder { color:rgba(74,98,132,.18); }
+
+/* Mobile split EN col header with TTS */
+.mob-split-en-header {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;
+}
+.mob-split-en-tts {
+  display:flex; align-items:center; gap:5px;
+}
+.mob-split-tts-btn {
+  width:26px; height:26px; border-radius:50%;
+  border:1px solid var(--border-g); background:var(--gold-faint);
+  font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  color:var(--navy); transition:all .2s; line-height:1; padding:0;
+}
+.mob-split-tts-btn:hover { background:var(--gold-pale); border-color:var(--gold-mid); }
+.mob-split-tts-btn.playing { background:linear-gradient(135deg,var(--gold),var(--gold-light)); border-color:var(--gold-mid); color:var(--navy-mid); }
+
+/* Mobile TTS settings panel */
+.mob-tts-settings-wrap { position:relative; }
+.mob-tts-settings-panel {
+  display:none; position:absolute; right:0; top:32px; z-index:50;
+  background:var(--white); border:1px solid var(--border-g); border-radius:var(--radius);
+  padding:12px 14px; box-shadow:var(--shadow); min-width:220px;
+}
+.mob-tts-settings-panel.open { display:block; }
+.mob-tts-setting-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.mob-tts-setting-row:last-child { margin-bottom:0; }
+.mob-tts-setting-label { font-size:10px; letter-spacing:1px; color:var(--blue-soft); white-space:nowrap; }
+.mob-tts-select { font-size:11px; border:1px solid var(--border-g); border-radius:var(--radius); padding:3px 5px; color:var(--navy); background:var(--gold-faint); max-width:130px; }
+.mob-tts-speed-row { display:flex; align-items:center; gap:5px; }
+.mob-tts-speed-slider { width:90px; accent-color:var(--gold); }
+.mob-tts-speed-val { font-size:10px; color:var(--blue-mid); min-width:28px; text-align:right; }
 
 /* ── PC Backup button ── */
 .btn-backup {
@@ -758,27 +791,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 #mob-neg-list::-webkit-scrollbar { width:2px; }
 #mob-neg-list::-webkit-scrollbar-thumb { background:var(--border-g); }
 
-/* ── Mobile split view neg col ── */
-.mob-split-neg-inner {
-  display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0;
-}
-.mob-split-neg-input-wrap {
-  padding:6px 0 8px;
-  border-bottom:1px solid rgba(26,48,80,0.07);
-  flex-shrink:0;
-}
-.mob-split-neg-fire-input {
-  width:100%; border:none; outline:none;
-  border-bottom:1px solid rgba(26,48,80,0.10);
-  background:transparent;
-  font-family:'Noto Serif TC',serif; font-size:14px;
-  line-height:1.8; color:var(--blue-text); padding:3px 0;
-}
-.mob-split-neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
-.mob-split-neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
-#mob-split-neg-list {
-  flex:1; overflow-y:auto; padding-top:6px; min-height:0;
-}
+/* mob-split-neg-* styles removed (neg col replaced by EN col in split view) */
 
 </style>
 </head>
@@ -1062,25 +1075,44 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
       </div>
       <div id="mob-neg-list"></div>
     </div>
-    <!-- Split (dual-column) view -->
+    <!-- Split (dual-column) view: 正能量 + 英文日記 -->
     <div class="mob-split-view" id="mob-split-view">
       <div class="mob-split-col mob-split-pos">
         <div class="mob-split-label">✧ 正能量</div>
         <textarea class="mob-split-textarea" id="mob-split-pos-text" placeholder="這一天沒有正能量記事…"></textarea>
       </div>
       <div class="mob-split-divider"></div>
-      <div class="mob-split-col mob-split-neg">
-        <div class="mob-split-label">✦ 負能量</div>
-        <!-- Bullet launcher in split view -->
-        <div class="mob-split-neg-inner">
-          <div class="mob-split-neg-input-wrap">
-            <input class="mob-split-neg-fire-input" id="mob-split-neg-fire-input" type="text" placeholder="開噴…" autocomplete="off">
+      <div class="mob-split-col mob-split-en">
+        <div class="mob-split-en-header">
+          <div class="mob-split-label" style="margin-bottom:0;">✦ ENGLISH</div>
+          <div class="mob-split-en-tts">
+            <button class="mob-split-tts-btn" id="mob-split-tts-play" onclick="mobSplitTtsToggle()" title="播放 / 暫停">▶</button>
+            <button class="mob-split-tts-btn" id="mob-split-tts-stop" onclick="mobSplitTtsStop()" title="停止">■</button>
+            <div class="mob-tts-settings-wrap">
+              <button class="mob-split-tts-btn" id="mob-split-tts-settings-btn" onclick="mobSplitTtsToggleSettings()" title="聲音設定">⚙</button>
+              <div class="mob-tts-settings-panel" id="mob-tts-settings-panel">
+                <div class="mob-tts-setting-row">
+                  <span class="mob-tts-setting-label">VOICE 聲線</span>
+                  <select class="mob-tts-select" id="mob-tts-voice-select" onchange="mobTtsSavePref()"></select>
+                </div>
+                <div class="mob-tts-setting-row">
+                  <span class="mob-tts-setting-label">SPEED 速度</span>
+                  <div class="mob-tts-speed-row">
+                    <input type="range" class="mob-tts-speed-slider" id="mob-tts-speed"
+                      min="0.5" max="2" step="0.1" value="1" oninput="mobTtsSpeedChange(this)">
+                    <span class="mob-tts-speed-val" id="mob-tts-speed-val">1.0×</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div id="mob-split-neg-list"></div>
         </div>
-        <!-- Hidden for save compat -->
-        <textarea id="mob-split-neg-text" style="display:none;"></textarea>
+        <textarea class="mob-split-textarea" id="mob-split-en-text"
+          placeholder="Paste your English translation here…"
+          oninput="mobScheduleSplitSave()"></textarea>
       </div>
+      <!-- Hidden for neg save compat (unused in split but kept for JS safety) -->
+      <textarea id="mob-split-neg-text" style="display:none;"></textarea>
     </div>
     <div class="mob-ed-bottom">
       <button class="mob-btn-del" id="mob-btn-del" style="display:none" onclick="mobDelEntry()">刪除</button>
@@ -1408,35 +1440,13 @@ document.getElementById('mob-neg-fire-input').addEventListener('keyup', function
   // some Android keyboards fire keyup only — handled by keydown already
 });
 
-/* ── Mobile split neg state ── */
+/* ── Mobile split neg state (kept for hidden textarea compat only) ── */
 let mobSplitNegItems = [];
-
-function showMobSplitNegPanel(body, isToday) {
-  mobSplitNegItems = negBodyToItems(body);
-  const container = document.getElementById('mob-split-neg-list');
-  renderNegList(container, mobSplitNegItems, isToday);
-  _negListBindDelete(container, mobSplitNegItems, isToday, () => _mobSplitNegSync());
-  document.getElementById('mob-split-neg-fire-input').value = '';
-}
-
 function _mobSplitNegSync() {
-  document.getElementById('mob-split-neg-text').value = negItemsToBody(mobSplitNegItems);
+  const el = document.getElementById('mob-split-neg-text');
+  if (el) el.value = negItemsToBody(mobSplitNegItems);
 }
-
-document.getElementById('mob-split-neg-fire-input').addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const val = this.value.trim();
-  if (!val) return;
-  mobSplitNegItems.push(val);
-  this.value = '';
-  const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
-  const isToday = isDateToday(dateCtx.y, dateCtx.m, dateCtx.d);
-  const container = document.getElementById('mob-split-neg-list');
-  renderNegList(container, mobSplitNegItems, isToday);
-  _negListBindDelete(container, mobSplitNegItems, isToday, () => _mobSplitNegSync());
-  _mobSplitNegSync();
-  mobScheduleSplitSave();
-});
+function showMobSplitNegPanel() { /* no-op: neg col removed from split view */ }
 
 
 /* ═══════════════════════ SYNC ICON ═══════════════════════ */
@@ -2567,7 +2577,7 @@ document.addEventListener('touchend', () => { cancelBackupLongPress(); });
 
 /* ═══════════════════════ MOBILE SPLIT VIEW ═══════════════════════ */
 let mobSplitOn = false;
-let _mobSplitPosId = null, _mobSplitNegId = null;
+let _mobSplitPosId = null, _mobSplitEnId = null;
 
 function mobToggleSplit() {
   mobSplitOn = !mobSplitOn;
@@ -2618,19 +2628,18 @@ function mobRenderSplit() {
     return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
   });
   const posEntry = dayEntries.find(e => e.mood === 'positive');
-  const negEntry = dayEntries.find(e => e.mood === 'negative');
+  const enEntry  = dayEntries.find(e => e.mood === 'english');
   _mobSplitPosId = posEntry ? posEntry.id : null;
-  _mobSplitNegId = negEntry ? negEntry.id : null;
+  _mobSplitEnId  = enEntry  ? enEntry.id  : null;
   document.getElementById('mob-split-pos-text').value = posEntry ? (posEntry.body||'') : '';
-  // Neg col: bullet panel
-  const splitIsToday = isDateToday(y, m, d);
-  mobSplitNegItems = [];
-  showMobSplitNegPanel(negEntry ? (negEntry.body||'') : '', splitIsToday);
-  _mobSplitNegSync();
-  // Auto-save on change for pos textarea
+  document.getElementById('mob-split-en-text').value  = enEntry  ? (enEntry.body||'')  : '';
+  // Auto-save on change for both textareas
   const posTA = document.getElementById('mob-split-pos-text');
   const freshPos = posTA.cloneNode(true); posTA.parentNode.replaceChild(freshPos, posTA);
   document.getElementById('mob-split-pos-text').addEventListener('input', () => mobScheduleSplitSave());
+  const enTA = document.getElementById('mob-split-en-text');
+  const freshEn = enTA.cloneNode(true); enTA.parentNode.replaceChild(freshEn, enTA);
+  document.getElementById('mob-split-en-text').addEventListener('input', () => mobScheduleSplitSave());
 }
 
 let mobSplitSaveTimer = null;
@@ -2645,11 +2654,10 @@ async function mobSaveSplit() {
   const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
   const {y,m,d} = dateCtx;
   const posBody = document.getElementById('mob-split-pos-text').value.trim();
-  const negBody = negItemsToBody(mobSplitNegItems).trim();
-  // Sync hidden textarea too
-  document.getElementById('mob-split-neg-text').value = negBody;
+  const enBody  = document.getElementById('mob-split-en-text').value.trim();
   try {
     const ops = [];
+    // Save positive
     if (posBody) {
       if (_mobSplitPosId) {
         ops.push(updateDoc(doc(db,'SanctuaryOfReed',_mobSplitPosId),{body:posBody,mood:'positive'}));
@@ -2659,13 +2667,14 @@ async function mobSaveSplit() {
         _mobSplitPosId = ref.id; await loadEntries();
       }
     }
-    if (negBody) {
-      if (_mobSplitNegId) {
-        ops.push(updateDoc(doc(db,'SanctuaryOfReed',_mobSplitNegId),{body:negBody,mood:'negative'}));
-        const i=entries.findIndex(e=>e.id===_mobSplitNegId); if(i!==-1) entries[i].body=negBody;
+    // Save English translation
+    if (enBody) {
+      if (_mobSplitEnId) {
+        ops.push(updateDoc(doc(db,'SanctuaryOfReed',_mobSplitEnId),{body:enBody,mood:'english'}));
+        const i=entries.findIndex(e=>e.id===_mobSplitEnId); if(i!==-1) entries[i].body=enBody;
       } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
-        _mobSplitNegId = ref.id; await loadEntries();
+        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:enBody,mood:'english',createdAt:Timestamp.fromDate(new Date(y,m,d,12,2,0))});
+        _mobSplitEnId = ref.id; await loadEntries();
       }
     }
     if (ops.length) await Promise.all(ops);
@@ -2675,10 +2684,6 @@ async function mobSaveSplit() {
 
 async function mobSaveActive() {
   if (mobSplitOn) {
-    // Fire any pending neg split input
-    const splitNegFireEl = document.getElementById('mob-split-neg-fire-input');
-    const splitNegPending = splitNegFireEl.value.trim();
-    if (splitNegPending) { mobSplitNegItems.push(splitNegPending); splitNegFireEl.value=''; _mobSplitNegSync(); }
     clearTimeout(mobSplitSaveTimer);
     await mobSaveSplit();
     showToast('已儲存 ✦');
@@ -2872,6 +2877,125 @@ ttsLoadPref();
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = ttsPopulateVoices;
   ttsPopulateVoices();
+}
+
+/* ═══════════════════════ MOBILE SPLIT TTS ENGINE ═══════════════════════ */
+let _mobTtsPlaying = false;
+let _mobTtsPref = { voiceURI: '', rate: 1.0 };
+
+function mobTtsLoadPref() {
+  try {
+    const saved = localStorage.getItem('mob_tts_pref');
+    if (saved) _mobTtsPref = { ..._mobTtsPref, ...JSON.parse(saved) };
+  } catch(_) {}
+}
+function mobTtsSavePref() {
+  const sel = document.getElementById('mob-tts-voice-select');
+  const spd = document.getElementById('mob-tts-speed');
+  _mobTtsPref.voiceURI = sel ? sel.value : '';
+  _mobTtsPref.rate = spd ? parseFloat(spd.value) : 1.0;
+  try { localStorage.setItem('mob_tts_pref', JSON.stringify(_mobTtsPref)); } catch(_) {}
+}
+function mobTtsPopulateVoices() {
+  const voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+  const sel = document.getElementById('mob-tts-voice-select');
+  if (!sel) return;
+  sel.innerHTML = '';
+  if (!voices.length) {
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '（無可用英文聲線）';
+    sel.appendChild(opt);
+    return;
+  }
+  voices.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.voiceURI;
+    opt.textContent = v.name + ' (' + v.lang + ')';
+    sel.appendChild(opt);
+  });
+  if (_mobTtsPref.voiceURI) {
+    const match = [...sel.options].find(o => o.value === _mobTtsPref.voiceURI);
+    if (match) sel.value = _mobTtsPref.voiceURI;
+  }
+  const spd = document.getElementById('mob-tts-speed');
+  if (spd) { spd.value = _mobTtsPref.rate; document.getElementById('mob-tts-speed-val').textContent = parseFloat(_mobTtsPref.rate).toFixed(1) + '×'; }
+}
+function mobTtsSpeedChange(el) {
+  document.getElementById('mob-tts-speed-val').textContent = parseFloat(el.value).toFixed(1) + '×';
+  _mobTtsPref.rate = parseFloat(el.value);
+  mobTtsSavePref();
+  if (_mobTtsPlaying) { mobSplitTtsStop(); mobSplitTtsPlay(); }
+}
+function mobSplitTtsToggleSettings() {
+  const panel = document.getElementById('mob-tts-settings-panel');
+  const btn   = document.getElementById('mob-split-tts-settings-btn');
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  if (!isOpen) mobTtsPopulateVoices();
+}
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('mob-tts-settings-panel');
+  const btn   = document.getElementById('mob-split-tts-settings-btn');
+  if (!panel || !panel.classList.contains('open')) return;
+  if (!panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('open');
+  }
+});
+function mobSplitTtsGetVoice() {
+  const all = window.speechSynthesis.getVoices();
+  if (_mobTtsPref.voiceURI) {
+    const match = all.find(v => v.voiceURI === _mobTtsPref.voiceURI);
+    if (match) return match;
+  }
+  return all.find(v => v.lang.startsWith('en')) || null;
+}
+function mobSplitTtsPlay() {
+  const text = (document.getElementById('mob-split-en-text') || {}).value || '';
+  if (!text.trim()) { showToast('請先貼上英文翻譯'); return; }
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.voice = mobSplitTtsGetVoice();
+  utt.rate  = _mobTtsPref.rate || 1.0;
+  utt.lang  = 'en';
+  utt.onstart = () => {
+    _mobTtsPlaying = true;
+    const btn = document.getElementById('mob-split-tts-play');
+    if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
+  };
+  utt.onend = utt.onerror = () => {
+    _mobTtsPlaying = false;
+    const btn = document.getElementById('mob-split-tts-play');
+    if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+  };
+  window.speechSynthesis.speak(utt);
+}
+function mobSplitTtsStop() {
+  window.speechSynthesis.cancel();
+  _mobTtsPlaying = false;
+  const btn = document.getElementById('mob-split-tts-play');
+  if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+}
+function mobSplitTtsToggle() {
+  if (!window.speechSynthesis) { showToast('此瀏覽器不支援 TTS'); return; }
+  if (_mobTtsPlaying) {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      const btn = document.getElementById('mob-split-tts-play');
+      if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
+    } else {
+      window.speechSynthesis.pause();
+      _mobTtsPlaying = false;
+      const btn = document.getElementById('mob-split-tts-play');
+      if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+    }
+  } else {
+    mobSplitTtsPlay();
+  }
+}
+mobTtsLoadPref();
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => { ttsPopulateVoices(); mobTtsPopulateVoices(); };
 }
 
 /* ═══════════════════════ PURGE EXPIRED GUESTS ═══════════════════════ */
