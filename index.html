@@ -2,8 +2,19 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Sanctuary Of Reed</title>
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0b1929">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sanctuary">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
 <script type="module">
@@ -2788,267 +2799,172 @@ function cmpEnScheduleSave() {
   }, 2000);
 }
 
-/* ═══════════════════════ TTS ENGINE ═══════════════════════ */
-let _ttsUtterance = null;
-let _ttsPlaying = false;
-let _ttsVoices = [];
-let _ttsPref = { voiceURI: '', rate: 1.0 };
+/* ═══════════════════════ TTS ENGINE（共用工廠，桌面 / 手機共用同一份邏輯）═══════════════════════
+   原本桌面版 (tts*) 與手機版 (mobTts* / mobSplitTts*) 是兩份幾乎一模一樣的程式碼，
+   現在改用 createTtsEngine() 產生兩個獨立 instance，差異只在 DOM id / localStorage key，
+   往後修 bug 或加功能只需要改這一份工廠函式即可。
+═══════════════════════════════════════════════════════════════════════════════════ */
+function createTtsEngine(cfg) {
+  const state = { playing: false, pref: { voiceURI: '', rate: 1.0 } };
 
-function ttsLoadPref() {
-  try {
-    const saved = localStorage.getItem('tts_pref');
-    if (saved) _ttsPref = { ..._ttsPref, ...JSON.parse(saved) };
-  } catch(_) {}
-}
-function ttsSavePref() {
-  const sel = document.getElementById('tts-voice-select');
-  const spd = document.getElementById('tts-speed');
-  _ttsPref.voiceURI = sel ? sel.value : '';
-  _ttsPref.rate = spd ? parseFloat(spd.value) : 1.0;
-  try { localStorage.setItem('tts_pref', JSON.stringify(_ttsPref)); } catch(_) {}
-}
+  const $ = (id) => document.getElementById(id);
 
-function ttsPopulateVoices() {
-  _ttsVoices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-  const sel = document.getElementById('tts-voice-select');
-  if (!sel) return;
-  sel.innerHTML = '';
-  if (!_ttsVoices.length) {
-    const opt = document.createElement('option');
-    opt.value = ''; opt.textContent = '（無可用英文聲線）';
-    sel.appendChild(opt);
-    return;
+  function loadPref() {
+    try {
+      const saved = localStorage.getItem(cfg.storageKey);
+      if (saved) state.pref = { ...state.pref, ...JSON.parse(saved) };
+    } catch(_) {}
   }
-  _ttsVoices.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v.voiceURI;
-    opt.textContent = v.name + ' (' + v.lang + ')';
-    sel.appendChild(opt);
-  });
-  // Restore saved preference
-  if (_ttsPref.voiceURI) {
-    const match = [...sel.options].find(o => o.value === _ttsPref.voiceURI);
-    if (match) sel.value = _ttsPref.voiceURI;
+  function savePref() {
+    const sel = $(cfg.voiceSelectId);
+    const spd = $(cfg.speedInputId);
+    state.pref.voiceURI = sel ? sel.value : '';
+    state.pref.rate = spd ? parseFloat(spd.value) : 1.0;
+    try { localStorage.setItem(cfg.storageKey, JSON.stringify(state.pref)); } catch(_) {}
   }
-  // Set speed slider
-  const spd = document.getElementById('tts-speed');
-  if (spd) { spd.value = _ttsPref.rate; document.getElementById('tts-speed-val').textContent = parseFloat(_ttsPref.rate).toFixed(1) + '×'; }
-}
-
-function ttsSpeedChange(el) {
-  document.getElementById('tts-speed-val').textContent = parseFloat(el.value).toFixed(1) + '×';
-  _ttsPref.rate = parseFloat(el.value);
-  ttsSavePref();
-  // If currently playing, restart with new speed
-  if (_ttsPlaying) { ttsStop(); ttsPlay(); }
-}
-
-function ttsToggleSettings() {
-  const panel = document.getElementById('tts-settings-panel');
-  const btn   = document.getElementById('en-tts-settings-btn');
-  if (!panel) return;
-  const isOpen = panel.classList.contains('open');
-  panel.classList.toggle('open', !isOpen);
-  btn.classList.toggle('settings-open', !isOpen);
-  if (!isOpen) ttsPopulateVoices();
-}
-
-// Close settings panel when clicking outside
-document.addEventListener('click', function(e) {
-  const panel = document.getElementById('tts-settings-panel');
-  const btn   = document.getElementById('en-tts-settings-btn');
-  if (!panel || !panel.classList.contains('open')) return;
-  if (!panel.contains(e.target) && e.target !== btn) {
-    panel.classList.remove('open');
-    btn && btn.classList.remove('settings-open');
+  function populateVoices() {
+    const voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+    const sel = $(cfg.voiceSelectId);
+    if (!sel) return;
+    sel.innerHTML = '';
+    if (!voices.length) {
+      const opt = document.createElement('option');
+      opt.value = ''; opt.textContent = '（無可用英文聲線）';
+      sel.appendChild(opt);
+      return;
+    }
+    voices.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.voiceURI;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(opt);
+    });
+    if (state.pref.voiceURI) {
+      const match = [...sel.options].find(o => o.value === state.pref.voiceURI);
+      if (match) sel.value = state.pref.voiceURI;
+    }
+    const spd = $(cfg.speedInputId);
+    if (spd) { spd.value = state.pref.rate; $(cfg.speedValId).textContent = parseFloat(state.pref.rate).toFixed(1) + '×'; }
   }
-});
-
-function ttsGetVoice() {
-  const all = window.speechSynthesis.getVoices();
-  if (_ttsPref.voiceURI) {
-    const match = all.find(v => v.voiceURI === _ttsPref.voiceURI);
-    if (match) return match;
+  function speedChange(el) {
+    $(cfg.speedValId).textContent = parseFloat(el.value).toFixed(1) + '×';
+    state.pref.rate = parseFloat(el.value);
+    savePref();
+    if (state.playing) { stop(); play(); }
   }
-  // Fallback: first English voice
-  return all.find(v => v.lang.startsWith('en')) || null;
-}
-
-function ttsPlay() {
-  const text = (document.getElementById('cmp-text-en') || {}).value || '';
-  if (!text.trim()) { showToast('請先貼上英文翻譯'); return; }
-  window.speechSynthesis.cancel();
-  _ttsUtterance = new SpeechSynthesisUtterance(text);
-  _ttsUtterance.voice = ttsGetVoice();
-  _ttsUtterance.rate  = _ttsPref.rate || 1.0;
-  _ttsUtterance.lang  = 'en';
-  _ttsUtterance.onstart = () => {
-    _ttsPlaying = true;
-    const btn = document.getElementById('en-tts-play');
-    if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
-  };
-  _ttsUtterance.onend = _ttsUtterance.onerror = () => {
-    _ttsPlaying = false;
-    const btn = document.getElementById('en-tts-play');
-    if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
-  };
-  window.speechSynthesis.speak(_ttsUtterance);
-}
-
-function ttsPause() {
-  if (window.speechSynthesis.speaking) {
+  function toggleSettings() {
+    const panel = $(cfg.settingsPanelId);
+    const btn   = $(cfg.settingsBtnId);
+    if (!panel) return;
+    const isOpen = panel.classList.contains('open');
+    panel.classList.toggle('open', !isOpen);
+    btn && btn.classList.toggle('settings-open', !isOpen);
+    if (!isOpen) populateVoices();
+  }
+  function getVoice() {
+    const all = window.speechSynthesis.getVoices();
+    if (state.pref.voiceURI) {
+      const match = all.find(v => v.voiceURI === state.pref.voiceURI);
+      if (match) return match;
+    }
+    return all.find(v => v.lang.startsWith('en')) || null;
+  }
+  function setBtnState(playing) {
+    const btn = $(cfg.playBtnId);
+    if (!btn) return;
+    btn.textContent = playing ? '⏸' : '▶';
+    btn.classList.toggle('playing', playing);
+  }
+  function play() {
+    const text = ($(cfg.textSourceId) || {}).value || '';
+    if (!text.trim()) { showToast('請先貼上英文翻譯'); return; }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.voice = getVoice();
+    utt.rate  = state.pref.rate || 1.0;
+    utt.lang  = 'en';
+    utt.onstart = () => { state.playing = true; setBtnState(true); };
+    utt.onend = utt.onerror = () => { state.playing = false; setBtnState(false); };
+    window.speechSynthesis.speak(utt);
+  }
+  function pauseResume() {
+    if (!window.speechSynthesis.speaking) return;
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
-      const btn = document.getElementById('en-tts-play');
-      if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
+      setBtnState(true);
     } else {
       window.speechSynthesis.pause();
-      const btn = document.getElementById('en-tts-play');
-      if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+      state.playing = false;
+      setBtnState(false);
     }
   }
-}
-
-function ttsToggle() {
-  if (!window.speechSynthesis) { showToast('此瀏覽器不支援 TTS'); return; }
-  if (_ttsPlaying) {
-    ttsPause();
-  } else {
-    ttsPlay();
+  function toggle() {
+    if (!window.speechSynthesis) { showToast('此瀏覽器不支援 TTS'); return; }
+    if (state.playing) pauseResume();
+    else play();
   }
-}
-
-function ttsStop() {
-  window.speechSynthesis.cancel();
-  _ttsPlaying = false;
-  const btn = document.getElementById('en-tts-play');
-  if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
-}
-
-// Init TTS
-ttsLoadPref();
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = ttsPopulateVoices;
-  ttsPopulateVoices();
-}
-
-/* ═══════════════════════ MOBILE SPLIT TTS ENGINE ═══════════════════════ */
-let _mobTtsPlaying = false;
-let _mobTtsPref = { voiceURI: '', rate: 1.0 };
-
-function mobTtsLoadPref() {
-  try {
-    const saved = localStorage.getItem('mob_tts_pref');
-    if (saved) _mobTtsPref = { ..._mobTtsPref, ...JSON.parse(saved) };
-  } catch(_) {}
-}
-function mobTtsSavePref() {
-  const sel = document.getElementById('mob-tts-voice-select');
-  const spd = document.getElementById('mob-tts-speed');
-  _mobTtsPref.voiceURI = sel ? sel.value : '';
-  _mobTtsPref.rate = spd ? parseFloat(spd.value) : 1.0;
-  try { localStorage.setItem('mob_tts_pref', JSON.stringify(_mobTtsPref)); } catch(_) {}
-}
-function mobTtsPopulateVoices() {
-  const voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-  const sel = document.getElementById('mob-tts-voice-select');
-  if (!sel) return;
-  sel.innerHTML = '';
-  if (!voices.length) {
-    const opt = document.createElement('option');
-    opt.value = ''; opt.textContent = '（無可用英文聲線）';
-    sel.appendChild(opt);
-    return;
+  function stop() {
+    window.speechSynthesis.cancel();
+    state.playing = false;
+    setBtnState(false);
   }
-  voices.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v.voiceURI;
-    opt.textContent = v.name + ' (' + v.lang + ')';
-    sel.appendChild(opt);
+
+  // 點外部關閉設定面板
+  document.addEventListener('click', (e) => {
+    const panel = $(cfg.settingsPanelId);
+    const btn   = $(cfg.settingsBtnId);
+    if (!panel || !panel.classList.contains('open')) return;
+    if (!panel.contains(e.target) && e.target !== btn) {
+      panel.classList.remove('open');
+      btn && btn.classList.remove('settings-open');
+    }
   });
-  if (_mobTtsPref.voiceURI) {
-    const match = [...sel.options].find(o => o.value === _mobTtsPref.voiceURI);
-    if (match) sel.value = _mobTtsPref.voiceURI;
-  }
-  const spd = document.getElementById('mob-tts-speed');
-  if (spd) { spd.value = _mobTtsPref.rate; document.getElementById('mob-tts-speed-val').textContent = parseFloat(_mobTtsPref.rate).toFixed(1) + '×'; }
+
+  loadPref();
+  return { populateVoices, speedChange, toggleSettings, play, stop, toggle, savePref };
 }
-function mobTtsSpeedChange(el) {
-  document.getElementById('mob-tts-speed-val').textContent = parseFloat(el.value).toFixed(1) + '×';
-  _mobTtsPref.rate = parseFloat(el.value);
-  mobTtsSavePref();
-  if (_mobTtsPlaying) { mobSplitTtsStop(); mobSplitTtsPlay(); }
-}
-function mobSplitTtsToggleSettings() {
-  const panel = document.getElementById('mob-tts-settings-panel');
-  const btn   = document.getElementById('mob-split-tts-settings-btn');
-  if (!panel) return;
-  const isOpen = panel.classList.contains('open');
-  panel.classList.toggle('open', !isOpen);
-  if (!isOpen) mobTtsPopulateVoices();
-}
-document.addEventListener('click', function(e) {
-  const panel = document.getElementById('mob-tts-settings-panel');
-  const btn   = document.getElementById('mob-split-tts-settings-btn');
-  if (!panel || !panel.classList.contains('open')) return;
-  if (!panel.contains(e.target) && e.target !== btn) {
-    panel.classList.remove('open');
-  }
+
+// 桌面版（比較檢視中的英文欄）
+const ttsEngine = createTtsEngine({
+  storageKey: 'tts_pref',
+  voiceSelectId: 'tts-voice-select',
+  speedInputId: 'tts-speed',
+  speedValId: 'tts-speed-val',
+  settingsPanelId: 'tts-settings-panel',
+  settingsBtnId: 'en-tts-settings-btn',
+  playBtnId: 'en-tts-play',
+  textSourceId: 'cmp-text-en',
 });
-function mobSplitTtsGetVoice() {
-  const all = window.speechSynthesis.getVoices();
-  if (_mobTtsPref.voiceURI) {
-    const match = all.find(v => v.voiceURI === _mobTtsPref.voiceURI);
-    if (match) return match;
-  }
-  return all.find(v => v.lang.startsWith('en')) || null;
-}
-function mobSplitTtsPlay() {
-  const text = (document.getElementById('mob-split-en-text') || {}).value || '';
-  if (!text.trim()) { showToast('請先貼上英文翻譯'); return; }
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.voice = mobSplitTtsGetVoice();
-  utt.rate  = _mobTtsPref.rate || 1.0;
-  utt.lang  = 'en';
-  utt.onstart = () => {
-    _mobTtsPlaying = true;
-    const btn = document.getElementById('mob-split-tts-play');
-    if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
-  };
-  utt.onend = utt.onerror = () => {
-    _mobTtsPlaying = false;
-    const btn = document.getElementById('mob-split-tts-play');
-    if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
-  };
-  window.speechSynthesis.speak(utt);
-}
-function mobSplitTtsStop() {
-  window.speechSynthesis.cancel();
-  _mobTtsPlaying = false;
-  const btn = document.getElementById('mob-split-tts-play');
-  if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
-}
-function mobSplitTtsToggle() {
-  if (!window.speechSynthesis) { showToast('此瀏覽器不支援 TTS'); return; }
-  if (_mobTtsPlaying) {
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-      const btn = document.getElementById('mob-split-tts-play');
-      if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
-    } else {
-      window.speechSynthesis.pause();
-      _mobTtsPlaying = false;
-      const btn = document.getElementById('mob-split-tts-play');
-      if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
-    }
-  } else {
-    mobSplitTtsPlay();
-  }
-}
-mobTtsLoadPref();
+// 手機版（雙欄對照中的英文欄）
+const mobTtsEngine = createTtsEngine({
+  storageKey: 'mob_tts_pref',
+  voiceSelectId: 'mob-tts-voice-select',
+  speedInputId: 'mob-tts-speed',
+  speedValId: 'mob-tts-speed-val',
+  settingsPanelId: 'mob-tts-settings-panel',
+  settingsBtnId: 'mob-split-tts-settings-btn',
+  playBtnId: 'mob-split-tts-play',
+  textSourceId: 'mob-split-en-text',
+});
+
+// 沿用原本的全域函式名稱，相容 HTML 內的 onclick="..."
+function ttsToggleSettings() { ttsEngine.toggleSettings(); }
+function ttsSpeedChange(el)  { ttsEngine.speedChange(el); }
+function ttsToggle()         { ttsEngine.toggle(); }
+function ttsStop()           { ttsEngine.stop(); }
+function ttsSavePref()       { ttsEngine.savePref(); }
+
+function mobSplitTtsToggleSettings() { mobTtsEngine.toggleSettings(); }
+function mobTtsSpeedChange(el)       { mobTtsEngine.speedChange(el); }
+function mobSplitTtsToggle()         { mobTtsEngine.toggle(); }
+function mobSplitTtsStop()           { mobTtsEngine.stop(); }
+function mobTtsSavePref()            { mobTtsEngine.savePref(); }
+
+// 初始化聲線清單（聲線是非同步載入的，瀏覽器準備好才會觸發 onvoiceschanged）
 if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => { ttsPopulateVoices(); mobTtsPopulateVoices(); };
+  window.speechSynthesis.onvoiceschanged = () => { ttsEngine.populateVoices(); mobTtsEngine.populateVoices(); };
+  ttsEngine.populateVoices();
+  mobTtsEngine.populateVoices();
 }
 
 /* ═══════════════════════ PURGE EXPIRED GUESTS ═══════════════════════ */
@@ -3086,6 +3002,46 @@ async function revokeAllGuests(){
 
 /* ═══════════════════════ UTILS ═══════════════════════ */
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+/* ═══════════════════════ PWA: SERVICE WORKER + 自動更新 ═══════════════════════
+   每次你重新部署（推上新版 index.html / sw.js）後：
+   1. 使用者開啟 App 時，瀏覽器會在背景比對 sw.js 是否有變動。
+   2. 新 SW 安裝完成 → 立即 skipWaiting + clients.claim 接管。
+   3. 頁面收到 controllerchange 後自動重新整理一次，載入最新內容。
+   4. 即使 sw.js 本身沒變，頁面資源也是 network-first 策略，
+      只要有網路就一定拿到最新版本，不會被舊快取卡住。
+   使用者完全不需要手動清快取或重新安裝。
+═══════════════════════════════════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      // 每次進站都主動檢查一次是否有新版本
+      reg.update().catch(() => {});
+
+      // 定期背景檢查（每 30 分鐘），避免長時間開著分頁吃不到更新
+      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+
+      reg.addEventListener('updatefound', () => {
+        const installing = reg.installing;
+        if (!installing) return;
+        installing.addEventListener('statechange', () => {
+          if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+            // 有新版本已就緒，請它立刻接管（新 sw.js 內也會 skipWaiting）
+            installing.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+    }).catch((e) => console.warn('[SW] 註冊失敗：', e.message));
+
+    // 新 SW 接管後，重新整理頁面以套用最新版本（只自動重整一次）
+    let _swRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swRefreshed) return;
+      _swRefreshed = true;
+      window.location.reload();
+    });
+  });
+}
 </script>
 </body>
 </html>
