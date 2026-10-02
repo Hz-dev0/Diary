@@ -656,6 +656,11 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .save-state[data-s=error]{color:#c44;font-weight:600}
 .mob-ed-title{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
 #entry-date{margin-bottom:0}
+
+.mode-btn{display:inline-flex;align-items:center;justify-content:center;line-height:0;padding:5px 9px;border:1px solid var(--border-g);background:var(--white);color:var(--gold-deep);border-radius:3px;cursor:pointer;white-space:nowrap}
+.mode-btn:hover{background:var(--cream,#faf6ec)}
+.tb-right{display:flex;align-items:center;gap:12px}
+body.en-only .compare-pos,body.en-only .compare-divider,body.en-only .mob-split-pos,body.en-only .mob-split-divider{display:none!important}
 </style>
 </head>
 <body>
@@ -721,7 +726,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     <div id="edview" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
         <div id="entry-date"></div>
-        <span class="save-state" id="save-state"></span>
+        <div class="tb-right"><span class="save-state" id="save-state"></span><button class="mode-btn" id="en-only-btn" onclick="toggleEnOnly()"></button></div>
       </div>
       <div class="compare-view" id="compare-view">
         <div class="compare-col compare-pos">
@@ -734,10 +739,9 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
           <div class="en-col-header">
             <div class="en-col-label">✦ ENGLISH</div>
             <div class="en-tts-controls">
-              <button class="en-tts-btn" id="en-tts-play" onclick="ttsToggle()" title="播放 / 暫停">▶</button>
+              <button class="en-tts-btn" id="en-tts-play" title="點擊播放／暫停 · 右鍵開啟設定">▶</button>
               <button class="en-tts-btn" id="en-tts-stop" onclick="ttsStop()" title="停止">■</button>
               <div class="en-tts-settings-wrap">
-                <button class="en-tts-btn" id="en-tts-settings-btn" onclick="ttsToggleSettings()" title="聲音設定">⚙</button>
                 <div class="tts-settings-panel" id="tts-settings-panel">
                   <div class="tts-setting-row">
                     <span class="tts-setting-label">VOICE 聲線</span>
@@ -747,7 +751,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
                     <span class="tts-setting-label">SPEED 速度</span>
                     <div class="tts-speed-row">
                       <input type="range" class="tts-speed-slider" id="tts-speed"
-                        min="0.5" max="2" step="0.1" value="1" oninput="ttsSpeedChange(this)">
+                        min="0.2" max="1.3" step="0.1" value="1" oninput="ttsSpeedChange(this)">
                       <span class="tts-speed-val" id="tts-speed-val">1.0×</span>
                     </div>
                   </div>
@@ -880,7 +884,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     <div class="mob-ed-top">
       <button class="mob-back" onclick="mobBack()">‹</button>
       <div class="mob-ed-title"><span id="mob-entry-date" style="margin:0"></span><span class="save-state" id="mob-save-state"></span></div>
-      <span class="mob-sync-icon" id="mob-sync-icon">✦</span>
+      <div class="tb-right" style="gap:8px"><button class="mode-btn" id="mob-en-only-btn" onclick="toggleEnOnly()"></button><span class="mob-sync-icon" id="mob-sync-icon">✦</span></div>
     </div>
     <!-- Split (dual-column) view: 正能量 + 英文日記 -->
     <div class="mob-split-view" id="mob-split-view">
@@ -893,10 +897,9 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div class="mob-split-en-header">
           <div class="mob-split-label" style="margin-bottom:0;">✦ ENGLISH</div>
           <div class="mob-split-en-tts">
-            <button class="mob-split-tts-btn" id="mob-split-tts-play" onclick="mobSplitTtsToggle()" title="播放 / 暫停">▶</button>
+            <button class="mob-split-tts-btn" id="mob-split-tts-play" title="點擊播放／暫停 · 長按開啟設定">▶</button>
             <button class="mob-split-tts-btn" id="mob-split-tts-stop" onclick="mobSplitTtsStop()" title="停止">■</button>
             <div class="mob-tts-settings-wrap">
-              <button class="mob-split-tts-btn" id="mob-split-tts-settings-btn" onclick="mobSplitTtsToggleSettings()" title="聲音設定">⚙</button>
               <div class="mob-tts-settings-panel" id="mob-tts-settings-panel">
                 <div class="mob-tts-setting-row">
                   <span class="mob-tts-setting-label">VOICE 聲線</span>
@@ -906,7 +909,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
                   <span class="mob-tts-setting-label">SPEED 速度</span>
                   <div class="mob-tts-speed-row">
                     <input type="range" class="mob-tts-speed-slider" id="mob-tts-speed"
-                      min="0.5" max="2" step="0.1" value="1" oninput="mobTtsSpeedChange(this)">
+                      min="0.2" max="1.3" step="0.1" value="1" oninput="mobTtsSpeedChange(this)">
                     <span class="mob-tts-speed-val" id="mob-tts-speed-val">1.0×</span>
                   </div>
                 </div>
@@ -955,7 +958,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 let curId = null, mood = '', entries = [], durMin = 30, timerInt = null;
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
 let mobCalYear = new Date().getFullYear(), mobCalMonth = new Date().getMonth();
-let autoSaveTimer = null, stealthOn = false, selectedDate = null;
+let autoSaveTimer = null, stealthOn = true, selectedDate = null;
 let mobCurId = null, mobMood = '', mobAutoSaveTimer = null;
 
 
@@ -1139,7 +1142,7 @@ window.enterApp = function(role) {
       };
       document.getElementById('status-txt').textContent='訪客模式 · 限時存取';
       document.getElementById('backup-row').style.display='block';
-      if(!stealthOn){toggleStealth();}
+      if(!stealthOn){setStealth(true,false);}
     }
   }
   // Mobile badges
@@ -1170,6 +1173,7 @@ window._showGuestScreen = function() {
 
 /* ═══════════════════════ DATA ═══════════════════════ */
 async function loadEntries() {
+  await loadStealthPref();
   // 訪客：先確認 guest_access 仍有效，否則 reload
   if (window._role === 'guest') {
     try {
@@ -1259,7 +1263,7 @@ function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCa
 function showTooltip(ev, y, m, d) {
   const r = getDayMarks().get(`${y}-${m}-${d}`); if (!r) return;
   const tt = document.getElementById('cal-tooltip');
-  tt.innerHTML = (r.zh ? `<span class="tt-pos">中文 ${r.zh} 字</span>` : '') + (r.zh && r.en ? '<br>' : '') + (r.en ? `<span class="tt-neg">EN ${r.en} words</span>` : '');
+  tt.innerHTML = (r.zh && !enOnly ? `<span class="tt-pos">中文 ${r.zh} 字</span>` : '') + (r.zh && !enOnly && r.en ? '<br>' : '') + (r.en ? `<span class="tt-neg">EN ${r.en} words</span>` : '');
   moveTooltip(ev);
   tt.classList.add('show');
 }
@@ -1275,12 +1279,39 @@ function moveTooltip(ev) {
 }
 function hideTooltip() { document.getElementById('cal-tooltip').classList.remove('show'); }
 
-function toggleStealth() {
-  stealthOn = !stealthOn;
-  document.body.classList.toggle('stealth', stealthOn);
-  document.getElementById('stealth-btn').classList.toggle('active', stealthOn);
+/* ████ 模式：狀態存在雲端（SanctuaryOfReed/_settings），無痕視窗或換裝置都會跟著走。
+   預設為開啟（fail-safe）：登入後讀到雲端設定為「關」才會關閉，讀取失敗或離線時維持開啟，避免內容被看到。
+   _settings 沒有 createdAt，不會出現在日記查詢與備份匯出裡。 */
+function setStealth(on, persist = true) {
+  stealthOn = on;
+  document.body.classList.toggle('stealth', on);
+  const b = document.getElementById('stealth-btn'); if (b) b.classList.toggle('active', on);
+  if (persist && window._role === 'trusted') saveSettingCloud({ stealth: on });
 }
-document.addEventListener('keydown', e => { if (e.ctrlKey&&e.shiftKey&&e.key==='H'){e.preventDefault();toggleStealth();} });
+async function saveSettingCloud(obj) {
+  try {
+    const { db, doc, setDoc } = window._fb;
+    await setDoc(doc(db, 'SanctuaryOfReed', '_settings'), obj, { merge: true });
+  } catch (e) { console.warn(e); showToast('設定無法同步到雲端，僅本次有效'); }
+}
+let stealthLoaded = false;
+async function loadStealthPref() {
+  if (stealthLoaded || window._role !== 'trusted') return;
+  try {
+    const { db, doc, getDoc } = window._fb;
+    const snap = await getDoc(doc(db, 'SanctuaryOfReed', '_settings'));
+    stealthLoaded = true;
+    const d = snap.exists() ? snap.data() : null;
+    if (d && d.stealth === false) setStealth(false, false);
+    if (!d || d.enOnly !== true) setEnOnly(false, false);   // 只有雲端明確記錄「只看英文」才維持隱藏中文
+  } catch (e) { console.warn(e); /* 讀取失敗：維持開啟 */ }
+}
+function toggleStealth() { setStealth(!stealthOn); }
+setStealth(true, false);   // 載入雲端設定前先保持開啟
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey&&e.shiftKey&&e.key==='H'){e.preventDefault();toggleStealth();}
+  if (e.altKey&&!e.ctrlKey&&!e.metaKey&&e.code==='KeyX'){e.preventDefault();toggleEnOnly();}
+});
 
 /* ═══════════════════════ MOBILE CALENDAR ═══════════════════════ */
 function renderMobCalendar() {
@@ -1459,7 +1490,7 @@ function setSaveState(st) {
 function dayKeyOf(e) { const t = e.createdAt?.toDate ? e.createdAt.toDate() : null; return t && `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`; }
 function updateWordCount() {
   const v = VIEWS[activeView], zh = $id(v.pos).value.replace(/\s/g,'').length, en = $id(v.en).value.trim().split(/\s+/).filter(Boolean).length;
-  const w = $id('wordcount'); if (w) w.textContent = `中文 ${zh} 字 · EN ${en} words`;
+  const w = $id('wordcount'); if (w) w.textContent = enOnly ? `EN ${en} words` : `中文 ${zh} 字 · EN ${en} words`;
 }
 function refreshDayUI() {
   const has = !!(curDay && (curDay.posId || curDay.enId));
@@ -1568,6 +1599,26 @@ async function mobBack() {
   if (!ok && !confirm('這一天還沒儲存成功，仍要離開嗎？（未儲存的內容會遺失）')) return;
   $id('mob-editor').style.display = 'none'; $id('mob-home').style.display = 'flex'; renderMobCalendar();
 }
+/* ═══ 只看英文模式：整欄隱藏中文（非模糊）；狀態存雲端，預設隱藏直到讀到雲端設定 ═══ */
+let enOnly = true;
+const _eye = d => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const EYE_OPEN = _eye('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>');
+const EYE_CLOSED = _eye('<path d="M3 10c2.2 3.6 5.4 5.5 9 5.5s6.8-1.9 9-5.5"/><path d="M5.5 14.2L4 16.5M9.5 16l-.8 2.6M14.5 16l.8 2.6M18.5 14.2l1.5 2.3"/>');
+function setEnOnly(on, persist = true) {
+  enOnly = on;
+  document.body.classList.toggle('en-only', on);
+  ['en-only-btn', 'mob-en-only-btn'].forEach(id => {
+    const b = $id(id); if (!b) return;
+    b.innerHTML = on ? EYE_CLOSED : EYE_OPEN;                       // 閉眼＝中文已隱藏，睜眼＝中文顯示中
+    b.title = b.ariaLabel = (on ? '顯示中文' : '隱藏中文') + '（Alt+X）';
+  });
+  if (on && curDay) $id(VIEWS[activeView].en).focus();
+  updateWordCount(); renderCalendar(); renderMobCalendar();
+  if (persist && window._role === 'trusted') saveSettingCloud({ enOnly: on });
+}
+function toggleEnOnly() { setEnOnly(!enOnly); }
+setEnOnly(true, false);
+
 // 最後防線：未儲存時關閉頁面會跳出提醒；切到背景或關頁時順手再存一次
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('visibilitychange', () => { if (document.hidden && dirty) saveDay(false); });
@@ -1587,6 +1638,7 @@ function createTtsEngine(cfg) {
     try {
       const saved = localStorage.getItem(cfg.storageKey);
       if (saved) state.pref = { ...state.pref, ...JSON.parse(saved) };
+      state.pref.rate = Math.min(1.3, Math.max(0.2, parseFloat(state.pref.rate) || 1));
     } catch(_) {}
   }
   function savePref() {
@@ -1688,13 +1740,29 @@ function createTtsEngine(cfg) {
     const panel = $(cfg.settingsPanelId);
     const btn   = $(cfg.settingsBtnId);
     if (!panel || !panel.classList.contains('open')) return;
-    if (!panel.contains(e.target) && e.target !== btn) {
+    if (!panel.contains(e.target) && !(e.target.closest && e.target.closest('#' + cfg.playBtnId))) {
       panel.classList.remove('open');
       btn && btn.classList.remove('settings-open');
     }
   });
 
+  // 播放鍵手勢：電腦右鍵、手機長按 → 開啟設定；一般點擊 → 播放／暫停
+  function bindPlayGestures() {
+    const btn = $(cfg.playBtnId); if (!btn) return;
+    let timer = null, fired = false;
+    const open = () => {
+      const p = $(cfg.settingsPanelId);
+      if (p && !p.classList.contains('open')) { p.classList.add('open'); populateVoices(); }
+    };
+    const cancel = () => clearTimeout(timer);
+    btn.addEventListener('contextmenu', (e) => { e.preventDefault(); open(); });
+    btn.addEventListener('touchstart', () => { fired = false; timer = setTimeout(() => { fired = true; open(); }, 500); }, { passive: true });
+    ['touchend', 'touchmove', 'touchcancel'].forEach(t => btn.addEventListener(t, cancel));
+    btn.addEventListener('click', () => { if (fired) { fired = false; return; } toggle(); });
+  }
+
   loadPref();
+  bindPlayGestures();
   return { populateVoices, speedChange, toggleSettings, play, stop, toggle, savePref };
 }
 
