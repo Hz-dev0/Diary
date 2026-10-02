@@ -191,7 +191,6 @@ body.stealth .ed-header,
 body.stealth .ed-toolbar,
 body.stealth .statusbar,
 body.stealth .calendar-wrap,
-body.stealth .energy-wrap,
 body.stealth .cal-new-row,
 body.stealth .sb-spacer {
   background: rgba(235,225,200,0.25) !important;
@@ -252,11 +251,6 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .ed-header-title { font-family:'Cormorant Garamond',serif; font-size:16px; letter-spacing:4px; color:var(--blue-text); font-weight:600; flex:1; }
 
 .ed-toolbar { display:flex; align-items:center; justify-content:space-between; padding:9px 28px; border-bottom:1px solid var(--border-g); background:var(--white); position:relative; z-index:1; }
-.mood-toggle { display:flex; gap:6px; align-items:center; }
-.mood-sym { width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border-b); background:none; font-size:15px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; color:var(--blue-faint); font-family:'Noto Serif TC',serif; }
-.mood-sym:hover { border-color:var(--gold); background:var(--gold-faint); color:var(--navy); }
-.mood-sym.sym-positive.on { background:linear-gradient(135deg,var(--gold),var(--gold-light)); border-color:var(--gold-mid); color:var(--navy-mid); box-shadow:0 2px 8px rgba(180,140,50,0.25); }
-.mood-sym.sym-negative.on { background:linear-gradient(135deg,var(--navy-mid),var(--navy-light)); border-color:var(--navy-mid); color:var(--gold-light); box-shadow:0 2px 8px rgba(22,38,68,0.2); }
 .tr { display:flex; gap:7px; align-items:center; }
 .btn-del { padding:5px 12px; background:none; border:1px solid var(--border-b); border-radius:var(--radius); font-size:11px; color:var(--blue-soft); cursor:pointer; transition:all .2s; }
 .btn-del:hover { border-color:#b04040; color:#b04040; }
@@ -264,12 +258,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .btn-save:hover { background:linear-gradient(135deg,var(--navy-light),var(--navy-soft)); }
 .btn-save:disabled { opacity:.4; cursor:default; }
 
-.ed-body { flex:1; display:flex; flex-direction:column; padding:28px 48px; overflow-y:auto; position:relative; z-index:1; transition:background .4s; }
-.ed-body::-webkit-scrollbar { width:3px; }
-.ed-body::-webkit-scrollbar-thumb { background:var(--border-g); }
 #entry-date { font-size:10px; color:var(--gold-mid); letter-spacing:2.5px; margin-bottom:16px; font-weight:500; }
-.ed-body.tint-pos { background:linear-gradient(180deg,rgba(196,162,74,0.06) 0%,transparent 50%); }
-.ed-body.tint-neg { background:linear-gradient(180deg,rgba(26,48,80,0.05) 0%,transparent 50%); }
 #entry-body { font-family:'Noto Serif TC',serif; font-size:15px; line-height:2.1; color:var(--blue-text); border:none; outline:none; width:100%; flex:1; min-height:300px; background:transparent; resize:none; }
 #entry-body::placeholder { color:rgba(74,98,132,.18); }
 
@@ -319,9 +308,6 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .cal-divider { height:1px; background:var(--border-g); margin:0 13px; }
 
 /* Energy bar */
-.energy-wrap { padding:10px 13px 8px; background:var(--white); flex-shrink:0; }
-.energy-bar-bg { height:5px; border-radius:3px; background:rgba(196,162,74,0.12); overflow:hidden; }
-.energy-bar-fill { height:100%; border-radius:3px; transition:width .6s ease; background:var(--gold); }
 
 /* Spacer pushes btn-new to bottom */
 .sb-spacer { flex:1; }
@@ -357,15 +343,6 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .btn-outline:hover { background:var(--gold-faint); border-color:var(--gold); color:var(--navy); }
 
 /* ── COMPARE BUTTON ── */
-.btn-compare {
-  width:32px; height:32px; border-radius:var(--radius);
-  border:1.5px solid var(--border-b); background:none;
-  font-size:16px; cursor:pointer; transition:all .2s;
-  display:flex; align-items:center; justify-content:center;
-  color:var(--blue-soft); line-height:1;
-}
-.btn-compare:hover { border-color:var(--gold); background:var(--gold-faint); color:var(--navy); }
-.btn-compare.active { background:linear-gradient(135deg,var(--gold-faint),var(--gold-pale)); border-color:var(--gold-mid); color:var(--navy); }
 
 /* ── COMPARE (dual-column) VIEW ── */
 .compare-view {
@@ -379,13 +356,11 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .compare-col::-webkit-scrollbar { width:3px; }
 .compare-col::-webkit-scrollbar-thumb { background:var(--border-g); }
 .compare-pos { background:linear-gradient(180deg,rgba(196,162,74,0.07) 0%,transparent 60%); }
-.compare-neg { background:linear-gradient(180deg,rgba(26,48,80,0.06) 0%,transparent 60%); }
 .compare-label {
   font-size:10px; letter-spacing:2.5px; font-weight:600;
   margin-bottom:8px; opacity:.55;
 }
 .compare-pos .compare-label { color:var(--gold-deep); }
-.compare-neg .compare-label { color:var(--navy-soft); }
 .compare-date {
   font-size:9.5px; color:var(--gold-mid); letter-spacing:2px;
   margin-bottom:14px; font-weight:500;
@@ -534,9 +509,6 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .mob-cal-day.selected::before, .mob-cal-day.selected::after { display:none !important; }
 
 /* Energy bar mobile */
-.mob-energy-wrap { padding:6px 14px 2px; }
-.mob-energy-bg { height:5px; border-radius:3px; background:rgba(180,140,50,0.15); overflow:hidden; }
-.mob-energy-fill { height:100%; border-radius:3px; background:var(--gold); transition:width .6s; }
 
 /* Mobile stats row */
 .mob-stats { display:flex; gap:8px; padding:10px 14px 6px; }
@@ -557,15 +529,10 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 
 .mob-ed-top { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border-g); background:var(--white); position:relative; z-index:2; flex-shrink:0; }
 .mob-back { background:none; border:none; font-size:20px; color:var(--gold-mid); cursor:pointer; padding:2px 8px; line-height:1; }
-.mob-mood-row { display:flex; gap:6px; }
-.mob-mood-sym { width:34px; height:34px; border-radius:50%; border:1.5px solid var(--border-b); background:none; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--blue-faint); transition:all .2s; }
-.mob-mood-sym.sym-positive.on { background:linear-gradient(135deg,var(--gold),var(--gold-light)); border-color:var(--gold-mid); color:var(--navy-mid); }
-.mob-mood-sym.sym-negative.on { background:linear-gradient(135deg,var(--navy-mid),var(--navy-light)); border-color:var(--navy-mid); color:var(--gold-light); }
 .mob-sync-icon { font-size:14px; color:transparent; transition:color .3s; }
 .mob-sync-icon.syncing { color:var(--gold); animation:syncpulse 0.8s ease-in-out infinite alternate; }
 .mob-sync-icon.error { color:#c44; }
 
-.mob-ed-body { flex:1; overflow-y:auto; padding:14px 14px 16px; position:relative; z-index:1; min-height:0; }
 #mob-entry-date { font-size:10px; color:var(--gold-mid); letter-spacing:2px; margin-bottom:8px; display:block; }
 #mob-entry-body { font-family:'Noto Serif TC',serif; font-size:15px; line-height:2.1; color:var(--blue-text); border:none; outline:none; width:100%; min-height:200px; background:transparent; resize:none; }
 #mob-entry-body::placeholder { color:rgba(74,98,132,.18); }
@@ -577,18 +544,8 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .mob-btn-save { padding:9px 22px; background:var(--navy); color:var(--gold-light); border:none; border-radius:var(--radius); font-size:13px; letter-spacing:2px; cursor:pointer; font-weight:600; font-family:'Noto Sans TC',sans-serif; }
 
 /* ── Mobile dual-column (split view) ── */
-.mob-btn-split {
-  width:34px; height:34px; border-radius:50%;
-  border:1.5px solid var(--border-b); background:none;
-  font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
-  color:var(--blue-soft); transition:all .2s; line-height:1;
-}
-.mob-btn-split.active {
-  background:linear-gradient(135deg,var(--gold-faint),var(--gold-pale));
-  border-color:var(--gold-mid); color:var(--navy);
-}
 .mob-split-view {
-  display:none; flex-direction:column; flex:1; overflow:hidden; position:relative; z-index:1;
+  display:flex; flex-direction:column; flex:1; overflow:hidden; position:relative; z-index:1;
 }
 .mob-split-col {
   flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:14px 18px 10px; min-height:0;
@@ -679,131 +636,26 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 ═══════════════════════════════════════ */
 
 /* ── PC single-col neg panel ── */
-#neg-panel {
-  display:none; flex-direction:column; flex:1; overflow:hidden;
-  position:relative; z-index:1;
-}
-.neg-input-wrap {
-  padding:18px 48px 12px;
-  border-bottom:1px solid var(--border-b);
-  flex-shrink:0;
-  background:linear-gradient(180deg,rgba(26,48,80,0.05) 0%,transparent 100%);
-}
-.neg-fire-input {
-  width:100%; border:none; outline:none;
-  border-bottom:1.5px solid rgba(26,48,80,0.12);
-  background:transparent;
-  font-family:'Noto Serif TC',serif; font-size:15px;
-  line-height:1.8; color:var(--blue-text); padding:6px 0;
-  transition:border-color .2s;
-}
-.neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
-.neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
-.neg-fire-hint {
-  font-size:10px; color:var(--blue-faint); margin-top:5px; letter-spacing:1px;
-}
-#neg-list-container {
-  flex:1; overflow-y:auto; padding:16px 48px 20px;
-}
-#neg-list-container::-webkit-scrollbar { width:3px; }
-#neg-list-container::-webkit-scrollbar-thumb { background:var(--border-g); }
 
 /* ── PC compare view neg col ── */
-.cmp-neg-panel {
-  display:flex; flex-direction:column; flex:1; overflow:hidden;
-}
-.cmp-neg-input-wrap {
-  padding:6px 0 10px;
-  border-bottom:1px solid rgba(26,48,80,0.07);
-  flex-shrink:0;
-}
-.cmp-neg-fire-input {
-  width:100%; border:none; outline:none;
-  border-bottom:1.5px solid rgba(26,48,80,0.12);
-  background:transparent;
-  font-family:'Noto Serif TC',serif; font-size:14px;
-  line-height:1.8; color:var(--blue-text); padding:4px 0;
-  transition:border-color .2s;
-}
-.cmp-neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
-.cmp-neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
-#cmp-neg-list {
-  flex:1; overflow-y:auto; margin-top:8px;
-}
-#cmp-neg-list::-webkit-scrollbar { width:2px; }
-#cmp-neg-list::-webkit-scrollbar-thumb { background:var(--border-g); }
 
 /* ── NEG ITEM (shared by all contexts) ── */
-.neg-item {
-  display:flex; align-items:flex-start; gap:8px;
-  padding:7px 0; border-bottom:1px solid rgba(28,48,78,0.05);
-  cursor:pointer; user-select:none;
-  transition:filter .3s ease, opacity .3s ease;
-}
-.neg-item:last-child { border-bottom:none; }
 
 /* Old items (not latest today) — blurred */
-.neg-item.blurred {
-  filter:blur(5px); opacity:0.4;
-}
 /* Reveal on hover or click-active */
-.neg-item.blurred:hover,
-.neg-item.blurred.peek {
-  filter:blur(0); opacity:1;
-}
 
-.neg-bullet {
-  flex-shrink:0; width:5px; height:5px; border-radius:50%;
-  background:var(--navy-soft); margin-top:8px; opacity:.5;
-}
-.neg-item-text {
-  font-family:'Noto Serif TC',serif; font-size:14.5px;
-  line-height:2; color:var(--blue-text); word-break:break-word; flex:1;
-}
-.neg-item-del {
-  flex-shrink:0; width:18px; height:18px; border-radius:50%;
-  border:none; background:none; cursor:pointer;
-  font-size:14px; color:var(--blue-faint); line-height:1;
-  display:flex; align-items:center; justify-content:center;
-  opacity:0; transition:opacity .15s, color .15s;
-  padding:0;
-}
-.neg-item:hover .neg-item-del { opacity:1; }
-.neg-item-del:hover { color:#b04040; }
-.neg-empty {
-  font-size:12px; color:var(--blue-faint); opacity:.4;
-  font-style:italic; padding:20px 0 0;
-}
 
 /* ── Mobile neg panel (single view) ── */
-#mob-neg-panel {
-  display:none; flex-direction:column; flex:1; overflow:hidden;
-  min-height:0; position:relative; z-index:1;
-}
-.mob-neg-input-wrap {
-  padding:12px 14px 10px;
-  border-bottom:1px solid var(--border-b);
-  flex-shrink:0;
-  background:linear-gradient(180deg,rgba(26,48,80,0.04) 0%,transparent 100%);
-}
-.mob-neg-fire-input {
-  width:100%; border:none; outline:none;
-  border-bottom:1.5px solid rgba(26,48,80,0.12);
-  background:transparent;
-  font-family:'Noto Serif TC',serif; font-size:15px;
-  line-height:1.9; color:var(--blue-text); padding:4px 0;
-  transition:border-color .2s;
-}
-.mob-neg-fire-input:focus { border-bottom-color:var(--navy-soft); }
-.mob-neg-fire-input::placeholder { color:rgba(74,98,132,.22); font-style:italic; }
-#mob-neg-list {
-  flex:1; overflow-y:auto; padding:10px 14px 12px; min-height:0;
-}
-#mob-neg-list::-webkit-scrollbar { width:2px; }
-#mob-neg-list::-webkit-scrollbar-thumb { background:var(--border-g); }
 
 /* mob-split-neg-* styles removed (neg col replaced by EN col in split view) */
 
+
+.cal-day.has-en,.mob-cal-day.has-en{box-shadow:inset 0 -2px 0 #3d8a5c}
+.save-state{font-size:10px;letter-spacing:1px;color:var(--blue-faint)}
+.save-state[data-s=dirty]{color:var(--gold-deep)}
+.save-state[data-s=error]{color:#c44;font-weight:600}
+.mob-ed-title{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+#entry-date{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -868,40 +720,13 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
     </div>
     <div id="edview" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
-        <div class="mood-toggle">
-          <button class="mood-sym sym-positive" id="ms-pos" onclick="selMood('positive')">✧</button>
-          <button class="mood-sym sym-negative" id="ms-neg" onclick="selMood('negative')">✦</button>
-        </div>
-        <div class="tr">
-          <button class="btn-compare" id="btn-compare" style="display:none" onclick="toggleCompare()" title="對照正負能量">⊞</button>
-          <button class="btn-del" id="btn-del" style="display:none" onclick="delEntry()">刪除</button>
-          <button class="btn-save" id="btn-save" onclick="saveEntry()">儲 存</button>
-        </div>
-      </div>
-      <div class="ed-body" id="ed-body">
         <div id="entry-date"></div>
-        <textarea id="entry-body" placeholder="寫下此刻的想法…"></textarea>
+        <span class="save-state" id="save-state"></span>
       </div>
-      <!-- Negative energy bullet launcher (PC single-col) -->
-      <div id="neg-panel">
-        <div style="padding:14px 48px 0;flex-shrink:0;">
-          <div id="neg-entry-date" style="font-size:10px;color:var(--gold-mid);letter-spacing:2.5px;margin-bottom:10px;font-weight:500;"></div>
-        </div>
-        <div class="neg-input-wrap">
-          <input class="neg-fire-input" id="neg-fire-input" type="text" placeholder="此刻有什麼鳥事？直接開噴…" autocomplete="off">
-          <div class="neg-fire-hint">按 Enter 發射一條 · 點擊舊條目暫時解鎖</div>
-        </div>
-        <div id="neg-list-container"></div>
-      </div>
-      <div class="compare-view" id="compare-view" style="display:none;">
-        <!-- Hidden neg elements kept for JS compatibility -->
-        <input id="cmp-neg-fire-input" style="display:none;" autocomplete="off">
-        <div id="cmp-neg-list" style="display:none;"></div>
-        <textarea id="cmp-text-neg" style="display:none;"></textarea>
+      <div class="compare-view" id="compare-view">
         <div class="compare-col compare-pos">
-          <div class="compare-label">✧ 正能量</div>
-          <div class="compare-date" id="cmp-date-pos"></div>
-          <textarea class="compare-text compare-textarea" id="cmp-text-pos" placeholder="這一天沒有正能量記事" oninput="cmpPosScheduleSave()"></textarea>
+          <div class="compare-label">中文日記</div>
+          <textarea class="compare-text compare-textarea" id="cmp-text-pos" placeholder="寫下今天的日記…"></textarea>
         </div>
         <!-- English translation column -->
         <div class="compare-divider"></div>
@@ -930,15 +755,14 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
               </div>
             </div>
           </div>
-          <div class="compare-date" id="cmp-date-en"></div>
-          <textarea class="compare-text compare-textarea" id="cmp-text-en"
+                    <textarea class="compare-text compare-textarea" id="cmp-text-en"
             placeholder="Paste your English translation here…"
-            oninput="cmpEnScheduleSave()"></textarea>
+           ></textarea>
         </div>
       </div>
-      <div class="compare-actions" id="compare-actions" style="display:none;">
-        <button class="btn-del" id="btn-del-both" onclick="_delBoth()">刪除記事</button>
-        <button class="btn-save" id="btn-save-both" onclick="_saveBoth()">儲 存</button>
+      <div class="compare-actions" id="compare-actions">
+        <button class="btn-del" id="btn-del-both" onclick="delDay()">刪除</button>
+        <button class="btn-save" id="btn-save-both" onclick="saveDay(true)">儲 存</button>
       </div>
       <div class="statusbar">
         <span class="sdot"></span>
@@ -972,12 +796,6 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div class="cal-dow">三</div><div class="cal-dow">四</div><div class="cal-dow">五</div><div class="cal-dow">六</div>
       </div>
     </div>
-
-    <!-- Energy bar -->
-    <div class="energy-wrap">
-      <div class="energy-bar-bg">
-        <div class="energy-bar-fill" id="energy-fill" style="width:0%"></div>
-      </div>
     </div>
 
     <!-- Spacer -->
@@ -1049,12 +867,10 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
         <div class="mob-cal-dow">日</div><div class="mob-cal-dow">一</div><div class="mob-cal-dow">二</div>
         <div class="mob-cal-dow">三</div><div class="mob-cal-dow">四</div><div class="mob-cal-dow">五</div><div class="mob-cal-dow">六</div>
       </div>
-      <div class="mob-energy-wrap" style="margin-top:10px;">
-        <div class="mob-energy-bg"><div class="mob-energy-fill" id="mob-energy-fill" style="width:0%"></div></div>
-      </div>
+      
     </div>
     <div class="mob-bottom">
-      <button class="mob-btn-new" onclick="mobNewEntry()">＋ 新增記事</button>
+      <button class="mob-btn-new" onclick="openToday()">＋ 寫今天</button>
       <button class="mob-btn-token" id="mob-btn-token" onclick="openModal()">🔑 驗證碼</button>
       <button class="mob-btn-revoke" id="mob-btn-revoke" onclick="revokeAllGuests()" style="display:none;">⊘ 登出訪客</button>
     </div>
@@ -1064,33 +880,14 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
   <div class="mob-editor" id="mob-editor">
     <div class="mob-ed-top">
       <button class="mob-back" onclick="mobBack()">‹</button>
-      <div class="mob-mood-row">
-        <button class="mob-mood-sym sym-positive" id="mob-ms-pos" onclick="mobSelMood('positive')">✧</button>
-        <button class="mob-mood-sym sym-negative" id="mob-ms-neg" onclick="mobSelMood('negative')">✦</button>
-        <button class="mob-btn-split" id="mob-btn-split" onclick="mobToggleSplit()" title="雙欄對照">⊞</button>
-      </div>
+      <div class="mob-ed-title"><span id="mob-entry-date" style="margin:0"></span><span class="save-state" id="mob-save-state"></span></div>
       <span class="mob-sync-icon" id="mob-sync-icon">✦</span>
-    </div>
-    <!-- Single entry body -->
-    <div class="mob-ed-body" id="mob-ed-body">
-      <div id="mob-entry-date"></div>
-      <textarea id="mob-entry-body" placeholder="寫下此刻的想法…"></textarea>
-    </div>
-    <!-- Mobile negative energy bullet launcher (single view) -->
-    <div id="mob-neg-panel">
-      <div style="padding:10px 14px 0;flex-shrink:0;">
-        <div id="mob-neg-entry-date" style="font-size:10px;color:var(--gold-mid);letter-spacing:2px;margin-bottom:6px;font-weight:500;display:block;"></div>
-      </div>
-      <div class="mob-neg-input-wrap">
-        <input class="mob-neg-fire-input" id="mob-neg-fire-input" type="text" placeholder="此刻有什麼鳥事？直接開噴…" autocomplete="off">
-      </div>
-      <div id="mob-neg-list"></div>
     </div>
     <!-- Split (dual-column) view: 正能量 + 英文日記 -->
     <div class="mob-split-view" id="mob-split-view">
       <div class="mob-split-col mob-split-pos">
-        <div class="mob-split-label">✧ 正能量</div>
-        <textarea class="mob-split-textarea" id="mob-split-pos-text" placeholder="這一天沒有正能量記事…"></textarea>
+        <div class="mob-split-label">中文日記</div>
+        <textarea class="mob-split-textarea" id="mob-split-pos-text" placeholder="寫下今天的日記…"></textarea>
       </div>
       <div class="mob-split-divider"></div>
       <div class="mob-split-col mob-split-en">
@@ -1119,15 +916,12 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
           </div>
         </div>
         <textarea class="mob-split-textarea" id="mob-split-en-text"
-          placeholder="Paste your English translation here…"
-          oninput="mobScheduleSplitSave()"></textarea>
+          placeholder="Paste your English translation here…"></textarea>
       </div>
-      <!-- Hidden for neg save compat (unused in split but kept for JS safety) -->
-      <textarea id="mob-split-neg-text" style="display:none;"></textarea>
     </div>
     <div class="mob-ed-bottom">
-      <button class="mob-btn-del" id="mob-btn-del" style="display:none" onclick="mobDelEntry()">刪除</button>
-      <button class="mob-btn-save" id="mob-btn-save-btn" onclick="mobSaveActive()">儲 存</button>
+      <button class="mob-btn-del" id="mob-btn-del" style="display:none" onclick="delDay()">刪除</button>
+      <button class="mob-btn-save" id="mob-btn-save-btn" onclick="saveDay(true)">儲 存</button>
     </div>
   </div>
 </div>
@@ -1164,300 +958,6 @@ let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
 let mobCalYear = new Date().getFullYear(), mobCalMonth = new Date().getMonth();
 let autoSaveTimer = null, stealthOn = false, selectedDate = null;
 let mobCurId = null, mobMood = '', mobAutoSaveTimer = null;
-
-
-/* ═══════════════════════════════════════
-   NEGATIVE ENERGY — BULLET ENGINE
-   Storage: body field as \n-joined string (Firebase-compatible)
-   isLatestToday: only the last-added bullet of today stays unblurred
-═══════════════════════════════════════ */
-
-// Parse body string → array of non-empty bullet strings
-function negBodyToItems(body) {
-  return (body || '').split('\n').map(s => s.trim()).filter(Boolean);
-}
-
-// Join bullet array → body string
-function negItemsToBody(items) {
-  return items.filter(Boolean).join('\n');
-}
-
-/* Render a neg list into a container element.
-   items: string[]
-   isToday: whether this is today's entry (last item unblurred)
-   onDelete: function(idx) called when item × clicked
-   onFire: function(text) called when Enter in the input fires a new item
-   (onFire is handled separately via input event binding)
-*/
-function renderNegList(container, items, isToday) {
-  container.innerHTML = '';
-  if (!items.length) {
-    const e = document.createElement('div');
-    e.className = 'neg-empty';
-    e.textContent = '還沒有任何鳥事 —';
-    container.appendChild(e);
-    return;
-  }
-  // Render newest first (reversed display), but keep original idx for delete
-  const reversed = items.map((txt, idx) => ({ txt, idx })).reverse();
-  reversed.forEach(({ txt, idx }) => {
-    const isLatest = isToday && idx === items.length - 1;
-    const item = document.createElement('div');
-    item.className = 'neg-item' + (isLatest ? '' : ' blurred');
-    item.dataset.idx = idx;
-
-    const bullet = document.createElement('span');
-    bullet.className = 'neg-bullet';
-
-    const text = document.createElement('span');
-    text.className = 'neg-item-text';
-    text.textContent = txt;
-
-    const del = document.createElement('button');
-    del.className = 'neg-item-del';
-    del.textContent = '×';
-    del.title = '刪除';
-    del.setAttribute('aria-label', '刪除');
-    del.onclick = (e) => {
-      e.stopPropagation();
-      item._negOnDelete && item._negOnDelete(idx);
-    };
-
-    item.appendChild(bullet);
-    item.appendChild(text);
-    item.appendChild(del);
-
-    // Peek on click (toggle), reveal on hover handled by CSS
-    if (!isLatest) {
-      item.addEventListener('click', () => {
-        item.classList.add('peek');
-        clearTimeout(item._peekTimer);
-        item._peekTimer = setTimeout(() => {
-          item.classList.remove('peek');
-        }, 5000);
-      });
-    }
-
-    container.appendChild(item);
-  });
-  // Newest is at top, no need to scroll
-  container.scrollTop = 0;
-}
-
-/* Check whether a given date is today */
-function isDateToday(y, m, d) {
-  const t = new Date();
-  return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d;
-}
-
-/* ── PC Single-col neg state ── */
-let negItems = [];   // working copy of current neg entry items
-
-function showNegPanel(body, dateStr) {
-  document.getElementById('ed-body').style.display = 'none';
-  document.getElementById('neg-panel').style.display = 'flex';
-  document.getElementById('neg-entry-date').textContent = dateStr || '';
-  negItems = negBodyToItems(body);
-  const today = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : true;
-  const container = document.getElementById('neg-list-container');
-  _negListBindDelete(container, negItems, today, () => negAutoSave());
-  renderNegList(container, negItems, today);
-  document.getElementById('neg-fire-input').value = '';
-  setTimeout(() => document.getElementById('neg-fire-input').focus(), 80);
-}
-
-function hideNegPanel() {
-  document.getElementById('neg-panel').style.display = 'none';
-}
-
-function _negListBindDelete(container, items, today, onSave) {
-  // Items get their delete handler via item._negOnDelete set during render
-  // We re-render after every delete, so we just need the callback to trigger save+re-render
-  // Actual binding happens in renderNegList via item._negOnDelete
-  // This function wires up delete callbacks after render
-  container.querySelectorAll('.neg-item').forEach(item => {
-    item._negOnDelete = (idx) => {
-      items.splice(idx, 1);
-      renderNegList(container, items, today);
-      // Re-wire delete after re-render
-      _negListBindDelete(container, items, today, onSave);
-      onSave();
-    };
-  });
-}
-
-function negAutoSave() {
-  clearTimeout(autoSaveTimer);
-  setSyncState('syncing');
-  autoSaveTimer = setTimeout(async () => { await _negSave(); }, 2000);
-}
-
-async function _negSave() {
-  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
-  const body = negItemsToBody(negItems);
-  if (!body && !curId) { setSyncState('idle'); return; }
-  const data = { body, mood: 'negative' };
-  try {
-    if (curId) {
-      await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
-      const idx = entries.findIndex(e => e.id === curId);
-      if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
-    } else {
-      if (selectedDate) {
-        const { y, m, d } = selectedDate;
-        data.createdAt = Timestamp.fromDate(new Date(y, m, d, 12, 1, 0));
-      } else {
-        data.createdAt = serverTimestamp();
-      }
-      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
-      curId = ref.id;
-      document.getElementById('btn-del').style.display = 'inline-block';
-      await loadEntries(); setSyncState('idle'); return;
-    }
-    setSyncState('idle');
-    renderCalendar(); updateEnergyBar();
-  } catch(e) { setSyncState('error'); }
-}
-
-// Wire up PC single-col neg fire input
-document.getElementById('neg-fire-input').addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const val = this.value.trim();
-  if (!val) return;
-  negItems.push(val);
-  this.value = '';
-  const today = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : true;
-  const container = document.getElementById('neg-list-container');
-  renderNegList(container, negItems, today);
-  _negListBindDelete(container, negItems, today, () => negAutoSave());
-  negAutoSave();
-});
-
-/* ── PC saveEntry override for neg mood ── */
-// Called by btn-save. We intercept here to handle neg mood saving.
-// We keep the original saveEntry but it checks mood.
-
-/* ── Compare view neg state ── */
-let cmpNegItems = [];
-
-function showCmpNegPanel(body, isToday) {
-  cmpNegItems = negBodyToItems(body);
-  const container = document.getElementById('cmp-neg-list');
-  renderNegList(container, cmpNegItems, isToday);
-  _negListBindDelete(container, cmpNegItems, isToday, () => _cmpNegSync());
-  document.getElementById('cmp-neg-fire-input').value = '';
-}
-
-function _cmpNegSync() {
-  // Keep hidden textarea in sync so _saveBoth() can read it
-  document.getElementById('cmp-text-neg').value = negItemsToBody(cmpNegItems);
-}
-
-document.getElementById('cmp-neg-fire-input').addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const val = this.value.trim();
-  if (!val) return;
-  cmpNegItems.push(val);
-  this.value = '';
-  const isToday = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : true;
-  const container = document.getElementById('cmp-neg-list');
-  renderNegList(container, cmpNegItems, isToday);
-  _negListBindDelete(container, cmpNegItems, isToday, () => _cmpNegSync());
-  _cmpNegSync();
-});
-
-/* ── Mobile single-col neg state ── */
-let mobNegItems = [];
-
-function showMobNegPanel(body, dateStr) {
-  document.getElementById('mob-ed-body').style.display = 'none';
-  document.getElementById('mob-neg-panel').style.display = 'flex';
-  document.getElementById('mob-neg-entry-date').textContent = dateStr || '';
-  mobNegItems = negBodyToItems(body);
-  const today = mobSelectedDate ? isDateToday(mobSelectedDate.y, mobSelectedDate.m, mobSelectedDate.d) : true;
-  const container = document.getElementById('mob-neg-list');
-  renderNegList(container, mobNegItems, today);
-  _negListBindDelete(container, mobNegItems, today, () => mobNegAutoSave());
-  document.getElementById('mob-neg-fire-input').value = '';
-  setTimeout(() => document.getElementById('mob-neg-fire-input').focus(), 80);
-}
-
-function hideMobNegPanel() {
-  document.getElementById('mob-neg-panel').style.display = 'none';
-  document.getElementById('mob-ed-body').style.display = 'flex';
-}
-
-function mobNegAutoSave() {
-  clearTimeout(mobAutoSaveTimer);
-  setSyncState('syncing');
-  mobAutoSaveTimer = setTimeout(async () => { await _mobNegSave(); }, 2000);
-}
-
-async function _mobNegSave() {
-  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
-  const body = negItemsToBody(mobNegItems);
-  if (!body && !mobCurId) { setSyncState('idle'); return; }
-  const data = { body, mood: 'negative' };
-  try {
-    if (mobCurId) {
-      await updateDoc(doc(db,'SanctuaryOfReed',mobCurId), data);
-      const idx = entries.findIndex(e => e.id === mobCurId);
-      if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
-      setSyncState('idle');
-      renderMobCalendar();
-    } else {
-      if (mobSelectedDate) {
-        const { y, m, d } = mobSelectedDate;
-        // Check for existing entry on the same date+mood before creating
-        const existing = entries.find(e => {
-          const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-          return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d && e.mood==='negative';
-        });
-        if (existing) {
-          mobCurId = existing.id;
-          await updateDoc(doc(db,'SanctuaryOfReed',mobCurId), data);
-          const idx = entries.findIndex(e => e.id === mobCurId);
-          if (idx !== -1) entries[idx] = { ...entries[idx], ...data };
-          document.getElementById('mob-btn-del').style.display = 'inline-block';
-          setSyncState('idle'); renderMobCalendar(); return;
-        }
-        data.createdAt = Timestamp.fromDate(new Date(y, m, d, 12, 1, 0));
-      } else {
-        data.createdAt = serverTimestamp();
-      }
-      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
-      mobCurId = ref.id;
-      document.getElementById('mob-btn-del').style.display = 'inline-block';
-      await loadEntries(); setSyncState('idle'); return;
-    }
-  } catch(e) { setSyncState('error'); }
-}
-
-document.getElementById('mob-neg-fire-input').addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const val = this.value.trim();
-  if (!val) return;
-  mobNegItems.push(val);
-  this.value = '';
-  const today = mobSelectedDate ? isDateToday(mobSelectedDate.y, mobSelectedDate.m, mobSelectedDate.d) : true;
-  const container = document.getElementById('mob-neg-list');
-  renderNegList(container, mobNegItems, today);
-  _negListBindDelete(container, mobNegItems, today, () => mobNegAutoSave());
-  mobNegAutoSave();
-});
-
-// Mobile: also support "send" button on soft keyboards via input event
-document.getElementById('mob-neg-fire-input').addEventListener('keyup', function(e) {
-  // some Android keyboards fire keyup only — handled by keydown already
-});
-
-/* ── Mobile split neg state (kept for hidden textarea compat only) ── */
-let mobSplitNegItems = [];
-function _mobSplitNegSync() {
-  const el = document.getElementById('mob-split-neg-text');
-  if (el) el.value = negItemsToBody(mobSplitNegItems);
-}
-function showMobSplitNegPanel() { /* no-op: neg col removed from split view */ }
 
 
 /* ═══════════════════════ SYNC ICON ═══════════════════════ */
@@ -1689,41 +1189,40 @@ async function loadEntries() {
     const snap = await getDocs(q);
     const wasEmpty = entries.length === 0;
     entries = snap.docs.map(d=>({id:d.id,...d.data()}));
+    // 負能量功能已移除：非訪客身分時順手清掉舊的負能量紀錄
+    const oldNeg = entries.filter(e=>e.mood==='negative');
+    if (oldNeg.length) {
+      entries = entries.filter(e=>e.mood!=='negative');
+      if (window._role !== 'guest') oldNeg.forEach(e=>window._fb.deleteDoc(window._fb.doc(db,'SanctuaryOfReed',e.id)).catch(()=>{}));
+    }
     setSyncState('idle');
     renderCalendar(); renderMobCalendar();
-    updateEnergyBar();
     // On first load, auto-open today on PC
     if (wasEmpty) {
       const t = new Date();
-      selectDay(t.getFullYear(), t.getMonth(), t.getDate());
+      openDay(t.getFullYear(), t.getMonth(), t.getDate());
     }
   } catch(e) { setSyncState('error'); console.warn(e); }
 }
 
 /* ═══════════════════════ CALENDAR HELPERS ═══════════════════════ */
-function getEntryDateSet() {
-  const s = new Set();
+// key "y-m-d" → {zh: 中文字數, en: 英文單字數}
+function getDayMarks() {
+  const map = new Map();
   entries.forEach(e => {
-    const d = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-    if (d) s.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    const t = e.createdAt?.toDate ? e.createdAt.toDate() : null; if (!t) return;
+    const key = `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`;
+    const r = map.get(key) || { zh: 0, en: 0 };
+    if (e.mood === 'english') r.en += (e.body||'').trim().split(/\s+/).filter(Boolean).length;
+    else r.zh += (e.body||'').replace(/\s/g,'').length;
+    map.set(key, r);
   });
-  return s;
+  return map;
 }
-
-// Returns {pos, neg, both} word counts for a given y-m-d
-function getDayStats(y, m, d) {
-  const de = entries.filter(e => {
-    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
-  });
-  let pos = 0, neg = 0;
-  de.forEach(e => {
-    const wc = (e.body||'').replace(/\s/g,'').length;
-    if (e.mood === 'positive') pos += wc;
-    else if (e.mood === 'negative') neg += wc;
-    // no mood: not counted
-  });
-  return { pos, neg, entries: de };
+function markDay(el, r) {
+  if (!r) return;
+  if (r.zh) el.classList.add('has-entry');   // 金色底線 = 有中文
+  if (r.en) el.classList.add('has-en');      // 綠色底線 = 有英文
 }
 
 /* ═══════════════════════ PC CALENDAR ═══════════════════════ */
@@ -1736,21 +1235,21 @@ function renderCalendar() {
     const h = document.createElement('div'); h.className = 'cal-dow'; h.textContent = label; grid.appendChild(h);
   });
   const today = new Date();
-  const dates = getEntryDateSet();
+  const dates = getDayMarks();
   const first = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
   for (let i=0;i<first;i++) { const x=document.createElement('div'); x.className='cal-day'; grid.appendChild(x); }
   for (let day=1; day<=daysInMonth; day++) {
     const el = document.createElement('div'); el.className='cal-day'; el.textContent=day;
     const key = `${calYear}-${calMonth}-${day}`;
-    if (dates.has(key)) el.classList.add('has-entry');
+    markDay(el, dates.get(key));
     if (today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===day) el.classList.add('today');
     if (selectedDate && selectedDate.y===calYear && selectedDate.m===calMonth && selectedDate.d===day) el.classList.add('selected');
     // Hover tooltip
     el.addEventListener('mouseenter', ev => showTooltip(ev, calYear, calMonth, day));
     el.addEventListener('mousemove', ev => moveTooltip(ev));
     el.addEventListener('mouseleave', hideTooltip);
-    el.onclick = () => selectDay(calYear, calMonth, day);
+    el.onclick = () => openDay(calYear, calMonth, day);
     grid.appendChild(el);
   }
 }
@@ -1759,14 +1258,9 @@ function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCa
 
 /* ═══════════════════════ TOOLTIP ═══════════════════════ */
 function showTooltip(ev, y, m, d) {
-  const { pos, neg } = getDayStats(y, m, d);
-  if (!pos && !neg) return;
+  const r = getDayMarks().get(`${y}-${m}-${d}`); if (!r) return;
   const tt = document.getElementById('cal-tooltip');
-  let html = '';
-  if (pos) html += `<span class="tt-pos">✧ ${pos}</span>`;
-  if (pos && neg) html += '<br>';
-  if (neg) html += `<span class="tt-neg">✦ ${neg}</span>`;
-  tt.innerHTML = html;
+  tt.innerHTML = (r.zh ? `<span class="tt-pos">中文 ${r.zh} 字</span>` : '') + (r.zh && r.en ? '<br>' : '') + (r.en ? `<span class="tt-neg">EN ${r.en} words</span>` : '');
   moveTooltip(ev);
   tt.classList.add('show');
 }
@@ -1782,483 +1276,12 @@ function moveTooltip(ev) {
 }
 function hideTooltip() { document.getElementById('cal-tooltip').classList.remove('show'); }
 
-/* ═══════════════════════ ENERGY BAR ═══════════════════════ */
-function updateEnergyBar() {
-  // Count days in current calMonth: pure-pos / mixed / pure-neg
-  const y = calYear, m = calMonth;
-  const daysInMonth = new Date(y, m+1, 0).getDate();
-  let pure_pos = 0, mixed = 0, pure_neg = 0, total = 0;
-  for (let d=1; d<=daysInMonth; d++) {
-    const de = entries.filter(e => {
-      const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-      return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
-    });
-    if (!de.length) continue;
-    const hasPos = de.some(e=>e.mood==='positive');
-    const hasNeg = de.some(e=>e.mood==='negative');
-    if (hasPos && hasNeg) mixed++;
-    else if (hasPos) pure_pos++;
-    else if (hasNeg) pure_neg++;
-    // no mood → skip (do not count as pos)
-    else { total--; continue; }
-    total++;
-  }
-  if (!total) { setBar('energy-fill', 0, 0, 0); setBar('mob-energy-fill', 0, 0, 0); return; }
-  const pP = pure_pos/total, pM = mixed/total, pN = pure_neg/total;
-  setBar('energy-fill', pP, pM, pN);
-  setBar('mob-energy-fill', pP, pM, pN);
-}
-
-function setBar(id, pP, pM, pN) {
-  const el = document.getElementById(id); if (!el) return;
-  if (pP===0 && pM===0 && pN===0) { el.style.width='0%'; el.style.background=''; return; }
-  // gold: #c9a84c  mixed: #8a7a56 (warm blue-gold blend)  navy: #2a4a7a
-  const stops = [];
-  let pos = 0;
-  const push = (color, frac) => {
-    if (frac <= 0) return;
-    stops.push(`${color} ${(pos*100).toFixed(1)}%`);
-    pos += frac;
-    stops.push(`${color} ${(pos*100).toFixed(1)}%`);
-  };
-  push('#c9a84c', pP);
-  push('#7a8a6a', pM); // gold-navy mix
-  push('#2a4a7a', pN);
-  el.style.width = '100%';
-  el.style.background = `linear-gradient(90deg, ${stops.join(', ')})`;
-}
-
-/* ═══════════════════════ DAY SELECTION ═══════════════════════ */
-function selectDay(y, m, d) {
-  const wasCompareOn = compareOn;
-  selectedDate = {y, m, d};
-  compareOn = false;
-  document.getElementById('compare-actions').style.display='none';
-  renderCalendar();
-  const dayEntries = entries.filter(e => {
-    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
-  });
-  if (wasCompareOn) {
-    // Compare 模式中切換日期：維持 Compare 模式，重新載入該天
-    compareOn = true;
-    document.getElementById('btn-compare').classList.add('active');
-    renderCompare();
-    updateCompareBtn(y, m, d);
-    return;
-  }
-  if (dayEntries.length > 0) {
-    // Prefer positive entry first, then any
-    const posEntry = dayEntries.find(e => e.mood === 'positive');
-    openEntry((posEntry || dayEntries[0]).id);
-  } else {
-    curId=null; mood='positive'; negItems=[];
-    const dateObj = new Date(y, m, d);
-    const dateStr = dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-    document.getElementById('entry-date').textContent = dateStr;
-    document.getElementById('entry-body').value='';
-    hideNegPanel();
-    updateMoodUI();
-    document.getElementById('btn-del').style.display='none';
-    document.getElementById('edview').style.display='flex';
-    document.getElementById('ed-body').style.display='flex';
-    document.getElementById('compare-view').style.display='none';
-    document.getElementById('btn-compare').style.display='none';
-    updateWordCount();
-    document.getElementById('entry-body').focus();
-  }
-  updateCompareBtn(y, m, d);
-}
-
-/* ═══════════════════════ COMPARE MODE ═══════════════════════ */
-let compareOn = false;
-
-function updateCompareBtn(y, m, d) {
-  // Show compare (dual-column) button whenever a date is selected
-  const btn = document.getElementById('btn-compare');
-  if (btn) btn.style.display = 'flex';
-}
-
-function toggleCompare() {
-  compareOn = !compareOn;
-  document.getElementById('btn-compare').classList.toggle('active', compareOn);
-  if (compareOn) renderCompare();
-  else exitCompare();
-}
-
-function exitCompare() {
-  compareOn = false;
-  const btn = document.getElementById('btn-compare');
-  if (btn) btn.classList.remove('active');
-  document.getElementById('compare-view').style.display = 'none';
-  document.getElementById('compare-actions').style.display = 'none';
-  if (mood === 'negative') {
-    document.getElementById('ed-body').style.display = 'none';
-    document.getElementById('neg-panel').style.display = 'flex';
-  } else {
-    document.getElementById('neg-panel').style.display = 'none';
-    document.getElementById('ed-body').style.display = 'flex';
-  }
-}
-
-let _cmpPosId = null, _cmpNegId = null, _cmpEnId = null;
-
-function renderCompare() {
-  if (!selectedDate) return;
-  const { y, m, d } = selectedDate;
-  const de = entries.filter(e => {
-    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
-  });
-  const posEntry = de.find(e => e.mood === 'positive');
-  const negEntry = de.find(e => e.mood === 'negative');
-  const enEntry  = de.find(e => e.mood === 'english');
-  _cmpPosId = posEntry ? posEntry.id : null;
-  _cmpNegId = negEntry ? negEntry.id : null;
-  _cmpEnId  = enEntry  ? enEntry.id  : null;
-
-  const dateStr = new Date(y,m,d).toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  document.getElementById('cmp-date-pos').textContent = dateStr;
-  document.getElementById('cmp-text-pos').value = posEntry ? (posEntry.body||''): '';
-  document.getElementById('cmp-text-pos').disabled = false;
-  document.getElementById('cmp-text-pos').placeholder = '寫下正能量記事…';
-
-  // Neg col hidden from UI — keep _cmpNegId for save/delete compat
-
-  // English col
-  document.getElementById('cmp-date-en').textContent = dateStr;
-  document.getElementById('cmp-text-en').value = enEntry ? (enEntry.body||'') : '';
-
-  document.getElementById('ed-body').style.display = 'none';
-  document.getElementById('neg-panel').style.display = 'none';
-  document.getElementById('compare-view').style.display = 'flex';
-  document.getElementById('compare-actions').style.display = 'flex';
-}
-
-async function _saveBoth() {
-  if (!selectedDate) return;
-  const { db, doc, updateDoc, addDoc, collection, Timestamp } = window._fb;
-  const { y, m, d } = selectedDate;
-  // Fire any pending cmp neg input
-  const cmpNegFireEl = document.getElementById('cmp-neg-fire-input');
-  const cmpNegPending = cmpNegFireEl.value.trim();
-  if (cmpNegPending) { cmpNegItems.push(cmpNegPending); cmpNegFireEl.value=''; _cmpNegSync(); }
-  const posBody = document.getElementById('cmp-text-pos').value.trim();
-  const negBody = document.getElementById('cmp-text-neg').value.trim();
-  const enBody  = document.getElementById('cmp-text-en').value.trim();
-
-  // 方案一：若原本有內容但現在清空，跳出確認
-  const willDelete = [];
-  if (_cmpPosId && !posBody) willDelete.push('正能量日記');
-  if (_cmpNegId && !negBody) willDelete.push('負能量日記');
-  if (_cmpEnId  && !enBody)  willDelete.push('英文日記');
-  if (willDelete.length > 0) {
-    const ok = confirm('以下欄位已清空，儲存將永久刪除：\n\n・' + willDelete.join('\n・') + '\n\n確定要繼續嗎？');
-    if (!ok) { setSyncState('idle'); return; }
-  }
-
-  setSyncState('syncing');
-  try {
-    // Save positive
-    if (posBody) {
-      if (_cmpPosId) {
-        await updateDoc(doc(db,'SanctuaryOfReed',_cmpPosId),{body:posBody,mood:'positive'});
-        const i=entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody;
-      } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
-        _cmpPosId = ref.id;
-      }
-    } else if (_cmpPosId) {
-      // Text cleared — delete entry
-      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpPosId));
-      entries = entries.filter(e=>e.id!==_cmpPosId); _cmpPosId=null;
-    }
-    // Save negative
-    if (negBody) {
-      if (_cmpNegId) {
-        await updateDoc(doc(db,'SanctuaryOfReed',_cmpNegId),{body:negBody,mood:'negative'});
-        const i=entries.findIndex(e=>e.id===_cmpNegId); if(i!==-1) entries[i].body=negBody;
-      } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:negBody,mood:'negative',createdAt:Timestamp.fromDate(new Date(y,m,d,12,1,0))});
-        _cmpNegId = ref.id;
-      }
-    } else if (_cmpNegId) {
-      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpNegId));
-      entries = entries.filter(e=>e.id!==_cmpNegId); _cmpNegId=null;
-    }
-    // Save English translation (stored as mood:'english' entry)
-    if (enBody) {
-      if (_cmpEnId) {
-        await updateDoc(doc(db,'SanctuaryOfReed',_cmpEnId),{body:enBody,mood:'english'});
-        const i=entries.findIndex(e=>e.id===_cmpEnId); if(i!==-1) entries[i].body=enBody;
-      } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:enBody,mood:'english',createdAt:Timestamp.fromDate(new Date(y,m,d,12,2,0))});
-        _cmpEnId = ref.id;
-      }
-    } else if (_cmpEnId) {
-      await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpEnId));
-      entries = entries.filter(e=>e.id!==_cmpEnId); _cmpEnId=null;
-    }
-    await loadEntries();
-    setSyncState('idle'); showToast('已儲存 ✦');
-  } catch(e) { setSyncState('error'); showToast('儲存失敗'); }
-}
-
-function _delBoth() {
-  delBothEntries(_cmpPosId, _cmpNegId, _cmpEnId);
-}
-
-
 function toggleStealth() {
   stealthOn = !stealthOn;
   document.body.classList.toggle('stealth', stealthOn);
   document.getElementById('stealth-btn').classList.toggle('active', stealthOn);
 }
 document.addEventListener('keydown', e => { if (e.ctrlKey&&e.shiftKey&&e.key==='H'){e.preventDefault();toggleStealth();} });
-
-/* ═══════════════════════ PC ENTRY ═══════════════════════ */
-function newEntry() {
-  curId=null; mood='positive'; selectedDate=null;
-  compareOn=false;
-  negItems=[];
-  document.getElementById('btn-compare').style.display='none';
-  document.getElementById('btn-compare').classList.remove('active');
-  document.getElementById('compare-view').style.display='none';
-  document.getElementById('compare-actions').style.display='none';
-  hideNegPanel();
-  document.getElementById('ed-body').style.display='flex';
-  renderCalendar();
-  document.getElementById('entry-body').value='';
-  document.getElementById('entry-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  updateMoodUI();
-  document.getElementById('btn-del').style.display='none';
-  updateWordCount();
-  document.getElementById('entry-body').focus();
-}
-
-function openEntry(id) {
-  const e = entries.find(x=>x.id===id); if (!e) return;
-  curId=id; mood=e.mood||'positive';
-  const dt = e.createdAt?.toDate ? e.createdAt.toDate() : new Date();
-  const dateStr = dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  document.getElementById('entry-date').textContent = dateStr;
-  document.getElementById('entry-body').value = e.body||'';
-  document.getElementById('btn-del').style.display='inline-block';
-  document.getElementById('edview').style.display='flex';
-  document.getElementById('compare-view').style.display='none';
-  document.getElementById('compare-actions').style.display='none';
-  if (compareOn) { compareOn=false; document.getElementById('btn-compare').classList.remove('active'); }
-  if (mood === 'negative') {
-    // Show neg bullet panel
-    const isToday = selectedDate ? isDateToday(selectedDate.y, selectedDate.m, selectedDate.d) : false;
-    showNegPanel(e.body||'', dateStr);
-    document.getElementById('neg-entry-date').textContent = dateStr;
-  } else {
-    hideNegPanel();
-    document.getElementById('ed-body').style.display='flex';
-    updateWordCount();
-  }
-  updateMoodUI();
-  if (selectedDate) updateCompareBtn(selectedDate.y, selectedDate.m, selectedDate.d);
-}
-
-function selMood(m) {
-  // Cannot deselect — must always have a mood selected
-  if (mood === m) return;
-  // Cancel any pending auto-save before switching
-  clearTimeout(autoSaveTimer);
-  mood = m;
-  updateMoodUI();
-  // If we have a selected date, load the matching mood entry (or blank)
-  if (selectedDate) {
-    const { y, m: mo, d } = selectedDate;
-    const dayEntries = entries.filter(e => {
-      const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-      return dt && dt.getFullYear()===y && dt.getMonth()===mo && dt.getDate()===d;
-    });
-    const target = dayEntries.find(e => e.mood === mood);
-    if (target) {
-      curId = target.id;
-      document.getElementById('entry-body').value = target.body || '';
-      document.getElementById('btn-del').style.display = 'inline-block';
-    } else {
-      curId = null;
-      document.getElementById('entry-body').value = '';
-      document.getElementById('btn-del').style.display = 'none';
-    }
-    const dateStr = new Date(y,mo,d).toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-    if (mood === 'negative') {
-      showNegPanel(target ? (target.body||'') : '', dateStr);
-    } else {
-      hideNegPanel();
-      updateWordCount();
-    }
-    updateMoodUI();
-    updateCompareBtn(y, mo, d);
-    return;
-  }
-  // No date context (new entry mode) — just update UI
-  if (mood === 'negative') {
-    showNegPanel('', '');
-  } else {
-    hideNegPanel();
-    updateWordCount();
-  }
-  updateMoodUI();
-}
-function updateMoodUI() {
-  document.getElementById('ms-pos').className='mood-sym sym-positive'+(mood==='positive'?' on':'');
-  document.getElementById('ms-neg').className='mood-sym sym-negative'+(mood==='negative'?' on':'');
-  document.getElementById('ed-body').className='ed-body'+(mood==='positive'?' tint-pos':mood==='negative'?' tint-neg':'');
-  // Show/hide neg panel
-  if (mood === 'negative') {
-    document.getElementById('ed-body').style.display = 'none';
-    document.getElementById('neg-panel').style.display = 'flex';
-  } else {
-    document.getElementById('neg-panel').style.display = 'none';
-    document.getElementById('ed-body').style.display = 'flex';
-  }
-}
-
-function scheduleAutoSave() {
-  clearTimeout(autoSaveTimer);
-  setSyncState('syncing');
-  autoSaveTimer = setTimeout(async () => {
-    await autoSave();
-  }, 3000);
-}
-
-async function autoSave() {
-  // Neg mood auto-save is handled by _negSave via negAutoSave()
-  if (mood === 'negative') { setSyncState('idle'); return; }
-  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
-  const body = document.getElementById('entry-body').value.trim();
-  if (!body) { setSyncState('idle'); return; }
-  const data = { body, mood };
-  try {
-    if (curId) {
-      await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
-      const idx = entries.findIndex(e=>e.id===curId);
-      if (idx!==-1) entries[idx]={...entries[idx],...data};
-    } else {
-      if (selectedDate) {
-        const {y,m,d} = selectedDate;
-        data.createdAt = Timestamp.fromDate(new Date(y,m,d,12,0,0));
-      } else {
-        data.createdAt = serverTimestamp();
-      }
-      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
-      curId = ref.id;
-      document.getElementById('btn-del').style.display='inline-block';
-      await loadEntries(); setSyncState('idle'); return;
-    }
-    setSyncState('idle');
-    renderCalendar(); updateEnergyBar();
-  } catch(e) { setSyncState('error'); }
-}
-
-document.getElementById('entry-body').addEventListener('input', () => { updateWordCount(); scheduleAutoSave(); });
-function updateWordCount() {
-  const c = document.getElementById('entry-body').value.replace(/\s/g,'').length;
-  document.getElementById('wordcount').textContent = c>0 ? c+' 字' : '';
-}
-
-async function saveEntry() {
-  clearTimeout(autoSaveTimer);
-  const { db, collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } = window._fb;
-  const bs = document.getElementById('btn-save');
-  bs.disabled=true; bs.textContent='儲存中…';
-  setSyncState('syncing');
-  // Neg mood: save bullet list
-  if (mood === 'negative') {
-    // Fire any pending input text
-    const fireEl = document.getElementById('neg-fire-input');
-    const pending = fireEl.value.trim();
-    if (pending) { negItems.push(pending); fireEl.value=''; }
-    const body = negItemsToBody(negItems);
-    if (!body && !curId) { showToast('請輸入內容'); bs.disabled=false; bs.textContent='儲 存'; setSyncState('idle'); return; }
-    const data = { body, mood: 'negative' };
-    try {
-      if (curId) {
-        await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
-        const idx = entries.findIndex(e=>e.id===curId); if(idx!==-1) entries[idx]={...entries[idx],...data};
-        showToast('已更新 ✦');
-      } else {
-        if (selectedDate) { const {y,m,d}=selectedDate; data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,1,0)); }
-        else { data.createdAt=serverTimestamp(); }
-        const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);
-        curId=ref.id; await loadEntries(); showToast('已儲存 ✦');
-      }
-      document.getElementById('btn-del').style.display='inline-block';
-      setSyncState('idle'); renderCalendar(); updateEnergyBar();
-      // Re-render list
-      const today = selectedDate ? isDateToday(selectedDate.y,selectedDate.m,selectedDate.d) : true;
-      const container = document.getElementById('neg-list-container');
-      renderNegList(container, negItems, today);
-      _negListBindDelete(container, negItems, today, () => negAutoSave());
-    } catch(e) { showToast('儲存失敗：'+e.message); setSyncState('error'); }
-    bs.disabled=false; bs.textContent='儲 存';
-    return;
-  }
-  // Positive mood: original behavior
-  const body = document.getElementById('entry-body').value.trim();
-  if (!body) { showToast('請輸入內容'); bs.disabled=false; bs.textContent='儲 存'; return; }
-  const data = { body, mood };
-  try {
-    if (curId) {
-      await updateDoc(doc(db,'SanctuaryOfReed',curId), data);
-      const idx = entries.findIndex(e=>e.id===curId);
-      if (idx!==-1) entries[idx]={...entries[idx],...data};
-      showToast('已更新 ✦');
-    } else {
-      data.createdAt = serverTimestamp();
-      const ref = await addDoc(collection(db,'SanctuaryOfReed'), data);
-      curId=ref.id; await loadEntries(); showToast('已儲存 ✦');
-    }
-    document.getElementById('btn-del').style.display='inline-block';
-    setSyncState('idle');
-    renderCalendar(); updateEnergyBar();
-  } catch(e) { showToast('儲存失敗：'+e.message); setSyncState('error'); }
-  bs.disabled=false; bs.textContent='儲 存';
-}
-
-async function delEntry() {
-  if (!curId) return;
-  if (!confirm('確定刪除這篇記事？')) return;
-  const { db, doc, deleteDoc } = window._fb;
-  try {
-    setSyncState('syncing');
-    await deleteDoc(doc(db,'SanctuaryOfReed',curId));
-    entries = entries.filter(e => e.id !== curId);
-    curId = null; selectedDate = null;
-    setSyncState('idle');
-    const t = new Date();
-    selectDay(t.getFullYear(), t.getMonth(), t.getDate());
-    renderCalendar(); updateEnergyBar(); showToast('已刪除');
-  } catch(e) { showToast('刪除失敗'); setSyncState('error'); }
-}
-
-async function delBothEntries(posId, negId, enId) {
-  const toDelete = [posId, negId, enId].filter(Boolean);
-  if (!toDelete.length) return;
-  const count = toDelete.length;
-  if (!confirm(`確定刪除這天的記事（共 ${count} 篇）？`)) return;
-  const { db, doc, deleteDoc } = window._fb;
-  try {
-    setSyncState('syncing');
-    await Promise.all(toDelete.map(id => deleteDoc(doc(db,'SanctuaryOfReed',id))));
-    const delIds = new Set(toDelete);
-    entries = entries.filter(e => !delIds.has(e.id));
-    curId = null; selectedDate = null; compareOn = false;
-    document.getElementById('btn-compare').classList.remove('active');
-    document.getElementById('compare-view').style.display = 'none';
-    document.getElementById('ed-body').style.display = 'flex';
-    setSyncState('idle');
-    const t = new Date();
-    selectDay(t.getFullYear(), t.getMonth(), t.getDate());
-    renderCalendar(); updateEnergyBar(); showToast('已刪除');
-  } catch(e) { showToast('刪除失敗'); setSyncState('error'); }
-}
 
 /* ═══════════════════════ MOBILE CALENDAR ═══════════════════════ */
 function renderMobCalendar() {
@@ -2267,214 +1290,21 @@ function renderMobCalendar() {
   const grid=document.getElementById('mob-cal-grid');
   grid.innerHTML='';
   ['日','一','二','三','四','五','六'].forEach(label=>{const h=document.createElement('div');h.className='mob-cal-dow';h.textContent=label;grid.appendChild(h);});
-  const today=new Date(), dates=getEntryDateSet();
+  const today=new Date(), dates=getDayMarks();
   const first=new Date(mobCalYear,mobCalMonth,1).getDay();
   const daysInMonth=new Date(mobCalYear,mobCalMonth+1,0).getDate();
   for(let i=0;i<first;i++){const x=document.createElement('div');x.className='mob-cal-day';grid.appendChild(x);}
   for(let day=1;day<=daysInMonth;day++){
     const el=document.createElement('div'); el.className='mob-cal-day'; el.textContent=day;
     const key=`${mobCalYear}-${mobCalMonth}-${day}`;
-    if(dates.has(key)) el.classList.add('has-entry');
+    markDay(el, dates.get(key));
     if(today.getFullYear()===mobCalYear&&today.getMonth()===mobCalMonth&&today.getDate()===day) el.classList.add('today');
-    el.onclick=()=>mobSelectDay(mobCalYear,mobCalMonth,day);
+    el.onclick=()=>openDay(mobCalYear,mobCalMonth,day,true);
     grid.appendChild(el);
   }
-  updateEnergyBar();
 }
 function mobCalPrev(){mobCalMonth--;if(mobCalMonth<0){mobCalMonth=11;mobCalYear--;}renderMobCalendar();}
 function mobCalNext(){mobCalMonth++;if(mobCalMonth>11){mobCalMonth=0;mobCalYear++;}renderMobCalendar();}
-
-/* ═══════════════════════ MOBILE EDITOR ═══════════════════════ */
-function mobSelectDay(y,m,d){
-  mobSelectedDate={y,m,d};
-  const dayEntries=entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;});
-  if(dayEntries.length>0){const posEntry=dayEntries.find(e=>e.mood==='positive');mobOpenEntry((posEntry||dayEntries[0]).id);}
-  else {
-    mobCurId=null; mobMood='positive'; mobNegItems=[];
-    const dateObj=new Date(y,m,d);
-    document.getElementById('mob-entry-date').textContent=dateObj.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-    document.getElementById('mob-entry-body').value='';
-    hideMobNegPanel();
-    mobUpdateMoodUI();
-    document.getElementById('mob-btn-del').style.display='none';
-    showMobEditor();
-    setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
-  }
-}
-
-function mobNewEntry(){
-  mobCurId=null; mobMood='positive'; mobNegItems=[];
-  document.getElementById('mob-entry-date').textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  document.getElementById('mob-entry-body').value='';
-  hideMobNegPanel();
-  mobUpdateMoodUI();
-  document.getElementById('mob-btn-del').style.display='none';
-  showMobEditor();
-  setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
-}
-
-function mobOpenEntry(id){
-  const e=entries.find(x=>x.id===id); if(!e) return;
-  mobCurId=id; mobMood=e.mood||'positive';
-  const dt=e.createdAt?.toDate?e.createdAt.toDate():new Date();
-  const dateStr=dt.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  document.getElementById('mob-entry-date').textContent=dateStr;
-  document.getElementById('mob-entry-body').value=e.body||'';
-  document.getElementById('mob-btn-del').style.display='inline-block';
-  showMobEditor();
-  if(mobMood==='negative'){
-    mobNegItems=[];
-    showMobNegPanel(e.body||'', dateStr);
-  } else {
-    hideMobNegPanel();
-    setTimeout(()=>document.getElementById('mob-entry-body').focus(),100);
-  }
-  mobUpdateMoodUI();
-}
-
-function showMobEditor(){
-  document.getElementById('mob-home').style.display='none';
-  const ed=document.getElementById('mob-editor');
-  ed.style.display='flex';
-  // Focus handled by mobOpenEntry/mobNewEntry per mood
-}
-
-function mobBack(){
-  // Reset split view state
-  mobSplitOn = false;
-  document.getElementById('mob-btn-split').classList.remove('active');
-  document.getElementById('mob-split-view').style.display = 'none';
-  document.getElementById('mob-ed-body').style.display = 'flex';
-  // Reset neg panel
-  hideMobNegPanel();
-  mobNegItems = [];
-  document.getElementById('mob-editor').style.display='none';
-  document.getElementById('mob-home').style.display='flex';
-  renderMobCalendar();
-}
-
-function mobSelMood(m){
-  if(mobMood===m) return; // cannot deselect
-  clearTimeout(mobAutoSaveTimer);
-  mobMood=m;
-  mobUpdateMoodUI();
-  // Load the correct mood entry for current date context
-  const dateCtx = mobSelectedDate || null;
-  if(dateCtx){
-    const {y,mo2,d} = {y:dateCtx.y, mo2:dateCtx.m, d:dateCtx.d};
-    const dayEntries=entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===mo2&&dt.getDate()===d;});
-    const target=dayEntries.find(e=>e.mood===mobMood);
-    if(target){
-      mobCurId=target.id;
-      document.getElementById('mob-entry-body').value=target.body||'';
-      document.getElementById('mob-btn-del').style.display='inline-block';
-    } else {
-      mobCurId=null;
-      document.getElementById('mob-entry-body').value='';
-      document.getElementById('mob-btn-del').style.display='none';
-    }
-    const dsEl=document.getElementById('mob-entry-date');
-    const dateStr=dsEl?dsEl.textContent:'';
-    if(mobMood==='negative'){
-      mobNegItems=[];
-      showMobNegPanel(target?(target.body||''):'', dateStr);
-    } else {
-      hideMobNegPanel();
-    }
-  }
-  mobUpdateMoodUI();
-}
-function mobUpdateMoodUI(){
-  document.getElementById('mob-ms-pos').className='mob-mood-sym sym-positive'+(mobMood==='positive'?' on':'');
-  document.getElementById('mob-ms-neg').className='mob-mood-sym sym-negative'+(mobMood==='negative'?' on':'');
-}
-
-function mobScheduleAutoSave(){
-  clearTimeout(mobAutoSaveTimer);
-  setSyncState('syncing');
-  mobAutoSaveTimer=setTimeout(async()=>{await mobAutoSave();},3000);
-}
-
-async function mobAutoSave(){
-  // Neg mood auto-save is handled by _mobNegSave
-  if(mobMood==='negative'){setSyncState('idle');return;}
-  const{db,collection,addDoc,doc,updateDoc,serverTimestamp,Timestamp}=window._fb;
-  const body=document.getElementById('mob-entry-body').value.trim();
-  if(!body){setSyncState('idle');return;}
-  const data={body,mood:mobMood};
-  try{
-    if(mobCurId){
-      await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);
-      const idx=entries.findIndex(e=>e.id===mobCurId);
-      if(idx!==-1) entries[idx]={...entries[idx],...data};
-    } else {
-      if(mobSelectedDate){
-        const{y,m,d}=mobSelectedDate;
-        const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
-        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};document.getElementById('mob-btn-del').style.display='inline-block';setSyncState('idle');renderMobCalendar();return;}
-        data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));
-      } else { data.createdAt=serverTimestamp(); }
-      const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);
-      mobCurId=ref.id;
-      document.getElementById('mob-btn-del').style.display='inline-block';
-      await loadEntries(); setSyncState('idle'); return;
-    }
-    setSyncState('idle');
-  } catch(e){setSyncState('error');}
-}
-
-document.getElementById('mob-entry-body').addEventListener('input',()=>mobScheduleAutoSave());
-
-async function mobSaveEntry(){
-  if(mobMood==='negative'){await mobSaveActive();return;}
-  clearTimeout(mobAutoSaveTimer);
-  const{db,collection,addDoc,doc,updateDoc,serverTimestamp,Timestamp}=window._fb;
-  const body=document.getElementById('mob-entry-body').value.trim();
-  if(!body){showToast('請輸入內容');return;}
-  setSyncState('syncing');
-  const data={body,mood:mobMood};
-  try{
-    if(mobCurId){
-      await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);
-      const idx=entries.findIndex(e=>e.id===mobCurId);
-      if(idx!==-1) entries[idx]={...entries[idx],...data};
-      showToast('已更新 ✦');
-    } else {
-      if(mobSelectedDate){
-        const{y,m,d}=mobSelectedDate;
-        const existing=entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood===mobMood;});
-        if(existing){mobCurId=existing.id;await updateDoc(doc(db,'SanctuaryOfReed',mobCurId),data);const idx=entries.findIndex(e=>e.id===mobCurId);if(idx!==-1)entries[idx]={...entries[idx],...data};showToast('已更新 ✦');}
-        else{data.createdAt=Timestamp.fromDate(new Date(y,m,d,12,0,0));const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);mobCurId=ref.id;await loadEntries();showToast('已儲存 ✦');}
-      } else {
-        data.createdAt=serverTimestamp();
-        const ref=await addDoc(collection(db,'SanctuaryOfReed'),data);
-        mobCurId=ref.id; await loadEntries(); showToast('已儲存 ✦');
-      }
-    }
-    document.getElementById('mob-btn-del').style.display='inline-block';
-    setSyncState('idle');
-    renderMobCalendar();
-  } catch(e){showToast('儲存失敗');setSyncState('error');}
-}
-
-async function mobDelEntry(){
-  if(!mobCurId)return;
-  const curEntry=entries.find(e=>e.id===mobCurId);if(!curEntry)return;
-  const curDt=curEntry.createdAt?.toDate?curEntry.createdAt.toDate():null;
-  const sameDay=curDt?entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===curDt.getFullYear()&&dt.getMonth()===curDt.getMonth()&&dt.getDate()===curDt.getDate();}):[curEntry];
-  const msg=sameDay.length>1?`確定刪除這天的全部記事（共 ${sameDay.length} 篇，正負能量皆會刪除）？`:'確定刪除這篇記事？';
-  if(!confirm(msg))return;
-  const{db,doc,deleteDoc}=window._fb;
-  try{
-    setSyncState('syncing');
-    await Promise.all(sameDay.map(e=>deleteDoc(doc(db,'SanctuaryOfReed',e.id))));
-    const delIds=new Set(sameDay.map(e=>e.id));
-    entries=entries.filter(e=>!delIds.has(e.id));
-    mobCurId=null; mobSelectedDate=null;
-    setSyncState('idle');
-    mobBack(); showToast('已刪除');
-  } catch(e){showToast('刪除失敗');setSyncState('error');}
-}
 
 /* ═══════════════════════ TOKEN MODAL ═══════════════════════ */
 function openModal(){document.getElementById('modal').classList.add('open');}
@@ -2611,193 +1441,138 @@ function hideBackupHistory() {
 document.addEventListener('mouseup', () => { cancelBackupLongPress(); hideBackupHistory(); });
 document.addEventListener('touchend', () => { cancelBackupLongPress(); });
 
-/* ═══════════════════════ MOBILE SPLIT VIEW ═══════════════════════ */
-let mobSplitOn = false;
-let _mobSplitPosId = null, _mobSplitEnId = null;
+/* ═══════════════════════ DAY EDITOR（桌機 / 手機共用，左中文右英文）═══════════════════════
+   資料模型不變：每天最多兩筆 → mood:'positive'（中文）、mood:'english'（英文）。
+   儲存策略：打字 1.5 秒後自動存、離開欄位/切換日期/離開頁面前會先存；
+   「儲存」鈕保留作為手動補存。任何一次存檔失敗都會在畫面上標示，並每 8 秒自動重試。 */
+const VIEWS = {
+  pc:  { pos:'cmp-text-pos',       en:'cmp-text-en',       date:'entry-date',     state:'save-state',     del:'btn-del' },
+  mob: { pos:'mob-split-pos-text', en:'mob-split-en-text', date:'mob-entry-date', state:'mob-save-state', del:'mob-btn-del' },
+};
+const $id = id => document.getElementById(id);
+let curDay = null, activeView = 'pc', dirty = false, saveTimer = null, saveChain = Promise.resolve(true);
+const SAVE_TXT = { saved:'已儲存', dirty:'尚未儲存…', saving:'儲存中…', error:'⚠ 儲存失敗，請按「儲存」重試' };
 
-function mobToggleSplit() {
-  mobSplitOn = !mobSplitOn;
-  const btn = document.getElementById('mob-btn-split');
-  const singleView = document.getElementById('mob-ed-body');
-  const splitView = document.getElementById('mob-split-view');
-  btn.classList.toggle('active', mobSplitOn);
-  if (mobSplitOn) {
-    singleView.style.display = 'none';
-    splitView.style.display = 'flex';
-    mobRenderSplit();
-  } else {
-    splitView.style.display = 'none';
-    // Restore single view to current mood entry
-    if (mobSelectedDate) {
-      const {y,m,d} = mobSelectedDate;
-      const dayEntries = entries.filter(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d;});
-      const target = dayEntries.find(e=>e.mood===mobMood);
-      if (target) {
-        mobCurId=target.id;
-        document.getElementById('mob-entry-body').value=target.body||'';
-        document.getElementById('mob-btn-del').style.display='inline-block';
-      } else {
-        mobCurId=null;
-        document.getElementById('mob-entry-body').value='';
-        document.getElementById('mob-btn-del').style.display='none';
-      }
-    }
-    if (mobMood === 'negative') {
-      singleView.style.display = 'none';
-      const target = mobSelectedDate ? entries.find(e=>{const dt=e.createdAt?.toDate?e.createdAt.toDate():null;const {y,m,d}=mobSelectedDate;return dt&&dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d&&e.mood==='negative';}) : null;
-      mobNegItems = [];
-      const dateStr = document.getElementById('mob-entry-date').textContent;
-      showMobNegPanel(target?(target.body||''):'', dateStr);
-    } else {
-      singleView.style.display = 'flex';
-      hideMobNegPanel();
-    }
+function setSaveState(st) {
+  Object.values(VIEWS).forEach(v => { const el = $id(v.state); if (el) { el.textContent = SAVE_TXT[st]; el.dataset.s = st; } });
+  setSyncState(st === 'saving' ? 'syncing' : st === 'error' ? 'error' : 'idle');
+}
+function dayKeyOf(e) { const t = e.createdAt?.toDate ? e.createdAt.toDate() : null; return t && `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`; }
+function updateWordCount() {
+  const v = VIEWS[activeView], zh = $id(v.pos).value.replace(/\s/g,'').length, en = $id(v.en).value.trim().split(/\s+/).filter(Boolean).length;
+  const w = $id('wordcount'); if (w) w.textContent = `中文 ${zh} 字 · EN ${en} words`;
+}
+function refreshDayUI() {
+  const has = !!(curDay && (curDay.posId || curDay.enId));
+  Object.values(VIEWS).forEach(v => { const b = $id(v.del); if (b) b.style.display = has ? '' : 'none'; });
+  renderCalendar(); renderMobCalendar(); updateWordCount();
+}
+
+async function openDay(y, m, d, showMob) {
+  if (curDay && !(curDay.y === y && curDay.m === m && curDay.d === d)) {
+    const ok = await flushSave();
+    if (!ok && !confirm('目前這一天還沒儲存成功，仍要切換嗎？（未儲存的內容會遺失）')) return;
   }
+  const key = `${y}-${m}-${d}`, de = entries.filter(e => dayKeyOf(e) === key);
+  const pos = de.find(e => e.mood === 'positive'), en = de.find(e => e.mood === 'english');
+  curDay = { y, m, d, posId: pos?.id || null, enId: en?.id || null };
+  selectedDate = { y, m, d };
+  const dateStr = new Date(y, m, d).toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  Object.values(VIEWS).forEach(v => { $id(v.date).textContent = dateStr; $id(v.pos).value = pos?.body || ''; $id(v.en).value = en?.body || ''; });
+  dirty = false; clearTimeout(saveTimer); setSaveState('saved'); refreshDayUI();
+  if (showMob) { $id('mob-home').style.display = 'none'; $id('mob-editor').style.display = 'flex'; }
+  setTimeout(() => $id(VIEWS[showMob ? 'mob' : 'pc'].pos).focus(), 100);
 }
-
-function mobRenderSplit() {
-  // Determine current date context
-  const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
-  const {y,m,d} = dateCtx;
-  const dayEntries = entries.filter(e => {
-    const dt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
-    return dt && dt.getFullYear()===y && dt.getMonth()===m && dt.getDate()===d;
-  });
-  const posEntry = dayEntries.find(e => e.mood === 'positive');
-  const enEntry  = dayEntries.find(e => e.mood === 'english');
-  _mobSplitPosId = posEntry ? posEntry.id : null;
-  _mobSplitEnId  = enEntry  ? enEntry.id  : null;
-  document.getElementById('mob-split-pos-text').value = posEntry ? (posEntry.body||'') : '';
-  document.getElementById('mob-split-en-text').value  = enEntry  ? (enEntry.body||'')  : '';
-  // Auto-save on change for both textareas
-  const posTA = document.getElementById('mob-split-pos-text');
-  const freshPos = posTA.cloneNode(true); posTA.parentNode.replaceChild(freshPos, posTA);
-  document.getElementById('mob-split-pos-text').addEventListener('input', () => mobScheduleSplitSave());
-  const enTA = document.getElementById('mob-split-en-text');
-  const freshEn = enTA.cloneNode(true); enTA.parentNode.replaceChild(freshEn, enTA);
-  document.getElementById('mob-split-en-text').addEventListener('input', () => mobScheduleSplitSave());
+function openToday() {
+  const t = new Date(); mobCalYear = t.getFullYear(); mobCalMonth = t.getMonth();
+  openDay(t.getFullYear(), t.getMonth(), t.getDate(), true);
 }
+let mobSelectedDate = null;
 
-let mobSplitSaveTimer = null;
-function mobScheduleSplitSave() {
-  clearTimeout(mobSplitSaveTimer);
-  setSyncState('syncing');
-  mobSplitSaveTimer = setTimeout(async () => { await mobSaveSplit(); }, 3000);
+function markDirty() {
+  dirty = true; setSaveState('dirty'); updateWordCount();
+  clearTimeout(saveTimer); saveTimer = setTimeout(() => saveDay(false), 1500);
 }
+Object.entries(VIEWS).forEach(([k, v]) => [v.pos, v.en].forEach(id => {
+  const ta = $id(id);
+  ta.addEventListener('input', () => { activeView = k; markDirty(); });
+  ta.addEventListener('blur', () => { if (dirty) saveDay(false); });
+}));
 
-async function mobSaveSplit() {
-  const {db,collection,addDoc,doc,updateDoc,Timestamp} = window._fb;
-  const dateCtx = mobSelectedDate || (() => { const t=new Date(); return {y:t.getFullYear(),m:t.getMonth(),d:t.getDate()}; })();
-  const {y,m,d} = dateCtx;
-  const posBody = document.getElementById('mob-split-pos-text').value.trim();
-  const enBody  = document.getElementById('mob-split-en-text').value.trim();
+function saveDay(manual) {
+  clearTimeout(saveTimer);
+  const day = curDay; if (!day) return Promise.resolve(true);
+  const v = VIEWS[activeView], pos = $id(v.pos).value.trim(), en = $id(v.en).value.trim();
+  const run = () => doSave(day, pos, en, manual);
+  return (saveChain = saveChain.then(run, run));
+}
+function flushSave() { return dirty ? saveDay(false) : saveChain; }
+
+async function doSave(day, pos, en, manual) {
+  if (!dirty && !manual) return true;
+  const { db, doc, setDoc, deleteDoc, Timestamp } = window._fb, COL = 'SanctuaryOfReed';
+  const jobs = [['posId','positive',pos,0,'中文日記'], ['enId','english',en,2,'英文日記']];
+  if (manual) {
+    const gone = jobs.filter(j => day[j[0]] && !j[2]).map(j => j[4]);
+    if (gone.length && !confirm('以下欄位已清空，儲存將永久刪除：\n\n・' + gone.join('\n・') + '\n\n確定要繼續嗎？')) return false;
+  }
+  if (day === curDay) setSaveState('saving');
   try {
-    const ops = [];
-    // Save positive
-    if (posBody) {
-      if (_mobSplitPosId) {
-        ops.push(updateDoc(doc(db,'SanctuaryOfReed',_mobSplitPosId),{body:posBody,mood:'positive'}));
-        const i=entries.findIndex(e=>e.id===_mobSplitPosId); if(i!==-1) entries[i].body=posBody;
-      } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
-        _mobSplitPosId = ref.id; await loadEntries();
-      }
+    await Promise.race([
+      Promise.all(jobs.map(async ([key, mood, body, min]) => {
+        if (body) {
+          const isNew = !day[key];
+          if (isNew) day[key] = doc(window._fb.collection(db, COL)).id;   // 先決定 id，逾時重試也不會重複新增
+          const data = { body, mood };
+          if (isNew) data.createdAt = Timestamp.fromDate(new Date(day.y, day.m, day.d, 12, min, 0));
+          await setDoc(doc(db, COL, day[key]), data, { merge: true });
+          const e = entries.find(x => x.id === day[key]);
+          if (e) e.body = body; else entries.push({ id: day[key], ...data, createdAt: data.createdAt || Timestamp.fromDate(new Date(day.y, day.m, day.d, 12, min, 0)) });
+        } else if (day[key] && manual) {
+          const id = day[key]; await deleteDoc(doc(db, COL, id));
+          entries = entries.filter(x => x.id !== id); day[key] = null;
+        }
+      })),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000)),
+    ]);
+    if (day === curDay) {
+      const v = VIEWS[activeView];
+      if ($id(v.pos).value.trim() === pos && $id(v.en).value.trim() === en) { dirty = false; setSaveState('saved'); }
+      else markDirty();
+      refreshDayUI();
     }
-    // Save English translation
-    if (enBody) {
-      if (_mobSplitEnId) {
-        ops.push(updateDoc(doc(db,'SanctuaryOfReed',_mobSplitEnId),{body:enBody,mood:'english'}));
-        const i=entries.findIndex(e=>e.id===_mobSplitEnId); if(i!==-1) entries[i].body=enBody;
-      } else {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:enBody,mood:'english',createdAt:Timestamp.fromDate(new Date(y,m,d,12,2,0))});
-        _mobSplitEnId = ref.id; await loadEntries();
-      }
-    }
-    if (ops.length) await Promise.all(ops);
-    setSyncState('idle');
-  } catch(e) { setSyncState('error'); }
-}
-
-async function mobSaveActive() {
-  if (mobSplitOn) {
-    clearTimeout(mobSplitSaveTimer);
-    await mobSaveSplit();
-    showToast('已儲存 ✦');
-  } else if (mobMood === 'negative') {
-    // Fire any pending neg single input
-    const negFireEl = document.getElementById('mob-neg-fire-input');
-    const negPending = negFireEl.value.trim();
-    if (negPending) { mobNegItems.push(negPending); negFireEl.value=''; }
-    await _mobNegSave();
-    showToast('已儲存 ✦');
-    // Re-render list
-    const today = mobSelectedDate ? isDateToday(mobSelectedDate.y,mobSelectedDate.m,mobSelectedDate.d) : true;
-    const container = document.getElementById('mob-neg-list');
-    renderNegList(container, mobNegItems, today);
-    _negListBindDelete(container, mobNegItems, today, () => mobNegAutoSave());
-  } else {
-    mobSaveEntry();
+    if (manual) showToast('已儲存 ✦');
+    return true;
+  } catch (err) {
+    console.warn('save failed', err);
+    if (day === curDay) { setSaveState('error'); clearTimeout(saveTimer); saveTimer = setTimeout(() => saveDay(false), 8000); }
+    if (manual) showToast('儲存失敗');
+    return false;
   }
 }
 
-/* ═══════════════════════ ENGLISH COLUMN AUTO-SAVE ═══════════════════════ */
-let cmpPosSaveTimer = null;
-function cmpPosScheduleSave() {
-  clearTimeout(cmpPosSaveTimer);
-  setSyncState('syncing');
-  cmpPosSaveTimer = setTimeout(async () => {
-    if (!selectedDate || !_cmpPosId && !document.getElementById('cmp-text-pos').value.trim()) {
-      setSyncState('idle'); return;
-    }
-    const { db, doc, updateDoc, addDoc, collection, Timestamp } = window._fb;
-    const posBody = document.getElementById('cmp-text-pos').value.trim();
-    const { y, m, d } = selectedDate;
-    try {
-      if (_cmpPosId) {
-        if (posBody) {
-          await updateDoc(doc(db,'SanctuaryOfReed',_cmpPosId), {body:posBody, mood:'positive'});
-          const i = entries.findIndex(e=>e.id===_cmpPosId); if(i!==-1) entries[i].body=posBody;
-        }
-        // 清空時不自動刪除，留給手動儲存的確認機制處理
-      } else if (posBody) {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:posBody,mood:'positive',createdAt:Timestamp.fromDate(new Date(y,m,d,12,0,0))});
-        _cmpPosId = ref.id;
-        await loadEntries();
-      }
-      setSyncState('idle');
-    } catch(e) { setSyncState('error'); }
-  }, 2000);
+async function delDay() {
+  if (!curDay || !(curDay.posId || curDay.enId)) return;
+  if (!confirm('確定要刪除這一天的中文與英文日記嗎？此動作無法復原。')) return;
+  clearTimeout(saveTimer); await saveChain;
+  const { db, doc, deleteDoc } = window._fb, ids = [curDay.posId, curDay.enId].filter(Boolean);
+  try {
+    await Promise.all(ids.map(id => deleteDoc(doc(db, 'SanctuaryOfReed', id))));
+    entries = entries.filter(e => !ids.includes(e.id)); curDay.posId = curDay.enId = null;
+    Object.values(VIEWS).forEach(v => { $id(v.pos).value = ''; $id(v.en).value = ''; });
+    dirty = false; setSaveState('saved'); refreshDayUI(); showToast('已刪除');
+  } catch (e) { showToast('刪除失敗'); }
 }
 
-let cmpEnSaveTimer = null;
-function cmpEnScheduleSave() {
-  clearTimeout(cmpEnSaveTimer);
-  setSyncState('syncing');
-  cmpEnSaveTimer = setTimeout(async () => {
-    if (!selectedDate || !_cmpEnId && !document.getElementById('cmp-text-en').value.trim()) {
-      setSyncState('idle'); return;
-    }
-    const { db, doc, updateDoc, addDoc, collection, Timestamp } = window._fb;
-    const enBody = document.getElementById('cmp-text-en').value.trim();
-    const { y, m, d } = selectedDate;
-    try {
-      if (_cmpEnId) {
-        if (enBody) {
-          await updateDoc(doc(db,'SanctuaryOfReed',_cmpEnId), {body:enBody, mood:'english'});
-          const i = entries.findIndex(e=>e.id===_cmpEnId); if(i!==-1) entries[i].body=enBody;
-        } else {
-          await window._fb.deleteDoc(doc(db,'SanctuaryOfReed',_cmpEnId));
-          entries = entries.filter(e=>e.id!==_cmpEnId); _cmpEnId=null;
-        }
-      } else if (enBody) {
-        const ref = await addDoc(collection(db,'SanctuaryOfReed'),{body:enBody,mood:'english',createdAt:Timestamp.fromDate(new Date(y,m,d,12,2,0))});
-        _cmpEnId = ref.id;
-        await loadEntries();
-      }
-      setSyncState('idle');
-    } catch(e) { setSyncState('error'); }
-  }, 2000);
+async function mobBack() {
+  const ok = await flushSave();
+  if (!ok && !confirm('這一天還沒儲存成功，仍要離開嗎？（未儲存的內容會遺失）')) return;
+  $id('mob-editor').style.display = 'none'; $id('mob-home').style.display = 'flex'; renderMobCalendar();
 }
+// 最後防線：未儲存時關閉頁面會跳出提醒；切到背景或關頁時順手再存一次
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', () => { if (document.hidden && dirty) saveDay(false); });
+window.addEventListener('pagehide', () => { if (dirty) saveDay(false); });
 
 /* ═══════════════════════ TTS ENGINE（共用工廠，桌面 / 手機共用同一份邏輯）═══════════════════════
    原本桌面版 (tts*) 與手機版 (mobTts* / mobSplitTts*) 是兩份幾乎一模一樣的程式碼，
