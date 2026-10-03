@@ -1484,17 +1484,18 @@ const VIEWS = {
 };
 const $id = id => document.getElementById(id);
 let curDay = null, activeView = 'pc', dirty = false, saveTimer = null, saveChain = Promise.resolve(true);
-const SAVE_TXT = { saved:'已儲存', dirty:'尚未儲存…', saving:'儲存中…', loading:'載入中…', error:'⚠ 儲存失敗，請按「儲存」重試', loaderr:'⚠ 資料讀取失敗，自動重試中（暫時無法輸入）' };
+const SAVE_TXT = { saved:'已儲存', dirty:'尚未儲存…', saving:'儲存中…', loading:'載入中…', error:'⚠ 儲存失敗，請按「儲存」重試', loaderr:'⚠ 資料讀取失敗，自動重試中（暫時無法輸入）', denied:'⚠ 此身分沒有日記存取權限（Firebase 規則未開放），無法輸入' };
 let entriesLoaded = false, loadRetryTimer = null;
 // 日記還沒載入完成前鎖住文字框，避免「打了字卻沒有對應的日期可存」而默默遺失
 function setEditable(on) { Object.values(VIEWS).forEach(v => [v.pos, v.en].forEach(id => { $id(id).readOnly = !on; })); }
 function showLoadError(e) {
+  if (e && e.code === 'permission-denied') { setSaveState('denied'); return; }   // 規則擋住：重試沒有用，直接說明
   setSaveState('loaderr', e && (e.code || e.message));
   clearTimeout(loadRetryTimer); loadRetryTimer = setTimeout(loadEntries, 5000);
 }
 
 function setSaveState(st, detail) {
-  const bad = st === 'error' || st === 'loaderr';
+  const bad = st === 'error' || st === 'loaderr' || st === 'denied';
   Object.values(VIEWS).forEach(v => { const el = $id(v.state); if (el) { el.textContent = SAVE_TXT[st] + (bad && detail ? ` [${detail}]` : ''); el.dataset.s = bad ? 'error' : st; } });
   setSyncState(st === 'saving' ? 'syncing' : bad ? 'error' : 'idle');
 }
@@ -1537,7 +1538,7 @@ function markDirty() {
 }
 Object.entries(VIEWS).forEach(([k, v]) => [v.pos, v.en].forEach(id => {
   const ta = $id(id);
-  ta.addEventListener('input', () => { activeView = k; markDirty(); });
+  ta.addEventListener('input', () => { if (ta.readOnly) return; activeView = k; markDirty(); });
   ta.addEventListener('blur', () => { if (dirty) saveDay(false); });
 }));
 
