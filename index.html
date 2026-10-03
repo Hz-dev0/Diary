@@ -723,11 +723,12 @@ body.sb-collapsed .sidebar{display:none}
     <div class="ed-header">
       <span class="sync-icon" id="sync-icon">✦</span>
       <span class="ed-header-title">Sanctuary Of Reed</span>
+      <button class="mode-btn" id="sb-toggle-btn" onclick="toggleSidebar()"></button>
     </div>
     <div id="edview" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
         <div id="entry-date"></div>
-        <div class="tb-right"><span class="save-state" id="save-state"></span><button class="mode-btn" id="en-only-btn" onclick="toggleEnOnly()"></button><button class="mode-btn" id="sb-toggle-btn" onclick="toggleSidebar()"></button></div>
+        <div class="tb-right"><span class="save-state" id="save-state"></span><button class="mode-btn" id="en-only-btn" onclick="toggleEnOnly()"></button></div>
       </div>
       <div class="compare-view" id="compare-view">
         <div class="compare-col compare-pos">
@@ -1717,9 +1718,18 @@ function createTtsEngine(cfg) {
     btn.textContent = playing ? '⏸' : '▶';
     btn.classList.toggle('playing', playing);
   }
+  // 有選取文字 → 從選取處開始念到結尾（選在單字中間會退到字首）；沒有選取 → 從頭念
+  function startIndex(ta) {
+    const a = ta.selectionStart, b = ta.selectionEnd;
+    if (a == null || a === b) return 0;
+    let i = a; while (i > 0 && /\S/.test(ta.value[i - 1])) i--;
+    return i;
+  }
   function play() {
-    const text = ($(cfg.textSourceId) || {}).value || '';
+    const ta = $(cfg.textSourceId) || { value: '' };
+    const from = startIndex(ta), text = (ta.value || '').slice(from);
     if (!text.trim()) { showToast('請先貼上英文翻譯'); return; }
+    state.fromIdx = from;
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(text);
     utt.voice = getVoice();
@@ -1733,6 +1743,7 @@ function createTtsEngine(cfg) {
     if (!window.speechSynthesis.speaking) return;
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
+      state.playing = true;
       setBtnState(true);
     } else {
       window.speechSynthesis.pause();
@@ -1743,7 +1754,12 @@ function createTtsEngine(cfg) {
   function toggle() {
     if (!window.speechSynthesis) { showToast('此瀏覽器不支援 TTS'); return; }
     if (state.playing) pauseResume();
-    else play();
+    else if (window.speechSynthesis.paused) {
+      // 暫停中：若又選了新的位置就從新位置重播，否則接續播放
+      const ta = $(cfg.textSourceId);
+      if (ta && ta.selectionStart !== ta.selectionEnd && startIndex(ta) !== state.fromIdx) play();
+      else pauseResume();
+    } else play();
   }
   function stop() {
     window.speechSynthesis.cancel();
@@ -1771,6 +1787,7 @@ function createTtsEngine(cfg) {
       if (p && !p.classList.contains('open')) { p.classList.add('open'); populateVoices(); }
     };
     const cancel = () => clearTimeout(timer);
+    btn.addEventListener('mousedown', (e) => e.preventDefault());   // 按播放鍵不搶走文字框焦點，選取範圍保持不變
     btn.addEventListener('contextmenu', (e) => { e.preventDefault(); open(); });
     btn.addEventListener('touchstart', () => { fired = false; timer = setTimeout(() => { fired = true; open(); }, 500); }, { passive: true });
     ['touchend', 'touchmove', 'touchcancel'].forEach(t => btn.addEventListener(t, cancel));
