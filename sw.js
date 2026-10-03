@@ -14,7 +14,7 @@
       避免影響 Firestore 即時連線。
 ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'sanctuary-of-reed-v9';
+const CACHE_NAME = 'sanctuary-of-reed-v10';
 
 // 開站必要資源（離線備援用）
 const CORE_ASSETS = [

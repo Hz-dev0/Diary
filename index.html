@@ -337,6 +337,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .dur-btn.active { background:var(--navy); color:var(--gold-light); border-color:var(--navy-mid); font-weight:600; }
 .token-box { text-align:center; padding:24px; background:var(--gold-faint); border-radius:var(--radius); border:1px dashed var(--border-g); margin-bottom:16px; }
 .token-num { font-family:'Cormorant Garamond',serif; font-size:42px; font-weight:600; letter-spacing:12px; color:var(--navy); }
+.token-num.empty { color:rgba(11,25,41,.14); }
 .token-tim { font-size:11px; color:var(--blue-soft); margin-top:7px; }
 .token-tim span { color:var(--gold-deep); font-weight:600; }
 .btn-outline { width:100%; padding:10px; background:none; border:1px solid var(--border-g); border-radius:var(--radius); font-size:12px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; color:var(--blue-soft); transition:all .2s; margin-top:7px; letter-spacing:1px; }
@@ -666,7 +667,7 @@ body.sb-collapsed .sidebar{display:none}
 .sb-handle:hover{background:rgba(196,162,74,.14);color:var(--gold-deep)}
 </style>
 </head>
-<body>
+<body class="sb-collapsed">
 
 <!-- Loading -->
 <div id="screen-loading">
@@ -939,7 +940,7 @@ body.sb-collapsed .sidebar{display:none}
       <button class="dur-btn" data-min="480" onclick="setDur(this)">8 小時</button>
     </div>
     <div class="token-box">
-      <div class="token-num" id="token-num">— — — — — —</div>
+      <div class="token-num empty" id="token-num">000000</div>
       <div class="token-tim" id="token-tim">點擊下方按鈕產生</div>
     </div>
     <button class="btn-main" onclick="generateToken()">產 生 新 驗 證 碼</button>
@@ -1304,7 +1305,6 @@ async function loadStealthPref() {
     const d = snap.exists() ? snap.data() : null;
     if (d && d.stealth === false) setStealth(false, false);
     if (!d || d.enOnly !== true) setEnOnly(false, false);   // 只有雲端明確記錄「只看英文」才維持隱藏中文
-    if (d && typeof d.sidebarCollapsed === 'boolean') setSidebar(d.sidebarCollapsed, false);
   } catch (e) { console.warn(e); /* 讀取失敗：維持開啟 */ }
 }
 function toggleStealth() { setStealth(!stealthOn); }
@@ -1339,7 +1339,8 @@ function mobCalNext(){mobCalMonth++;if(mobCalMonth>11){mobCalMonth=0;mobCalYear+
 
 /* ═══════════════════════ TOKEN MODAL ═══════════════════════ */
 function openModal(){document.getElementById('modal').classList.add('open');}
-function closeModal(){document.getElementById('modal').classList.remove('open');clearInterval(timerInt);}
+function resetTokenView(){const n=document.getElementById('token-num');n.textContent='000000';n.classList.add('empty');document.getElementById('token-tim').textContent='點擊下方按鈕產生';}
+function closeModal(){document.getElementById('modal').classList.remove('open');clearInterval(timerInt);resetTokenView();}
 function setDur(btn){document.querySelectorAll('.dur-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');durMin=parseInt(btn.dataset.min);}
 async function generateToken(){
   const{db,doc,setDoc,Timestamp}=window._fb;
@@ -1348,12 +1349,12 @@ async function generateToken(){
   const expiresAt=Date.now()+durMin*60000;  // 統一格式：毫秒數
   try{
     await setDoc(doc(db,'tokens',code),{ownerUid:window._me.uid,expiresAt});
-    document.getElementById('token-num').textContent=code;
+    const tn=document.getElementById('token-num'); tn.textContent=code; tn.classList.remove('empty');
     let rem=durMin*60;
     const tick=()=>{
       const m=Math.floor(rem/60),s=rem%60;
       document.getElementById('token-tim').innerHTML=`有效時間剩餘 <span>${m}:${String(s).padStart(2,'0')}</span>`;
-      if(rem<=0){clearInterval(timerInt);document.getElementById('token-tim').textContent='已過期';document.getElementById('token-num').textContent='——————';}
+      if(rem<=0){clearInterval(timerInt);resetTokenView();document.getElementById('token-tim').textContent='已過期';}
       rem--;
     };
     tick(); timerInt=setInterval(tick,1000);
@@ -1620,20 +1621,18 @@ function setEnOnly(on, persist = true) {
 function toggleEnOnly() { setEnOnly(!enOnly); }
 setEnOnly(true, false);
 
-/* ═══ 右側月曆欄收合：本機先套用（免閃爍），再以雲端設定為準 ═══ */
-let sbCollapsed = false;
-function setSidebar(collapsed, persist = true, remember = true) {
+/* ═══ 右側月曆欄：每次開啟頁面一律先收起；展開／收合只在本次使用中有效 ═══ */
+let sbCollapsed = true;
+function setSidebar(collapsed) {
   sbCollapsed = collapsed;
   document.body.classList.toggle('sb-collapsed', collapsed);
   const h = $id('sb-handle');
   if (h) { h.textContent = collapsed ? '◀' : '▶'; h.title = collapsed ? '展開月曆欄' : '收合月曆欄'; }
-  if (remember) { try { localStorage.setItem('sb_collapsed', collapsed ? '1' : '0'); } catch (_) {} }
-  if (persist && window._role === 'trusted') saveSettingCloud({ sidebarCollapsed: collapsed });
 }
 function toggleSidebar() { setSidebar(!sbCollapsed); }
-try { setSidebar(localStorage.getItem('sb_collapsed') === '1', false); } catch (_) { setSidebar(false, false); }
-// 用滑鼠／手指點進文字區 → 自動收起月曆欄（暫時性：不寫入記憶，下次仍依你手動設定的狀態；程式自動對焦不會觸發）
-['cmp-text-pos', 'cmp-text-en'].forEach(id => $id(id).addEventListener('pointerdown', () => { if (!sbCollapsed) setSidebar(true, false, false); }));
+setSidebar(true);
+// 用滑鼠／手指點進文字區 → 自動收起月曆欄（程式自動對焦不會觸發）
+['cmp-text-pos', 'cmp-text-en'].forEach(id => $id(id).addEventListener('pointerdown', () => { if (!sbCollapsed) setSidebar(true); }));
 
 // 最後防線：未儲存時關閉頁面會跳出提醒；切到背景或關頁時順手再存一次
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
