@@ -661,6 +661,7 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .mode-btn:hover{background:var(--cream,#faf6ec)}
 .tb-right{display:flex;align-items:center;gap:12px}
 body.en-only .compare-pos,body.en-only .compare-divider,body.en-only .mob-split-pos,body.en-only .mob-split-divider{display:none!important}
+body.sb-collapsed .sidebar{display:none}
 </style>
 </head>
 <body>
@@ -726,7 +727,7 @@ body.en-only .compare-pos,body.en-only .compare-divider,body.en-only .mob-split-
     <div id="edview" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
         <div id="entry-date"></div>
-        <div class="tb-right"><span class="save-state" id="save-state"></span><button class="mode-btn" id="en-only-btn" onclick="toggleEnOnly()"></button></div>
+        <div class="tb-right"><span class="save-state" id="save-state"></span><button class="mode-btn" id="en-only-btn" onclick="toggleEnOnly()"></button><button class="mode-btn" id="sb-toggle-btn" onclick="toggleSidebar()"></button></div>
       </div>
       <div class="compare-view" id="compare-view">
         <div class="compare-col compare-pos">
@@ -1304,6 +1305,7 @@ async function loadStealthPref() {
     const d = snap.exists() ? snap.data() : null;
     if (d && d.stealth === false) setStealth(false, false);
     if (!d || d.enOnly !== true) setEnOnly(false, false);   // 只有雲端明確記錄「只看英文」才維持隱藏中文
+    if (d && typeof d.sidebarCollapsed === 'boolean') setSidebar(d.sidebarCollapsed, false);
   } catch (e) { console.warn(e); /* 讀取失敗：維持開啟 */ }
 }
 function toggleStealth() { setStealth(!stealthOn); }
@@ -1618,6 +1620,20 @@ function setEnOnly(on, persist = true) {
 }
 function toggleEnOnly() { setEnOnly(!enOnly); }
 setEnOnly(true, false);
+
+/* ═══ 右側月曆欄收合：本機先套用（免閃爍），再以雲端設定為準 ═══ */
+let sbCollapsed = false;
+const SB_ICON = f => _eye(`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>${f ? '<rect x="15" y="4" width="6" height="16" rx="1" fill="currentColor" stroke="none" opacity=".35"/>' : ''}`);
+function setSidebar(collapsed, persist = true) {
+  sbCollapsed = collapsed;
+  document.body.classList.toggle('sb-collapsed', collapsed);
+  const b = $id('sb-toggle-btn');
+  if (b) { b.innerHTML = SB_ICON(!collapsed); b.title = b.ariaLabel = collapsed ? '展開月曆欄' : '收合月曆欄'; }
+  try { localStorage.setItem('sb_collapsed', collapsed ? '1' : '0'); } catch (_) {}
+  if (persist && window._role === 'trusted') saveSettingCloud({ sidebarCollapsed: collapsed });
+}
+function toggleSidebar() { setSidebar(!sbCollapsed); }
+try { setSidebar(localStorage.getItem('sb_collapsed') === '1', false); } catch (_) { setSidebar(false, false); }
 
 // 最後防線：未儲存時關閉頁面會跳出提醒；切到背景或關頁時順手再存一次
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
