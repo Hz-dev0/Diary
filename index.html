@@ -1174,7 +1174,7 @@ window._showGuestScreen = function() {
 
 /* ═══════════════════════ DATA ═══════════════════════ */
 async function loadEntries() {
-  await loadStealthPref();
+  loadStealthPref();   // 不等它：設定讀取卡住不可以擋住日記載入
   // 訪客：先確認 guest_access 仍有效，否則 reload
   if (window._role === 'guest') {
     try {
@@ -1190,7 +1190,7 @@ async function loadEntries() {
   try {
     setSyncState('syncing');
     const q = query(collection(db,'SanctuaryOfReed'), orderBy('createdAt','desc'));
-    const snap = await getDocs(q);
+    const snap = await Promise.race([getDocs(q), new Promise((_, rej) => setTimeout(() => rej(new Error('讀取逾時')), 15000))]);
     const wasEmpty = entries.length === 0;
     entries = snap.docs.map(d=>({id:d.id,...d.data()}));
     // 負能量功能已移除：非訪客身分時順手清掉舊的負能量紀錄
@@ -1200,13 +1200,14 @@ async function loadEntries() {
       if (window._role !== 'guest') oldNeg.forEach(e=>window._fb.deleteDoc(window._fb.doc(db,'SanctuaryOfReed',e.id)).catch(()=>{}));
     }
     setSyncState('idle');
+    entriesLoaded = true; clearTimeout(loadRetryTimer);
     renderCalendar(); renderMobCalendar();
     // On first load, auto-open today on PC
     if (wasEmpty) {
       const t = new Date();
       openDay(t.getFullYear(), t.getMonth(), t.getDate());
     }
-  } catch(e) { setSyncState('error'); console.warn(e); }
+  } catch(e) { setSyncState('error'); console.warn(e); showLoadError(e); }
 }
 
 /* ═══════════════════════ CALENDAR HELPERS ═══════════════════════ */
@@ -1300,7 +1301,7 @@ async function loadStealthPref() {
   if (stealthLoaded || window._role !== 'trusted') return;
   try {
     const { db, doc, getDoc } = window._fb;
-    const snap = await getDoc(doc(db, 'SanctuaryOfReed', '_settings'));
+    const snap = await Promise.race([getDoc(doc(db, 'SanctuaryOfReed', '_settings')), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))]);
     stealthLoaded = true;
     const d = snap.exists() ? snap.data() : null;
     if (d && d.stealth === false) setStealth(false, false);
@@ -1483,11 +1484,19 @@ const VIEWS = {
 };
 const $id = id => document.getElementById(id);
 let curDay = null, activeView = 'pc', dirty = false, saveTimer = null, saveChain = Promise.resolve(true);
-const SAVE_TXT = { saved:'已儲存', dirty:'尚未儲存…', saving:'儲存中…', error:'⚠ 儲存失敗，請按「儲存」重試' };
+const SAVE_TXT = { saved:'已儲存', dirty:'尚未儲存…', saving:'儲存中…', loading:'載入中…', error:'⚠ 儲存失敗，請按「儲存」重試', loaderr:'⚠ 資料讀取失敗，自動重試中（暫時無法輸入）' };
+let entriesLoaded = false, loadRetryTimer = null;
+// 日記還沒載入完成前鎖住文字框，避免「打了字卻沒有對應的日期可存」而默默遺失
+function setEditable(on) { Object.values(VIEWS).forEach(v => [v.pos, v.en].forEach(id => { $id(id).readOnly = !on; })); }
+function showLoadError(e) {
+  setSaveState('loaderr', e && (e.code || e.message));
+  clearTimeout(loadRetryTimer); loadRetryTimer = setTimeout(loadEntries, 5000);
+}
 
-function setSaveState(st) {
-  Object.values(VIEWS).forEach(v => { const el = $id(v.state); if (el) { el.textContent = SAVE_TXT[st]; el.dataset.s = st; } });
-  setSyncState(st === 'saving' ? 'syncing' : st === 'error' ? 'error' : 'idle');
+function setSaveState(st, detail) {
+  const bad = st === 'error' || st === 'loaderr';
+  Object.values(VIEWS).forEach(v => { const el = $id(v.state); if (el) { el.textContent = SAVE_TXT[st] + (bad && detail ? ` [${detail}]` : ''); el.dataset.s = bad ? 'error' : st; } });
+  setSyncState(st === 'saving' ? 'syncing' : bad ? 'error' : 'idle');
 }
 function dayKeyOf(e) { const t = e.createdAt?.toDate ? e.createdAt.toDate() : null; return t && `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`; }
 function updateWordCount() {
@@ -1501,6 +1510,7 @@ function refreshDayUI() {
 }
 
 async function openDay(y, m, d, showMob) {
+  if (!entriesLoaded) return;   // 資料沒載入成功前不開日期，避免對沒讀到的日記重複新增
   if (curDay && !(curDay.y === y && curDay.m === m && curDay.d === d)) {
     const ok = await flushSave();
     if (!ok && !confirm('目前這一天還沒儲存成功，仍要切換嗎？（未儲存的內容會遺失）')) return;
@@ -1511,7 +1521,7 @@ async function openDay(y, m, d, showMob) {
   selectedDate = { y, m, d };
   const dateStr = new Date(y, m, d).toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
   Object.values(VIEWS).forEach(v => { $id(v.date).textContent = dateStr; $id(v.pos).value = pos?.body || ''; $id(v.en).value = en?.body || ''; });
-  dirty = false; clearTimeout(saveTimer); setSaveState('saved'); refreshDayUI();
+  dirty = false; clearTimeout(saveTimer); setEditable(true); setSaveState('saved'); refreshDayUI();
   if (showMob) { $id('mob-home').style.display = 'none'; $id('mob-editor').style.display = 'flex'; }
   setTimeout(() => $id(VIEWS[showMob ? 'mob' : 'pc'].pos).focus(), 100);
 }
@@ -1577,7 +1587,7 @@ async function doSave(day, pos, en, manual) {
     return true;
   } catch (err) {
     console.warn('save failed', err);
-    if (day === curDay) { setSaveState('error'); clearTimeout(saveTimer); saveTimer = setTimeout(() => saveDay(false), 8000); }
+    if (day === curDay) { setSaveState('error', err.code || err.message); clearTimeout(saveTimer); saveTimer = setTimeout(() => saveDay(false), 8000); }
     if (manual) showToast('儲存失敗');
     return false;
   }
@@ -1620,6 +1630,7 @@ function setEnOnly(on, persist = true) {
 }
 function toggleEnOnly() { setEnOnly(!enOnly); }
 setEnOnly(true, false);
+setEditable(false); setSaveState('loading');
 
 /* ═══ 右側月曆欄：每次開啟頁面一律先收起；展開／收合只在本次使用中有效 ═══ */
 let sbCollapsed = true;
