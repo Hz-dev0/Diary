@@ -662,6 +662,8 @@ body.stealth ::-moz-selection { background: rgba(180,160,100,0.10); color: inher
 .tb-right{display:flex;align-items:center;gap:12px}
 body.en-only .compare-pos,body.en-only .compare-divider,body.en-only .mob-split-pos,body.en-only .mob-split-divider{display:none!important}
 body.sb-collapsed .sidebar{display:none}
+.sb-handle{order:1;flex:0 0 14px;width:14px;display:flex;align-items:center;justify-content:center;background:var(--white);border-left:1px solid var(--border-g);color:var(--blue-faint);font-size:9px;cursor:pointer;user-select:none;transition:background .2s,color .2s}
+.sb-handle:hover{background:rgba(196,162,74,.14);color:var(--gold-deep)}
 </style>
 </head>
 <body>
@@ -720,11 +722,6 @@ body.sb-collapsed .sidebar{display:none}
 <div id="screen-app">
   <!-- Editor (LEFT) -->
   <div class="editor">
-    <div class="ed-header">
-      <span class="sync-icon" id="sync-icon">✦</span>
-      <span class="ed-header-title">Sanctuary Of Reed</span>
-      <button class="mode-btn" id="sb-toggle-btn" onclick="toggleSidebar()"></button>
-    </div>
     <div id="edview" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="ed-toolbar">
         <div id="entry-date"></div>
@@ -779,6 +776,7 @@ body.sb-collapsed .sidebar{display:none}
   </div>
 
   <!-- Sidebar (RIGHT) -->
+  <div class="sb-handle" id="sb-handle" onclick="toggleSidebar()"></div>
   <div class="sidebar">
     <div class="sb-head">
       <div class="sb-head-row">
@@ -1624,17 +1622,18 @@ setEnOnly(true, false);
 
 /* ═══ 右側月曆欄收合：本機先套用（免閃爍），再以雲端設定為準 ═══ */
 let sbCollapsed = false;
-const SB_ICON = f => _eye(`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>${f ? '<rect x="15" y="4" width="6" height="16" rx="1" fill="currentColor" stroke="none" opacity=".35"/>' : ''}`);
-function setSidebar(collapsed, persist = true) {
+function setSidebar(collapsed, persist = true, remember = true) {
   sbCollapsed = collapsed;
   document.body.classList.toggle('sb-collapsed', collapsed);
-  const b = $id('sb-toggle-btn');
-  if (b) { b.innerHTML = SB_ICON(!collapsed); b.title = b.ariaLabel = collapsed ? '展開月曆欄' : '收合月曆欄'; }
-  try { localStorage.setItem('sb_collapsed', collapsed ? '1' : '0'); } catch (_) {}
+  const h = $id('sb-handle');
+  if (h) { h.textContent = collapsed ? '◀' : '▶'; h.title = collapsed ? '展開月曆欄' : '收合月曆欄'; }
+  if (remember) { try { localStorage.setItem('sb_collapsed', collapsed ? '1' : '0'); } catch (_) {} }
   if (persist && window._role === 'trusted') saveSettingCloud({ sidebarCollapsed: collapsed });
 }
 function toggleSidebar() { setSidebar(!sbCollapsed); }
 try { setSidebar(localStorage.getItem('sb_collapsed') === '1', false); } catch (_) { setSidebar(false, false); }
+// 用滑鼠／手指點進文字區 → 自動收起月曆欄（暫時性：不寫入記憶，下次仍依你手動設定的狀態；程式自動對焦不會觸發）
+['cmp-text-pos', 'cmp-text-en'].forEach(id => $id(id).addEventListener('pointerdown', () => { if (!sbCollapsed) setSidebar(true, false, false); }));
 
 // 最後防線：未儲存時關閉頁面會跳出提醒；切到背景或關頁時順手再存一次
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
