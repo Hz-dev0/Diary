@@ -25,7 +25,8 @@
     onAuthStateChanged, browserLocalPersistence, setPersistence,
   } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import {
-    getFirestore, collection, addDoc, getDocs, doc, deleteDoc,
+    getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+    collection, addDoc, getDocs, getDocsFromCache, doc, deleteDoc,
     updateDoc, setDoc, getDoc, onSnapshot, query, orderBy,
     serverTimestamp, Timestamp,
   } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -45,10 +46,19 @@
 
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db   = getFirestore(app);
+  // 離線支援：資料存在裝置的 IndexedDB 快取，斷線時仍可讀取；離線寫入會排隊，連線後自動同步
+  let db;
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+  } catch (e) {
+    console.warn('[Offline] 無法啟用離線快取，退回一般模式：', e);
+    db = getFirestore(app);
+  }
 
   window._fb = {
-    auth, db, collection, addDoc, getDocs, doc, deleteDoc,
+    auth, db, collection, addDoc, getDocs, getDocsFromCache, doc, deleteDoc,
     updateDoc, setDoc, getDoc, onSnapshot, query, orderBy,
     serverTimestamp, Timestamp,
     ENTRIES_PATH,
@@ -1190,7 +1200,18 @@ async function loadEntries() {
   try {
     setSyncState('syncing');
     const q = query(collection(db,'SanctuaryOfReed'), orderBy('createdAt','desc'));
-    const snap = await Promise.race([getDocs(q), new Promise((_, rej) => setTimeout(() => rej(new Error('讀取逾時')), 15000))]);
+    let snap;
+    if (!navigator.onLine) {
+      snap = await window._fb.getDocsFromCache(q);          // 明確離線：直接讀本機快取，不用等逾時
+    } else {
+      try {
+        snap = await Promise.race([getDocs(q), new Promise((_, rej) => setTimeout(() => rej(new Error('讀取逾時')), 15000))]);
+      } catch (err) {
+        if (err && err.code === 'permission-denied') throw err;
+        try { snap = await window._fb.getDocsFromCache(q); } catch (_) { throw err; }   // 網路不穩：改用快取
+        if (snap.empty) throw err;
+      }
+    }
     const wasEmpty = entries.length === 0;
     entries = snap.docs.map(d=>({id:d.id,...d.data()}));
     // 負能量功能已移除：非訪客身分時順手清掉舊的負能量紀錄
@@ -1484,7 +1505,7 @@ const VIEWS = {
 };
 const $id = id => document.getElementById(id);
 let curDay = null, activeView = 'pc', dirty = false, saveTimer = null, saveChain = Promise.resolve(true);
-const SAVE_TXT = { saved:'已儲存', dirty:'尚未儲存…', saving:'儲存中…', loading:'載入中…', error:'⚠ 儲存失敗，請按「儲存」重試', loaderr:'⚠ 資料讀取失敗，自動重試中（暫時無法輸入）', denied:'⚠ 此身分沒有日記存取權限（Firebase 規則未開放），無法輸入' };
+const SAVE_TXT = { saved:'已儲存', savedoff:'已儲存在本機 · 連線後同步', dirty:'尚未儲存…', saving:'儲存中…', loading:'載入中…', error:'⚠ 儲存失敗，請按「儲存」重試', loaderr:'⚠ 資料讀取失敗，自動重試中（暫時無法輸入）', denied:'⚠ 此身分沒有日記存取權限（Firebase 規則未開放），無法輸入' };
 let entriesLoaded = false, loadRetryTimer = null;
 // 日記還沒載入完成前鎖住文字框，避免「打了字卻沒有對應的日期可存」而默默遺失
 function setEditable(on) { Object.values(VIEWS).forEach(v => [v.pos, v.en].forEach(id => { $id(id).readOnly = !on; })); }
@@ -1523,7 +1544,11 @@ async function openDay(y, m, d, showMob) {
   const dateStr = new Date(y, m, d).toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
   Object.values(VIEWS).forEach(v => { $id(v.date).textContent = dateStr; $id(v.pos).value = pos?.body || ''; $id(v.en).value = en?.body || ''; });
   dirty = false; clearTimeout(saveTimer); setEditable(true); setSaveState('saved'); refreshDayUI();
-  if (showMob) { $id('mob-home').style.display = 'none'; $id('mob-editor').style.display = 'flex'; }
+  if (showMob) {
+    $id('mob-home').style.display = 'none'; $id('mob-editor').style.display = 'flex';
+    // 手機：為「日記頁」多推一層歷史紀錄，按系統上一頁 / 手勢返回就會回到月曆而不是離開 APP
+    if (!(history.state && history.state.view === 'editor')) history.pushState({ view: 'editor' }, '');
+  }
   setTimeout(() => $id(VIEWS[showMob ? 'mob' : 'pc'].pos).focus(), 100);
 }
 function openToday() {
@@ -1551,6 +1576,8 @@ function saveDay(manual) {
 }
 function flushSave() { return dirty ? saveDay(false) : saveChain; }
 
+// 離線時 Firestore 的寫入 Promise 要等到連上伺服器才 resolve；離線就不等，資料已寫進本機快取並排隊同步
+const fbAck = p => navigator.onLine ? p : (p.catch(() => {}), Promise.resolve());
 async function doSave(day, pos, en, manual) {
   if (!dirty && !manual) return true;
   const { db, doc, setDoc, deleteDoc, Timestamp } = window._fb, COL = 'SanctuaryOfReed';
@@ -1568,11 +1595,11 @@ async function doSave(day, pos, en, manual) {
           if (isNew) day[key] = doc(window._fb.collection(db, COL)).id;   // 先決定 id，逾時重試也不會重複新增
           const data = { body, mood };
           if (isNew) data.createdAt = Timestamp.fromDate(new Date(day.y, day.m, day.d, 12, min, 0));
-          await setDoc(doc(db, COL, day[key]), data, { merge: true });
+          await fbAck(setDoc(doc(db, COL, day[key]), data, { merge: true }));
           const e = entries.find(x => x.id === day[key]);
           if (e) e.body = body; else entries.push({ id: day[key], ...data, createdAt: data.createdAt || Timestamp.fromDate(new Date(day.y, day.m, day.d, 12, min, 0)) });
         } else if (day[key] && manual) {
-          const id = day[key]; await deleteDoc(doc(db, COL, id));
+          const id = day[key]; await fbAck(deleteDoc(doc(db, COL, id)));
           entries = entries.filter(x => x.id !== id); day[key] = null;
         }
       })),
@@ -1580,7 +1607,7 @@ async function doSave(day, pos, en, manual) {
     ]);
     if (day === curDay) {
       const v = VIEWS[activeView];
-      if ($id(v.pos).value.trim() === pos && $id(v.en).value.trim() === en) { dirty = false; setSaveState('saved'); }
+      if ($id(v.pos).value.trim() === pos && $id(v.en).value.trim() === en) { dirty = false; setSaveState(navigator.onLine ? 'saved' : 'savedoff'); }
       else markDirty();
       refreshDayUI();
     }
@@ -1600,18 +1627,33 @@ async function delDay() {
   clearTimeout(saveTimer); await saveChain;
   const { db, doc, deleteDoc } = window._fb, ids = [curDay.posId, curDay.enId].filter(Boolean);
   try {
-    await Promise.all(ids.map(id => deleteDoc(doc(db, 'SanctuaryOfReed', id))));
+    await Promise.all(ids.map(id => fbAck(deleteDoc(doc(db, 'SanctuaryOfReed', id)))));
     entries = entries.filter(e => !ids.includes(e.id)); curDay.posId = curDay.enId = null;
     Object.values(VIEWS).forEach(v => { $id(v.pos).value = ''; $id(v.en).value = ''; });
     dirty = false; setSaveState('saved'); refreshDayUI(); showToast('已刪除');
   } catch (e) { showToast('刪除失敗'); }
 }
 
-async function mobBack() {
+async function mobLeaveEditor(fromPop) {
   const ok = await flushSave();
-  if (!ok && !confirm('這一天還沒儲存成功，仍要離開嗎？（未儲存的內容會遺失）')) return;
+  if (!ok && !confirm('這一天還沒儲存成功，仍要離開嗎？（未儲存的內容會遺失）')) {
+    if (fromPop) history.pushState({ view: 'editor' }, '');   // 使用者取消離開：把剛退掉的歷史層補回來
+    return;
+  }
   $id('mob-editor').style.display = 'none'; $id('mob-home').style.display = 'flex'; renderMobCalendar();
 }
+// 畫面上的「‹」按鈕：走瀏覽器的上一頁，讓歷史紀錄與畫面保持一致
+function mobBack() {
+  if (history.state && history.state.view === 'editor') history.back();
+  else mobLeaveEditor(false);
+}
+// 若是在日記頁重新整理後載入，歷史紀錄還停在 editor 層，而畫面是月曆：退回去對齊，避免要多按一次上一頁
+if (history.state && history.state.view === 'editor') history.back(); else history.replaceState({ view: 'home' }, '');
+window.addEventListener('popstate', () => {
+  if ($id('mob-editor').style.display === 'flex') mobLeaveEditor(true);
+});
+// 恢復連線時，重新整理一次資料（有未儲存內容時不動）
+window.addEventListener('online', () => { if (entriesLoaded && !dirty) loadEntries(); });
 /* ═══ 只看英文模式：整欄隱藏中文（非模糊）；狀態存雲端，預設隱藏直到讀到雲端設定 ═══ */
 let enOnly = true;
 const _eye = d => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
